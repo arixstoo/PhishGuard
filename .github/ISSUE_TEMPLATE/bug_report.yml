@@ -1,0 +1,57 @@
+name: Bug report
+description: Something does not work as expected (crash, wrong output, broken install…).
+title: "bug: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! **Security issue?** Do not use this form, see SECURITY.md.
+        **Wrong phishing verdict?** Use the *Detection feedback* template instead.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Python package / scripts
+        - API
+        - Browser extension
+        - Telegram bot
+        - Web page
+        - Documentation
+        - CI / build
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. pip install -e '.[dev]'
+        2. python scripts/train_sms_baseline.py
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback
+      description: Remove any personal data or API key before pasting.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "v0.0.1 or commit sha"
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "Ubuntu 24.04 (WSL2), Python 3.12, Chrome 130"
