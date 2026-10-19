@@ -1,3 +1,6 @@
+[![CI](https://github.com/arixstoo/PhishGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/arixstoo/PhishGuard/actions/workflows/ci.yml)
+
+
 # **SMS Spam Detector (96%)**
 
 #### Hi there 👋 it's arixstoo again !
