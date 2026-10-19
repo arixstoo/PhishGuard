@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phishguard"
+version = "0.0.1"
+description = "Open-source, explainable and privacy-first phishing detection (URL, SMS, email)."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "arixstoo" }]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "lightgbm",
+    "tldextract",
+    "rapidfuzz",
+    "beautifulsoup4",
+    "joblib",
+    "httpx",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff==0.17.1",  # même version que .pre-commit-config.yaml
+    "pre-commit",
+    "hypothesis",
+]
+
+[project.urls]
+Repository = "https://github.com/arixstoo/PhishGuard"
+Issues = "https://github.com/arixstoo/PhishGuard/issues"
+
+[tool.ruff]
+line-length = 100
+# Code d'origine (tag v0-legacy) et cahier des charges : conservés tels quels.
+extend-exclude = ["notebooks/legacy", "*Cahier des charges*.md"]
+force-exclude = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

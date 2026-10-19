@@ -1,76 +1,119 @@
-# **SMS Spam Detector (96%)**
+# PhishGuard
 
-#### Hi there 👋 it's arixstoo again !
-## Project Description
-This project is a machine learning-based SMS spam detection system, developed using Python. The system classifies SMS messages as either spam or not spam by leveraging natural language processing (NLP) techniques and a Logistic Regression model. The model is trained on a labeled dataset of SMS messages and uses TF-IDF for feature extraction.
+[![CI](https://github.com/arixstoo/PhishGuard/actions/workflows/ci.yaml/badge.svg)](https://github.com/arixstoo/PhishGuard/actions/workflows/ci.yaml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Status](https://img.shields.io/badge/status-in%20development-orange)
 
-The project was developed to demonstrate text processing, feature extraction, and model training, with the final model being saved for deployment in a production environment where it can classify new SMS messages in real-time.
+**Open-source, explainable and privacy-first phishing detection for URLs, SMS and emails.**
+PhishGuard warns people at the exact moment they are about to click, with a clear verdict
+and a one-sentence explanation, in French, English and Arabic.
 
+> 🚧 **Work in progress.** The project is being rebuilt in public, module by module.
+> Nothing below is production-ready yet; the [roadmap](#roadmap) shows what exists today.
 
+<!-- Demo GIF goes here once the browser extension exists (module 5). -->
 
-## Technologies Used
-**- Programming Language: Python**
+## Why
 
-**- Libraries**: **Pandas** for data processing / **NLTK** for natural language processing / **Scikit-learn** for machine learning and model evaluation / **Joblib** for model serialization
+Phishing is still one of the main initial access vectors
+([MITRE ATT&CK T1566](https://attack.mitre.org/techniques/T1566/)). Existing protections
+are either paid enterprise products or reactive blocklists that only catch a site once it
+has already been reported. PhishGuard aims to fill the gap for non-technical users:
 
-**- NLP Techniques: Tokenization** / **Stop Words** Removal / **Stemming** (or Lemmatization) / TF-IDF **Vectorization**
+- **Local-first**: the detection model runs on the user's device; by default no email
+  content and no browsing history ever leave it.
+- **Explainable**: every verdict comes with plain-language reasons, plus a technical view
+  for analysts.
+- **Honest**: metrics are measured on a temporal split, false positives are tracked as
+  closely as missed detections, and robustness against evasion is benchmarked and published.
 
-**- Model: Logistic Regression**
+## Planned features
 
+- [x] Reproducible SMS spam/smishing baseline with honest metrics
+- [ ] URL analysis: verdict (safe / suspicious / phishing) + 0–100 score
+- [ ] SMS / text and raw email (`.eml`) analysis: SPF, DKIM, DMARC, display-vs-real links
+- [ ] Opt-in Threat Intelligence enrichment (Safe Browsing, VirusTotal, urlscan.io, RDAP, CT logs)
+- [ ] Explanations (SHAP + readable reasons) and MITRE ATT&CK mapping
+- [ ] Adversarial robustness benchmark (homoglyphs, typosquatting, zero-width characters…)
+- [ ] Hardened REST API (FastAPI, OpenAPI, rate limiting, SSRF guard)
+- [ ] Chrome extension (local inference, Gmail banner, link hover), Telegram bot, web page
+- [ ] FR / EN / AR interface (RTL)
 
+## Current results
 
-## Project Structure
+**SMS baseline** (TF-IDF + logistic regression on the
+[UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection)),
+spam = positive class, threshold 0.5. Full output: [`docs/metrics/sms_baseline.json`](docs/metrics/sms_baseline.json).
 
-### **Data Loading and Preprocessing:**
-The dataset is loaded and cleaned, including the removal of punctuation, conversion to lowercase, tokenization, and stop words removal.
+| Protocol | Precision | Recall | F1 | False positives | PR-AUC | Recall @ 1 % FPR | Test messages already seen in training |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Naive random split (original 2022 project) | 0.952 | 0.933 | 0.942 | 7 / 966 | 0.978 | 0.946 | **139 / 1115** |
+| **Deduplicated, then split (reference)** | **0.889** | **0.938** | **0.912** | **15 / 904** | **0.971** | **0.922** | **0** |
 
-Optional stemming or lemmatization is applied to reduce words to their base forms.
+**Lesson learned:** the corpus contains 414 duplicate messages. With a naive random split,
+12.5 % of the test set had already been seen during training, which inflated precision and
+halved the apparent number of false positives. The original project reported "96 % accuracy";
+on a dataset where 87 % of messages are legitimate, accuracy alone says very little. This
+baseline is a starting point: the current false positive rate (1.7 %) is above the project
+target of 1 %.
 
-### **Feature Extraction:**
-TF-IDF vectorization is used to convert text data into numerical features for the model.
+## Quick start
 
-### **Model Training and Evaluation:**
-The Logistic Regression model is trained on the preprocessed data.
+Requires Python 3.11+. On Windows, use WSL2.
 
-Model performance is evaluated using accuracy scores, classification reports, and cross-validation.
+```bash
+git clone https://github.com/arixstoo/PhishGuard.git && cd PhishGuard
+python -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev]'
 
-### **Model Saving:**
-The trained model and TF-IDF vectorizer are saved using joblib for future use.
+pytest --cov=phishguard                 # run the tests
+python scripts/train_sms_baseline.py    # download the dataset (SHA-256 verified) and reproduce the metrics
+```
 
+## Roadmap
 
+Each step is tracked as a GitHub issue, grouped by milestone.
 
-## Key Features
-**SMS Spam Classification:** The system can classify new SMS messages as spam or not spam using the trained Logistic Regression model.
+| Module | Content | Status |
+| --- | --- | --- |
+| M0 Foundations | Repo structure, CI, community files, SMS baseline, phishing 101 | 🟡 in progress |
+| M1 Detection | URL / text / email detectors, temporal split, model cards | ⏳ planned |
+| M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping | ⏳ planned |
+| M3 XAI & adversarial | SHAP explanations, evasion catalogue, robustness report | ⏳ planned |
+| M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image | ⏳ planned |
+| M5 Extension & bot | Chrome MV3 extension, Telegram bot, user tests | ⏳ planned |
+| M6 Launch | Deployment, Chrome Web Store, docs site, v1.0 | ⏳ planned |
 
-**Model Performance Evaluation:** Includes accuracy scores, classification reports, and cross-validation to assess the model's generalization to unseen data.
+## Repository layout
 
+```
+src/phishguard/   reusable package (data loading, evaluation, detectors, API…)
+scripts/          one-command data collection and training scripts
+tests/            pytest suite
+docs/             documentation, metrics, threat model, reports
+notebooks/legacy/ original 2022 SMS spam detector (tag v0-legacy)
+extension/        Chrome extension (module 5)
+bot/              Telegram bot (module 5)
+data/, models/    generated locally, never committed
+```
 
+## Learn more
 
-## Instructions for Execution
-### Clone the Repository:
-Write on the bash: git clone https://github.com/arixstoo/SMS-Spam-Detector-96
+- [Phishing 101](docs/phishing-101.md): how phishing works and how to spot it (French)
+- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
-### Install Dependencies:
-Ensure you have Python installed and all the libraries used in the project.
+## History
 
-### Run the Project:
-Execute the Python script to train the model or use the pre-trained model for predictions.
+PhishGuard started in 2022 as a small SMS spam detector (TF-IDF + logistic regression).
+That version is preserved under the [`v0-legacy`](https://github.com/arixstoo/PhishGuard/tree/v0-legacy)
+tag and in `notebooks/legacy/`, as a record of where the project came from.
 
+## License
 
+[MIT](LICENSE) for now, to keep reuse simple. The final licence choice will be made and
+explained before v1.0.
 
-## 🧰 Languages and Tools
-        
-<img align="left" alt="GitHub" width="30px" style="padding-right:10px;" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg" />
-<img align="left" alt="Git" width="30px" style="padding-right:10px;" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" />
-<img align="left" alt="VsCode" width="30px" style="padding-right:10px;" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vscode/vscode-original.svg" />
-<img align="left" alt="Python" width="30px" style="padding-right:10px;" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" />
-<br />
+## Author
 
-
-## 📊 Reach me here:
-
-[LinkedIn]: <a href="https://www.linkedin.com/in/saidi-mohamed-rostom-21b3b525a/" target="_blank">arixstoo</a>
-<br />
-[E-mail]: saidi.rostom26@gmail.com
-<br />
-[Discord]: arixstoo
+**arixstoo** · [LinkedIn](https://www.linkedin.com/in/saidi-mohamed-rostom-21b3b525a/)
