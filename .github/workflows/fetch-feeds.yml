@@ -1,0 +1,28 @@
+name: Scheduled Feed Fetch
+
+on:
+  schedule:
+    # Tous les jours à 04:00 UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch: # Permet de déclencher manuellement via le bouton GitHub
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install httpx
+      - name: Run feed collection
+        env:
+          URLHAUS_AUTH_KEY: ${{ secrets.URLHAUS_AUTH_KEY }}
+        run: python scripts/fetch_feeds.py --output-dir data/raw
+      - name: Archive feeds as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: feeds-${{ github.run_id }}
+          path: data/raw/
+          retention-days: 90

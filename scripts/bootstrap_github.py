@@ -185,8 +185,12 @@ class GitHub:
                 return
             project = json.loads(out)
             self.gh("project", "link", str(project["number"]), "--owner", owner, "-R", self.repo)
+        total = len([u for u in urls if u])
+        idx = 0
         for url in urls:
             if url:  # item-add est idempotent côté GitHub
+                idx += 1
+                print(f"  projet [{idx}/{total}] ajout : {url}")
                 self.gh(
                     "project", "item-add", str(project["number"]), "--owner", owner, "--url", url
                 )
