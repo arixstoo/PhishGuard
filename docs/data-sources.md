@@ -12,6 +12,7 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
 | **PhishTank** | Phishing (signalements validés) | CSV / JSON | Données libres pour recherche / non-commercial (Cisco) | Toutes les 1–4 h | `User-Agent` `phishtank/...` obligatoire, App Key facultative |
 | **URLhaus (abuse.ch)** | Malwares / Phishing (IOCs) | CSV / JSON | CC0 1.0 (Domaine public) | Toutes les 5 min | `Auth-Key` gratuite (auth.abuse.ch) |
 | **Tranco List** | Légitime (Top sites) | CSV / ZIP | Données de recherche ouvertes (Le Pochat et al.) | Quotidienne (22h UTC) | Aucune (identifiant permanent) |
+| **UCI PhiUSIIL** | Comparaison externe (phishing + légitime) | CSV dans un ZIP | CC BY 4.0 | Figé (version du 04/03/2024) | Aucune |
 
 ---
 
@@ -95,7 +96,21 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
 - **Piège structural (Biais de chemin / Path bias)** :
   - La liste Tranco ne fournit que des **domaines racines** (ex. `example.com`), sans chemin d'accès (`/login.php`, `/account/verify`).
   - À l'inverse, les URLs de phishing comportent quasi systématiquement des sous-chemins profonds et des paramètres de requête.
-  - Un modèle naïf entraîné sans précaution apprendrait le raccourci fallacieux : « présence d'un chemin = phishing ». Ce biais est documenté et adressé à l'étape 1.3 avec l'intégration de jeux légitimes avec chemins complets (comme le corpus PhiUSIIL).
+  - Un modèle naïf entraîné sans précaution apprendrait le raccourci fallacieux : « présence d'un chemin = phishing ». Ce biais est mesuré à l'étape 1.3 ([`data-bias.md`](data-bias.md)). PhiUSIIL, envisagé comme remède, **ne le corrige pas** : ses URLs légitimes n'ont pas de chemin non plus (voir section 5).
+
+---
+
+## 5. UCI PhiUSIIL (comparaison externe)
+
+- **Page** : https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+dataset
+- **Fichier** : `PhiUSIIL_Phishing_URL_Dataset.csv`, extrait du ZIP de l'UCI ; 235 795 URLs, 134 850 légitimes et 100 945 phishing. Empreinte SHA-256 du CSV figée dans `src/phishguard/data/phiusiil.py` : le téléchargement est refusé si elle change.
+- **Licence** : CC BY 4.0. Citation : Prasad, A. et Chandra, S. (2024), *PhiUSIIL: A diverse security profile empowered phishing URL detection framework based on similarity index and incremental learning*, Computers & Security, 136.
+- **Usage dans PhishGuard** : point de comparaison pour l'audit des biais (`scripts/audit_bias.py`), jamais pour l'entraînement. Téléchargé dans `data/external/` (non versionné).
+- **Pièges** :
+  - l'étiquette est **inversée** par rapport à la convention du projet : `label = 1` y désigne une URL légitime. Le chargeur la convertit (1 = phishing) ;
+  - aucune URL légitime n'a de chemin, de paramètre ni de schéma `http`, et toutes commencent par `www.` : le jeu reproduit le biais de chemin de Tranco et en ajoute un (`www.`) ;
+  - pas de date par URL : inutilisable pour un split temporel ;
+  - ses URLs de phishing (2023) recoupent PhishTank : les domaines déjà présents dans notre jeu sont exclus de la comparaison.
 
 ---
 

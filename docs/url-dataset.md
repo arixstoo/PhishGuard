@@ -78,6 +78,8 @@ Les chiffres à jour sont dans `docs/metrics/urls_dataset.json`.
 
 ## Limites connues (à traiter aux étapes 1.3 et 1.4)
 
+Ces limites sont mesurées, chiffres à l'appui, dans [`data-bias.md`](data-bias.md) (étape 1.3).
+
 - **Biais de chemin et de schéma.** Tranco ne fournit que des domaines, matérialisés en `https://<domaine>/` : aucune URL légitime n'a de chemin ni de `http`.
 - **Dates non comparables entre classes.** Les dates PhishTank remontent à 2011 alors que les domaines Tranco datent tous de nos collectes. Un split temporel naïf mettrait presque tout le légitime dans le test : il faudra découper par classe, ou sur la date de collecte.
 - **Limite par domaine et plateformes.** Avec 5 URLs au plus, le phishing hébergé sur `google.com` (Sites, Forms) ou derrière un raccourcisseur est fortement sous-représenté par rapport à la réalité.

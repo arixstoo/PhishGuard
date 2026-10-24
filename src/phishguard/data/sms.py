@@ -7,14 +7,12 @@ Format : une ligne par message, ``<ham|spam>\\t<texte>``.
 from __future__ import annotations
 
 import csv
-import io
-import zipfile
 from pathlib import Path
 
 import httpx
 import pandas as pd
 
-from phishguard.data.integrity import DatasetIntegrityError, sha256_bytes
+from phishguard.data.integrity import DatasetIntegrityError, download_zip_member, sha256_bytes
 
 UCI_ZIP_URL = "https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip"
 ZIP_MEMBER = "SMSSpamCollection"
@@ -41,35 +39,16 @@ def download_sms_collection(
 
     Ne fait rien si un fichier valide est déjà présent.
     """
-    dest = Path(dest)
-    if dest.exists() and sha256_bytes(dest.read_bytes()) == EXPECTED_SHA256:
-        return dest
-
-    owns_client = client is None
-    client = client or httpx.Client(timeout=timeout, follow_redirects=True)
-    try:
-        response = client.get(UCI_ZIP_URL)
-        response.raise_for_status()
-    finally:
-        if owns_client:
-            client.close()
-    if len(response.content) > MAX_DOWNLOAD_BYTES:
-        raise DatasetIntegrityError("archive anormalement volumineuse")
-
-    # On lit uniquement le membre attendu, sans extractall() : pas de risque de
-    # « zip slip » (chemins du type ../../ qui écrivent hors du dossier cible).
-    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-        payload = archive.read(ZIP_MEMBER)
-
-    digest = sha256_bytes(payload)
-    if digest != EXPECTED_SHA256:
-        raise DatasetIntegrityError(
-            f"SHA-256 inattendu pour {ZIP_MEMBER} : {digest} (attendu {EXPECTED_SHA256})"
-        )
-
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(payload)
-    return dest
+    return download_zip_member(
+        UCI_ZIP_URL,
+        ZIP_MEMBER,
+        EXPECTED_SHA256,
+        dest,
+        max_download_bytes=MAX_DOWNLOAD_BYTES,
+        max_member_bytes=MAX_DOWNLOAD_BYTES,
+        client=client,
+        timeout=timeout,
+    )
 
 
 def load_sms_collection(path: Path) -> pd.DataFrame:

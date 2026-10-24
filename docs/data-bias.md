@@ -1,0 +1,162 @@
+# Biais du jeu d'URLs (étape 1.3)
+
+Un jeu de données peut contenir des **raccourcis** : des indices qui séparent les classes dans le jeu, mais pas dans la réalité. Un modèle qui les apprend obtient d'excellents scores hors ligne et échoue en production. Ce document recense les raccourcis mesurés dans `data/processed/urls.parquet` (étape 1.2, voir [`url-dataset.md`](url-dataset.md)) et ce que le projet fait pour les neutraliser.
+
+```bash
+python scripts/audit_bias.py                # audit complet (≈ 6 min), avec PhiUSIIL
+python scripts/audit_bias.py --no-external  # sans téléchargement
+```
+
+| Sortie | Contenu | Versionné |
+| :--- | :--- | :--- |
+| `docs/metrics/data_bias.json` | Tous les chiffres de ce document, l'empreinte du jeu audité et les versions des bibliothèques | Oui : aucune URL ni aucun domaine |
+| `data/external/PhiUSIIL_Phishing_URL_Dataset.csv` | Jeu de comparaison, empreinte SHA-256 vérifiée | Non |
+
+Le code est dans `src/phishguard/data/bias.py` et `src/phishguard/data/phiusiil.py`, testé par `tests/test_data_bias.py`.
+
+## Méthode : un modèle sonde
+
+On n'a pas encore de modèle (étapes 1.5 et 1.6). L'audit utilise donc un **modèle sonde** volontairement simple : n-grammes de caractères (3 à 5) TF-IDF et régression logistique à classes équilibrées. Il ne sert pas à détecter le phishing mais à détecter les raccourcis. On compare ses scores selon :
+
+- **ce qu'il voit de l'URL** (« représentation ») : l'URL complète, l'origine (`schéma://hôte/`), l'hôte seul, le domaine enregistré seul ;
+- **le protocole de découpage** : aléatoire ou groupé par domaine enregistré ;
+- **les sources** vues à l'entraînement.
+
+Sauf mention contraire : split groupé par domaine enregistré, 20 % des domaines en test, graine 42, environ 22 % de phishing dans le test. Métriques : PR-AUC et rappel à 1 % de faux positifs (R@1%FPR), qui comptent davantage que l'accuracy (voir `src/phishguard/evaluation/metrics.py`).
+
+## Synthèse
+
+| Biais | Mesure clé | Gravité | Traitement |
+| :--- | :--- | :--- | :--- |
+| Structure (chemin, schéma, sous-domaine, longueur) | La longueur de l'URL seule donne une ROC-AUC de **0,96** | Élevée | Scores rapportés pour chaque représentation ; features groupées ; collecte d'URLs légitimes avec chemin à prévoir |
+| Source | R@1%FPR **0,92 → 0,63** quand PhishTank est absent de l'entraînement | Élevée | Évaluation croisée entre sources dans chaque rapport ; collecte quotidienne poursuivie |
+| Fuite par domaine | 5,5 % du test aléatoire partage un domaine avec l'entraînement | Faible ici | Split groupé obligatoire (étape 1.4) |
+| Temps | 96 % du phishing précède la première URL légitime | Bloquant pour un split temporel naïf | Split temporel par classe (étape 1.4) |
+| PhiUSIIL comme remède | Ses URLs légitimes n'ont **aucun** chemin | — | Remède du plan écarté ; jeu gardé comme comparaison externe |
+
+## 1. Biais de structure (« biais de chemin »)
+
+**En deux phrases.** Tranco ne publie que des domaines : toutes les URLs légitimes du jeu sont des pages d'accueil courtes en `https`, sans sous-domaine, alors que le phishing a souvent un chemin, un sous-domaine ou `http`. Un modèle apprend alors « URL longue ou avec chemin = phishing » et signalera n'importe quel lien profond d'un site légitime.
+
+### Constat
+
+| Part des URLs | Légitime (Tranco) | Phishing |
+| :--- | ---: | ---: |
+| avec un chemin | **0 %** | 44 % |
+| en `http` | **0 %** | 16 % |
+| avec un sous-domaine | **0 %** | 30 % |
+| longueur médiane | 21 | 41 (PhishTank), 45 (OpenPhish) |
+
+Le biais est pire que prévu : ce n'est pas seulement le chemin. **Un seul trait, la longueur de l'URL, sépare les classes avec une ROC-AUC de 0,960** (chemin seul : 0,72 ; sous-domaine seul : 0,65). Une régression logistique sur les 12 traits structurels, sans voir un seul caractère, atteint une PR-AUC de 0,960.
+
+Ablation du modèle sonde (même split, 25 719 URLs de test) :
+
+| Représentation vue | PR-AUC | ROC-AUC | R@1%FPR |
+| :--- | ---: | ---: | ---: |
+| URL complète | 0,978 | 0,986 | 0,931 |
+| origine (`schéma://hôte/`) | 0,939 | 0,961 | 0,823 |
+| hôte | 0,915 | 0,949 | 0,772 |
+| **domaine enregistré** (référence) | **0,878** | **0,923** | **0,715** |
+| traits structurels seuls | 0,960 | 0,982 | 0,852 |
+
+Le domaine enregistré est la seule représentation qui a la même forme dans les deux classes. **Environ 20 points de rappel à 1 % FPR (0,93 contre 0,72) viennent donc de la forme de l'URL**, et rien ne garantit qu'ils tiendront face à de vraies URLs légitimes avec chemin.
+
+### Le remède prévu (PhiUSIIL) ne fonctionne pas
+
+Le plan proposait de comparer avec PhiUSIIL, censé contenir des URLs légitimes avec chemin. Vérification faite, c'est faux : ses 134 849 URLs légitimes n'ont **aucun** chemin, aucun paramètre, aucun `http`, et **toutes** commencent par `www.`. PhiUSIIL a le même biais de chemin que Tranco, plus un biais `www.` qui lui est propre.
+
+Validation externe : la sonde, entraînée sur notre jeu, est testée sur PhiUSIIL (202 976 URLs, après exclusion des 31 920 dont le domaine figure déjà chez nous) :
+
+| Représentation vue | PR-AUC | ROC-AUC | R@1%FPR |
+| :--- | ---: | ---: | ---: |
+| URL complète | 0,918 | 0,887 | 0,787 |
+| origine | 0,814 | 0,744 | 0,593 |
+| hôte | 0,515 | **0,500** | 0,072 |
+| domaine enregistré | 0,776 | 0,778 | 0,368 |
+
+Lecture :
+
+- le bon score sur l'URL complète **ne prouve pas** que la sonde généralise : les deux jeux partagent le raccourci du chemin, donc elle y retrouve ce qu'elle a appris ;
+- sur l'hôte, la sonde tombe au **hasard** (ROC-AUC 0,50). Elle a appris chez nous « sous-domaine = phishing » ; dans PhiUSIIL, 100 % des URLs légitimes ont un sous-domaine (`www.`). C'est la démonstration directe qu'un raccourci du jeu d'entraînement casse dès que la distribution change ;
+- sur le domaine enregistré, sans raccourci de forme, le rappel à 1 % FPR tombe à 0,37. Les domaines de phishing de 2023 ne ressemblent pas à ceux de 2026 : premier signe de dérive temporelle.
+
+### Ce qu'on fait
+
+1. **Chaque évaluation de modèle URL rapportera l'ablation par représentation** (étapes 1.6 et 1.7), avec le domaine enregistré comme référence. Un gain qui n'existe que sur l'URL complète est considéré comme suspect.
+2. **Les features URL seront rangées en groupes** (hôte, chemin, schéma, longueur) à l'étape 1.5, pour entraîner et comparer les modèles avec et sans les groupes de chemin et de longueur, comme le demande le plan.
+3. **La longueur sera mesurée par composant** (longueur de l'hôte, longueur du chemin) plutôt que sur l'URL entière, qui mélange les deux.
+4. **Remède de données à prévoir** : collecter des URLs légitimes avec chemin. La piste retenue est l'index de Common Crawl, échantillonné sur les domaines du haut de Tranco, en excluant hébergeurs et raccourcisseurs (`sites.google.com`, `bit.ly`…). À ouvrir comme issue dédiée : c'est une nouvelle source à collecter, documenter et auditer.
+5. **Écarté** : fabriquer des URLs légitimes avec chemin en ajoutant `www.` ou un chemin inventé aux domaines Tranco. On remplacerait un raccourci par un autre, puisque ces chemins ne ressembleraient à rien de réel.
+
+## 2. Biais de source
+
+**En deux phrases.** 96 % du phishing vient de PhishTank et chaque source a un style reconnaissable (OpenPhish : 42 % de `http`, PhishTank : 15 %), tandis que tout le légitime vient de Tranco. Le modèle risque d'apprendre « ressemble à PhishTank » au lieu de « ressemble à du phishing », et de rater le phishing d'une autre origine.
+
+### Constat
+
+Pour chaque source cible, un même jeu de test départage deux modèles : l'un a vu la source cible à l'entraînement, l'autre jamais. Aucun domaine du test n'apparaît à l'entraînement.
+
+| Source testée | Modèle | PR-AUC | ROC-AUC | R@1%FPR |
+| :--- | :--- | ---: | ---: | ---: |
+| PhishTank | a vu PhishTank | 0,975 | 0,984 | 0,924 |
+| PhishTank | **n'a vu qu'OpenPhish** | 0,895 | 0,949 | **0,633** |
+| OpenPhish | a vu OpenPhish | 0,946 | 0,987 | 0,949 |
+| OpenPhish | n'a vu que PhishTank | 0,911 | 0,979 | 0,904 |
+
+- Sans PhishTank, le rappel à 1 % FPR perd 29 points. Une partie de l'écart vient de la taille (il ne reste qu'environ 1 000 URLs de phishing, toutes d'OpenPhish), mais pas tout : la PR-AUC chute aussi.
+- OpenPhish est bien détecté par un modèle qui ne l'a jamais vu (−4,5 points de rappel) : ce qui est appris sur PhishTank se transfère en grande partie. Ce test ne contient qu'environ 200 URLs de phishing (1 % du test) : son rappel est imprécis, et sa PR-AUC ne se compare pas à celle de PhishTank (22 % de phishing).
+- Un modèle qui devine la source d'une URL de phishing atteint une **ROC-AUC de 0,937** : les sources sont très reconnaissables.
+- URLhaus (6 URLs) est trop petit pour être évalué séparément.
+- Le légitime n'a qu'une source : « source = Tranco » et « légitime » sont confondus. C'est irréductible tant qu'on n'ajoute pas une seconde source légitime (voir le remède de données ci-dessus).
+
+### Ce qu'on fait
+
+1. **L'évaluation croisée entre sources fera partie du rapport de chaque modèle** (étape 1.7), en plus du score global.
+2. **La collecte quotidienne continue** (étape 1.1) : OpenPhish ne publie que ~300 URLs par jour, sa part augmentera avec le temps.
+3. La source n'est **jamais** une feature, et `first_seen` non plus.
+
+## 3. Fuite par domaine
+
+**En deux phrases.** Avec un split aléatoire, un même domaine enregistré peut se trouver à l'entraînement et au test : le modèle reconnaît alors le domaine au lieu de juger l'URL. On découpe donc par domaine enregistré, pour que le score mesure la détection de sites jamais vus.
+
+### Constat
+
+| Split | Test partageant un domaine avec l'entraînement | PR-AUC | R@1%FPR | R@0,1%FPR |
+| :--- | ---: | ---: | ---: | ---: |
+| aléatoire | 1 428 URLs (5,5 %) | 0,984 | 0,949 | 0,884 |
+| groupé par domaine | **0** | 0,978 | 0,931 | 0,869 |
+
+L'écart est modeste (2 points de rappel) parce que l'étape 1.2 limite déjà chaque domaine à 5 URLs. Sans cette limite, `google.com` aurait 6 114 URLs de phishing, et l'écart serait bien plus grand. Par ailleurs, 515 domaines (1 860 URLs) sont présents dans les deux classes : surtout des hébergeurs et des raccourcisseurs.
+
+### Ce qu'on fait
+
+1. **Split groupé par `registered_domain` obligatoire** pour tout modèle URL, avec un test unitaire qui vérifie l'absence de recouvrement (étape 1.4). `grouped_holdout` en donne déjà une version testée par propriétés (Hypothesis).
+2. Un domaine présent dans les deux classes est placé d'un seul côté du split, ses deux classes ensemble.
+
+## 4. Biais temporel
+
+**En deux phrases.** Les dates PhishTank remontent à 2011, alors que tout le légitime a été vu entre le 22 et le 24/10/2026 : 96 % du phishing est antérieur à la première URL légitime. Un split temporel naïf mettrait donc presque tout le phishing à l'entraînement et presque rien au test.
+
+### Constat
+
+Split naïf : tri global par `first_seen`, puis découpage 70 / 15 / 15 :
+
+| Bloc | URLs | Part de phishing |
+| :--- | ---: | ---: |
+| entraînement | 90 012 | 29,8 % |
+| validation | 19 288 | **0,2 %** |
+| test | 19 288 | 4,7 % |
+
+La validation ne contient quasiment aucun phishing : on ne pourrait ni régler un seuil ni mesurer un rappel.
+
+### Ce qu'on fait (étape 1.4)
+
+1. **Découper dans le temps à l'intérieur de chaque classe** (70 / 15 / 15 du phishing et du légitime séparément), puis appliquer la contrainte de groupe par domaine.
+2. Signaler dans le rapport d'évaluation que la dimension temporelle ne porte vraiment que sur le phishing : le légitime ne couvre que trois jours de collecte. Avec la collecte quotidienne, la liste Tranco change et cette limite s'atténuera.
+
+## Limites de cet audit
+
+- Le modèle sonde est un modèle parmi d'autres. Un modèle à features (étape 1.5) ou un LightGBM peut exploiter les raccourcis différemment : l'ablation sera refaite sur eux.
+- Un seul split, une seule graine : les écarts de moins de 1 point ne sont pas significatifs. Les écarts retenus ici (de 4 à 29 points) le sont largement.
+- PhiUSIIL date de 2023 : une partie de sa différence avec notre jeu est de la dérive temporelle, pas seulement du biais.
+- Les chiffres valent pour l'instantané du 24/10/2026. `docs/metrics/data_bias.json` conserve l'empreinte SHA-256 du jeu audité ; relancer `audit_bias.py` après chaque reconstruction du jeu.
