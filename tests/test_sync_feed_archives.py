@@ -58,6 +58,20 @@ def test_extract_only_raw_files_and_never_overwrite(tmp_path):
     assert not (tmp_path / "evil.txt").exists()
 
 
+def test_copy_plain_files_from_legacy_artifact(tmp_path):
+    src = tmp_path / "artifact"
+    src.mkdir()
+    (src / "openphish_1.txt").write_text("new")
+    (src / "manifest_1.json").write_text("new")
+    (src / "subdir").mkdir()
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "manifest_1.json").write_text("original")
+
+    assert sfa.copy_plain_files(src, out) == ["openphish_1.txt"]
+    assert (out / "manifest_1.json").read_text() == "original"
+
+
 def test_decrypt_matches_workflow_encryption(tmp_path):
     try:
         openssl = sfa.find_openssl()

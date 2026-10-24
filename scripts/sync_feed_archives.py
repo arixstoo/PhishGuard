@@ -110,6 +110,18 @@ def extract_feeds(tar_path: Path, output_dir: Path) -> list[str]:
     return added
 
 
+def copy_plain_files(src_dir: Path, output_dir: Path) -> list[str]:
+    """Copie les fichiers d'un artefact non chiffré (ancien format), sans rien écraser."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    added = []
+    for path in sorted(src_dir.iterdir()):
+        dest = output_dir / path.name
+        if path.is_file() and not path.is_symlink() and not dest.exists():
+            shutil.copyfile(path, dest)
+            added.append(path.name)
+    return added
+
+
 def read_state(output_dir: Path) -> set[str]:
     path = output_dir / STATE_FILE
     return set(path.read_text(encoding="utf-8").split()) if path.exists() else set()
@@ -131,11 +143,12 @@ def sync(repo: str, output_dir: Path, passphrase: str, openssl: str) -> int:
             )
             encrypted = next(tmp_dir.glob("*.tar.gz.enc"), None)
             if encrypted is None:
-                logger.warning("%s : pas d'archive chiffrée (ancien format ?), ignoré", name)
-                continue
-            archive = tmp_dir / "feeds.tar.gz"
-            decrypt(encrypted, archive, passphrase, openssl)
-            added = extract_feeds(archive, output_dir)
+                # Ancien format (avant chiffrement) : fichiers bruts à la racine de l'artefact.
+                added = copy_plain_files(tmp_dir, output_dir)
+            else:
+                archive = tmp_dir / "feeds.tar.gz"
+                decrypt(encrypted, archive, passphrase, openssl)
+                added = extract_feeds(archive, output_dir)
         with (output_dir / STATE_FILE).open("a", encoding="utf-8") as fh:
             fh.write(name + "\n")
         logger.info("%s : %d fichier(s) ajouté(s)", name, len(added))

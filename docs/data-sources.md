@@ -121,12 +121,13 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
    - Test : collectes les plus récentes ($T_1 	o T_2$), sans aucun `registered_domain` commun aux deux blocs.
 
 6. **Collecte quotidienne, deux filets de sécurité** :
-   - **En local (archive principale)** : `powershell -ExecutionPolicy Bypass -File scriptsegister_daily_fetch.ps1` programme la tâche Windows `PhishGuard-FetchFeeds` chaque jour à 06:00 (lancée au réveil si le PC était éteint). Logs : `data/logs/fetch_feeds.log`.
+   - **En local (archive principale)** : `powershell -ExecutionPolicy Bypass -File scripts
+egister_daily_fetch.ps1` programme la tâche Windows `PhishGuard-FetchFeeds` chaque jour à 06:00 (lancée au réveil si le PC était éteint). Logs : `data/logs/fetch_feeds.log`.
    - **Sur GitHub Actions (secours)** : `.github/workflows/fetch-feeds.yml` s'exécute à 04:00 UTC (et à la demande), y compris en cas de collecte partielle. Secrets du dépôt : `ARCHIVE_PASSPHRASE` (obligatoire), `URLHAUS_AUTH_KEY` (recommandé), `PHISHTANK_APP_KEY` (facultatif).
 
 7. **Archive GitHub chiffrée** : le dépôt est public et tout compte GitHub connecté peut télécharger ses artefacts. Les conditions d'OpenPhish interdisant la redistribution du flux, le workflow ne dépose que `feeds-<run_id>.tar.gz.enc` (AES-256-CBC, PBKDF2 200 000 itérations, clé `ARCHIVE_PASSPHRASE`). Sans ce secret, il refuse de déposer quoi que ce soit en clair. Ne jamais publier les fichiers bruts dans le dépôt ni dans une release.
 
-8. **Rapatriement avant expiration (90 jours)** : `python scripts/sync_feed_archives.py` liste les artefacts encore disponibles, télécharge ceux qui ne sont pas encore récupérés (suivi dans `data/raw/.synced_artifacts`), les déchiffre avec `ARCHIVE_PASSPHRASE` (lue dans `.env`) et copie leurs fichiers dans `data/raw/` sans jamais écraser un fichier existant. Il faut `gh` connecté et `openssl` (fourni par Git for Windows). À lancer au moins une fois par mois.
+8. **Rapatriement avant expiration (90 jours)** : `python scripts/sync_feed_archives.py` liste les artefacts encore disponibles, télécharge ceux qui ne sont pas encore récupérés (suivi dans `data/raw/.synced_artifacts`), les déchiffre avec `ARCHIVE_PASSPHRASE` (lue dans `.env`) et copie leurs fichiers dans `data/raw/` sans jamais écraser un fichier existant. Les artefacts antérieurs au chiffrement (fichiers en clair) sont aussi récupérés. Il faut `gh` connecté et `openssl` (fourni par Git for Windows). À lancer au moins une fois par mois.
 
 9. **Surveillance** : les IP des runners GitHub sont parfois bloquées par Cloudflare (PhishTank) ; vérifier le champ `status` de chaque source dans les manifestes.
 
