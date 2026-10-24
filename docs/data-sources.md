@@ -12,6 +12,7 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
 | **PhishTank** | Phishing (signalements validés) | CSV / JSON | Données libres pour recherche / non-commercial (Cisco) | Toutes les 1–4 h | `User-Agent` `phishtank/...` obligatoire, App Key facultative |
 | **URLhaus (abuse.ch)** | Malwares / Phishing (IOCs) | CSV / JSON | CC0 1.0 (Domaine public) | Toutes les 5 min | `Auth-Key` gratuite (auth.abuse.ch) |
 | **Tranco List** | Légitime (Top sites) | CSV / ZIP | Données de recherche ouvertes (Le Pochat et al.) | Quotidienne (22h UTC) | Aucune (identifiant permanent) |
+| **Common Crawl** | Légitime (pages internes des domaines Tranco) | Index CDX (blocs gzip) | [Conditions d'utilisation](https://commoncrawl.org/terms-of-use), usage libre | Un crawl par mois environ | Aucune |
 | **UCI PhiUSIIL** | Comparaison externe (phishing + légitime) | CSV dans un ZIP | CC BY 4.0 | Figé (version du 04/03/2024) | Aucune |
 
 ---
@@ -111,6 +112,29 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
   - aucune URL légitime n'a de chemin, de paramètre ni de schéma `http`, et toutes commencent par `www.` : le jeu reproduit le biais de chemin de Tranco et en ajoute un (`www.`) ;
   - pas de date par URL : inutilisable pour un split temporel ;
   - ses URLs de phishing (2023) recoupent PhishTank : les domaines déjà présents dans notre jeu sont exclus de la comparaison.
+
+---
+
+## 6. Common Crawl (URLs légitimes avec chemin)
+
+- **Pourquoi** : Tranco ne fournit que des domaines, PhiUSIIL aussi. Sans URL légitime avec chemin, un modèle apprend « chemin = phishing » (voir [`data-bias.md`](data-bias.md)). Common Crawl publie l'index de milliards de pages réellement visitées par son robot.
+- **Script** : `python scripts/fetch_commoncrawl.py` (logique dans `src/phishguard/data/commoncrawl.py`). Écrit `data/raw/commoncrawl_<crawl>_<horodatage>.csv` (`url`, `timestamp`, `domain`, `tranco_rank`) et un manifeste au format de `fetch_feeds.py` : `build_dataset.py` le lit comme les autres sources.
+- **Méthode** :
+  - on n'utilise pas le serveur de requêtes `index.commoncrawl.org` : sous la charge, il répond souvent en erreur 504, même pour une seule requête ;
+  - on télécharge une fois `cluster.idx` (≈ 100 Mo, mis en cache dans `data/external/commoncrawl/`), qui donne la première clé SURT de chacun des ≈ 890 000 blocs de l'index ;
+  - pour chaque domaine du top Tranco, une recherche dichotomique trouve ses blocs ; un bloc tiré au hasard (graine fixe) est lu par **requête HTTP partielle** sur le CDN `data.commoncrawl.org` (≈ 250 Ko) ;
+  - on garde les pages HTML en statut 200, puis au plus 5 URLs par domaine, en évitant la page d'accueil (déjà fournie par Tranco).
+- **Garde-fous** :
+  - **premier parti uniquement** : une URL n'est gardée que si son domaine enregistré est exactement le domaine Tranco. Sous `amazonaws.com` ou `github.io`, un sous-domaine appartient à un client de la plateforme (`ec2-….compute.amazonaws.com`), pas à l'entreprise ;
+  - **domaines qui hébergent du phishing** : `build_dataset.py` retire les pages crawlées d'un domaine qui apparaît aussi côté phishing (`google.com` via Sites et Forms, `weebly.com`…) ; sa page d'accueil Tranco est conservée ;
+  - réponses vérifiées (statut 206, taille exacte), noms de fichiers d'index contrôlés, tailles bornées, `cluster.idx` écrit sous un nom temporaire puis renommé.
+- **Reproductibilité** : le manifeste note l'identifiant du crawl, l'empreinte de `cluster.idx`, la liste Tranco utilisée (nom et SHA-256), la graine et les paramètres. Mêmes entrées, même graine : mêmes URLs.
+- **`first_seen`** : date de capture par Common Crawl.
+- **Limites** :
+  - une page crawlée n'est pas garantie saine : un site légitime peut être compromis et héberger du spam. Le risque est réduit en se limitant au haut du classement Tranco, pas éliminé ;
+  - les pages d'un domaine viennent d'un ou deux blocs de l'index, donc d'une même zone alphabétique de chemins : la diversité est bonne entre domaines, moindre au sein d'un domaine ;
+  - un domaine technique (CDN, API) n'a souvent aucune page HTML : environ 45 % des domaines du top ne donnent rien.
+- **Fréquence** : un crawl par mois environ. Relancer le script après chaque nouveau crawl (`https://index.commoncrawl.org/collinfo.json`).
 
 ---
 

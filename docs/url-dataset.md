@@ -20,7 +20,7 @@ La logique est dans `src/phishguard/data/urls.py`, testée par `tests/test_url_d
 | :--- | :--- | :--- |
 | `url` | `str` | URL normalisée (voir plus bas), unique dans le jeu |
 | `label` | `int8` | `1` = phishing, `0` = légitime |
-| `source` | `str` | `phishtank`, `openphish`, `urlhaus` ou `tranco` : la source qui a vu l'URL en premier |
+| `source` | `str` | `phishtank`, `openphish`, `urlhaus`, `tranco` ou `commoncrawl` : la source qui a vu l'URL en premier |
 | `first_seen` | `datetime64[UTC]` | Plus ancienne observation connue (voir plus bas) |
 | `host` | `str` | Hôte en minuscules, sans port, sans identifiants, sans point final |
 | `registered_domain` | `str` | Domaine enregistré (clé de regroupement pour le split de l'étape 1.4) |
@@ -43,8 +43,9 @@ Le fichier est trié par `first_seen` puis `url`.
    - une adresse IP est son propre domaine ;
    - un hôte sans suffixe connu (`localhost`) est écarté.
 6. **Conflits d'étiquette.** Une URL vue à la fois comme phishing et comme légitime (par exemple une page d'accueil du top Tranco signalée à PhishTank) est retirée.
-7. **Doublons exacts** fusionnés : on garde la plus ancienne observation et sa source. À date égale : PhishTank (validé par des humains), puis OpenPhish, URLhaus, Tranco.
-8. **Limite par domaine.** Au plus 5 URLs par couple (étiquette, `registered_domain`), tirées au hasard avec une graine fixe (`--seed`, défaut 42). Le tirage aléatoire préserve la répartition dans le temps ; la limite par étiquette évite qu'un domaine qui héberge du phishing (`sites.google.com`) fasse disparaître sa page d'accueil légitime.
+7. **Doublons exacts** fusionnés : on garde la plus ancienne observation et sa source. À date égale : PhishTank (validé par des humains), puis OpenPhish, URLhaus, Tranco, Common Crawl.
+8. **Pages crawlées des domaines qui hébergent du phishing** retirées : sur `google.com` (Sites, Forms), une page interne peut avoir été déposée par n'importe qui. La page d'accueil Tranco du domaine reste.
+9. **Limite par domaine.** Au plus 5 URLs par couple (étiquette, `registered_domain`), tirées au hasard avec une graine fixe (`--seed`, défaut 42). Le tirage aléatoire préserve la répartition dans le temps ; la limite par étiquette évite qu'un domaine qui héberge du phishing (`sites.google.com`) fasse disparaître sa page d'accueil légitime.
 
 ## Sens de `first_seen`
 
@@ -52,6 +53,7 @@ Le fichier est trié par `first_seen` puis `url`.
 | :--- | :--- |
 | PhishTank | `submission_time` (date du signalement) |
 | URLhaus | `dateadded` |
+| Common Crawl | Date de capture par le robot de Common Crawl |
 | OpenPhish, Tranco | Date de la collecte (`collected_at` du manifeste) |
 
 Une date annoncée par la source est bornée par la date de collecte, et la remplace si elle est absente ou illisible.

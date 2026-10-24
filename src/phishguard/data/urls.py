@@ -12,7 +12,8 @@ Règles appliquées, dans l'ordre :
 4. Une URL présente avec les deux étiquettes est retirée (étiquette incertaine).
 5. Les doublons exacts sont fusionnés : ``first_seen`` est la plus ancienne observation
    et ``source`` celle qui l'a observée.
-6. Au plus ``max_per_domain`` URLs par (étiquette, domaine enregistré), tirées au hasard
+6. Les pages Common Crawl d'un domaine qui héberge aussi du phishing sont retirées.
+7. Au plus ``max_per_domain`` URLs par (étiquette, domaine enregistré), tirées au hasard
    avec une graine fixe, pour qu'un site très présent ne domine pas le jeu.
 """
 
@@ -44,12 +45,13 @@ LABEL_PHISHING = 1
 
 # Ordre de préférence quand plusieurs sources observent une URL au même instant :
 # PhishTank est validé par des humains, OpenPhish est automatique.
-SOURCES = ("phishtank", "openphish", "urlhaus", "tranco")
+SOURCES = ("phishtank", "openphish", "urlhaus", "tranco", "commoncrawl")
 SOURCE_LABELS = {
     "phishtank": LABEL_PHISHING,
     "openphish": LABEL_PHISHING,
     "urlhaus": LABEL_PHISHING,
     "tranco": LABEL_LEGITIMATE,
+    "commoncrawl": LABEL_LEGITIMATE,
 }
 # Étiquettes URLhaus qui désignent du vol d'identifiants. Les leurres de type ClickFix ou
 # FakeCaptcha distribuent un malware : ils restent hors du jeu.
@@ -66,7 +68,13 @@ URLHAUS_COLUMNS = [
     "reporter",
 ]
 # Fichiers bruts produits par fetch_feeds.py, pour signaler ceux qu'aucun manifeste ne décrit.
-RAW_FEED_PATTERNS = ("openphish_*.txt", "phishtank_*.csv", "urlhaus_recent_*.csv", "tranco_*.csv")
+RAW_FEED_PATTERNS = (
+    "openphish_*.txt",
+    "phishtank_*.csv",
+    "urlhaus_recent_*.csv",
+    "tranco_*.csv",
+    "commoncrawl_*.csv",
+)
 
 ALLOWED_SCHEMES = frozenset({"http", "https"})
 _SCHEME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*://")
@@ -262,6 +270,15 @@ def load_tranco(feed: RawFeed) -> pd.DataFrame:
     return _observations("https://" + domains[domains != ""] + "/", feed)
 
 
+def load_commoncrawl(feed: RawFeed) -> pd.DataFrame:
+    """CSV de ``fetch_commoncrawl.py`` : pages internes de domaines Tranco.
+
+    ``first_seen`` est la date de capture par Common Crawl.
+    """
+    df = pd.read_csv(feed.path, dtype=str, keep_default_na=False, encoding="utf-8")
+    return _observations(df["url"], feed, _parse_utc(df["timestamp"], "%Y%m%d%H%M%S"))
+
+
 # --------------------------------------------------------------------------- #
 # Normalisation
 # --------------------------------------------------------------------------- #
@@ -362,6 +379,7 @@ def collect_observations(
                 "openphish": load_openphish,
                 "phishtank": load_phishtank,
                 "tranco": load_tranco,
+                "commoncrawl": load_commoncrawl,
             }[feed.source](feed)
         frames.append(frame)
         inputs.append(
@@ -427,6 +445,18 @@ def merge_duplicates(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
     return merged, stats
 
 
+def drop_crawled_pages_of_phishing_domains(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """Retire les pages Common Crawl d'un domaine qui héberge aussi du phishing.
+
+    Sur ``google.com`` (Sites, Forms) ou ``github.io``, une page interne peut avoir été
+    déposée par n'importe qui : rien ne garantit qu'elle soit légitime. La page d'accueil
+    Tranco du domaine, elle, est conservée.
+    """
+    phishing_domains = set(df.loc[df["label"] == LABEL_PHISHING, "registered_domain"])
+    drop = (df["source"] == "commoncrawl") & df["registered_domain"].isin(phishing_domains)
+    return df[~drop], int(drop.sum())
+
+
 def cap_per_domain(df: pd.DataFrame, max_per_domain: int, seed: int) -> pd.DataFrame:
     """Garde au plus ``max_per_domain`` URLs par (étiquette, domaine enregistré).
 
@@ -453,6 +483,7 @@ def build_url_dataset(
     observations, read_stats, inputs = collect_observations(feeds, verify=verify)
     df, normalize_stats = normalize_observations(observations, extractor or make_domain_extractor())
     df, merge_stats = merge_duplicates(df)
+    df, crawled_dropped = drop_crawled_pages_of_phishing_domains(df)
     capped = cap_per_domain(df, max_per_domain, seed)
 
     dataset = capped.sort_values(["first_seen", "url"], kind="stable").reset_index(drop=True)
@@ -461,6 +492,7 @@ def build_url_dataset(
         **read_stats,
         **normalize_stats,
         **merge_stats,
+        "commoncrawl_on_phishing_domain": crawled_dropped,
         "capped_by_domain": len(df) - len(capped),
         "rows": len(dataset),
     }
