@@ -2,27 +2,56 @@ name: Scheduled Feed Fetch
 
 on:
   schedule:
-    # Tous les jours à 04:00 UTC
+    # Tous les jours à 04:00 UTC (la liste Tranco de la veille est publiée vers 22:00 UTC)
     - cron: '0 4 * * *'
-  workflow_dispatch: # Permet de déclencher manuellement via le bouton GitHub
+  workflow_dispatch: # Déclenchement manuel depuis l'onglet Actions
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fetch-feeds
+  cancel-in-progress: false
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: pip install httpx
+        run: pip install httpx==0.28.1
       - name: Run feed collection
         env:
           URLHAUS_AUTH_KEY: ${{ secrets.URLHAUS_AUTH_KEY }}
+          PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
         run: python scripts/fetch_feeds.py --output-dir data/raw
-      - name: Archive feeds as artifacts
+      # Dépôt public : les artefacts sont visibles par tout compte GitHub. Les conditions
+      # d'OpenPhish interdisent la redistribution, donc on ne dépose qu'une archive chiffrée.
+      # On archive même une collecte partielle : les flux de phishing ne se rattrapent pas.
+      - name: Encrypt archive
+        if: always()
+        env:
+          ARCHIVE_PASSPHRASE: ${{ secrets.ARCHIVE_PASSPHRASE }}
+        run: |
+          if [ -z "$ARCHIVE_PASSPHRASE" ]; then
+            echo "::error::Secret ARCHIVE_PASSPHRASE absent : aucune archive déposée."
+            exit 1
+          fi
+          tar -czf feeds.tar.gz -C data raw
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -in feeds.tar.gz -out "feeds-${{ github.run_id }}.tar.gz.enc" \
+            -pass env:ARCHIVE_PASSPHRASE
+          rm feeds.tar.gz
+      - name: Upload encrypted archive
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: feeds-${{ github.run_id }}
-          path: data/raw/
+          path: feeds-${{ github.run_id }}.tar.gz.enc
+          if-no-files-found: error
+          compression-level: 0
           retention-days: 90
