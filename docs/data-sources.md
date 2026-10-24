@@ -72,7 +72,7 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
   - La clé peut être transmise à `fetch_feeds.py` via la variable d'environnement `URLHAUS_AUTH_KEY` ou l'option `--urlhaus-auth-key`.
 - **Piège majeur & Précaution d'analyse (Attention)** :
   - **Nature des données** : URLhaus recense principalement des URLs de distribution de logiciels malveillants (*malware download*, botnets, scripts malveillants, ransomwares) et non du vol d'identifiants (*credential phishing*).
-  - **Stratégie PhishGuard** : Conserver ces URLs avec un marquage explicite ou filtrer via les tags (`phishing`, `fake-update`, etc.). Dans l'Étape 1.2, ces URLs sont isolées ou annotées afin de ne pas induire en erreur un modèle de détection spécialisé dans les formulaires d'hameçonnage.
+  - **Stratégie PhishGuard** : Conserver ces URLs avec un marquage explicite ou filtrer via les tags (`phishing`, `fake-update`, etc.). Depuis l'étape 1.2, `build_dataset.py` ne garde que les URLs étiquetées `phishing` ou `pdf-link-phishing` (une poignée par export) et écarte les téléchargements de malwares, comptés dans le rapport (voir [`url-dataset.md`](url-dataset.md)).
 
 ---
 
@@ -95,7 +95,7 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
 - **Piège structural (Biais de chemin / Path bias)** :
   - La liste Tranco ne fournit que des **domaines racines** (ex. `example.com`), sans chemin d'accès (`/login.php`, `/account/verify`).
   - À l'inverse, les URLs de phishing comportent quasi systématiquement des sous-chemins profonds et des paramètres de requête.
-  - Un modèle naïf entraîné sans précaution apprendrait le raccourci fallacieux : « présence d'un chemin = phishing ». Ce biais est documenté et adressé lors des étapes 1.2 et 1.3 avec l'intégration de jeux légitimes avec chemins complets (comme le corpus PhiUSIIL).
+  - Un modèle naïf entraîné sans précaution apprendrait le raccourci fallacieux : « présence d'un chemin = phishing ». Ce biais est documenté et adressé à l'étape 1.3 avec l'intégration de jeux légitimes avec chemins complets (comme le corpus PhiUSIIL).
 
 ---
 
@@ -108,7 +108,7 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
    - `tranco_<list_id>_<N>_<horodatage>.csv`
    - `manifest_<horodatage>.json`
 
-   Les fichiers sont enregistrés **octet pour octet** tels que reçus (pas de nettoyage à cette étape, voir l'étape 1.2).
+   Les fichiers sont enregistrés **octet pour octet** tels que reçus (pas de nettoyage à cette étape, voir [`url-dataset.md`](url-dataset.md)).
 
 2. **Manifeste** : pour chaque source, `status` (`ok`, `error` ou `skipped`), `file`, `count`, `bytes`, `sha256`, `source_url` (clés masquées par `***`) et `error` le cas échéant ; pour Tranco, `list_id` et `list_date`. Les métadonnées donnent la date ISO de collecte, les versions du collecteur, de Python et de httpx, et `success`.
 

@@ -7,13 +7,14 @@ Format : une ligne par message, ``<ham|spam>\\t<texte>``.
 from __future__ import annotations
 
 import csv
-import hashlib
 import io
 import zipfile
 from pathlib import Path
 
 import httpx
 import pandas as pd
+
+from phishguard.data.integrity import DatasetIntegrityError, sha256_bytes
 
 UCI_ZIP_URL = "https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip"
 ZIP_MEMBER = "SMSSpamCollection"
@@ -24,13 +25,13 @@ MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024
 
 LABELS = {"ham": 0, "spam": 1}
 
-
-class DatasetIntegrityError(RuntimeError):
-    """Le fichier obtenu ne correspond pas à l'empreinte attendue."""
-
-
-def sha256_bytes(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
+__all__ = [
+    "DatasetIntegrityError",
+    "deduplicate",
+    "download_sms_collection",
+    "load_sms_collection",
+    "sha256_bytes",
+]
 
 
 def download_sms_collection(
