@@ -30,7 +30,7 @@ from sklearn.metrics import roc_auc_score
 
 from phishguard.data.bias import HOMEPAGE_SOURCE, INTERNAL_PAGE_SOURCE
 from phishguard.data.urls import LABEL_LEGITIMATE, LABEL_PHISHING
-from phishguard.evaluation.metrics import binary_report
+from phishguard.evaluation.metrics import binary_report, threshold_at_fpr
 from phishguard.urls.features import FAMILIES, feature_names
 
 FAMILY_STEPS: tuple[tuple[str, ...], ...] = tuple(FAMILIES[: i + 1] for i in range(len(FAMILIES)))
@@ -80,9 +80,7 @@ def score_report(
 ) -> dict[str, Any]:
     """Métriques globales et faux positifs par type de page légitime."""
     report = binary_report(y, scores)
-    legit = scores[y == LABEL_LEGITIMATE]
-    # Plus petit seuil laissant au plus max_fpr du légitime au-dessus.
-    threshold = float(np.quantile(legit, 1 - max_fpr, method="higher"))
+    threshold = threshold_at_fpr(scores[y == LABEL_LEGITIMATE], max_fpr)
     flagged = scores > threshold
     homepages = (y == LABEL_LEGITIMATE) & (sources == HOMEPAGE_SOURCE)
     internal = (y == LABEL_LEGITIMATE) & (sources == INTERNAL_PAGE_SOURCE)

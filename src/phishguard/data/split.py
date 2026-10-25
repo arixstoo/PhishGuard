@@ -34,6 +34,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -179,6 +180,31 @@ def assert_no_domain_leakage(df: pd.DataFrame, split: pd.Series) -> None:
 def split_frames(df: pd.DataFrame, split: pd.Series) -> dict[str, pd.DataFrame]:
     """Les trois blocs de ``df``, dans l'ordre de :data:`SPLITS`."""
     return {name: df.loc[split == name] for name in SPLITS}
+
+
+def read_split_blocks(
+    path: Path, names: Sequence[str], columns: Sequence[str] | None = None
+) -> dict[str, pd.DataFrame]:
+    """Lit seulement les blocs ``names`` du jeu découpé par ``scripts/split_dataset.py``.
+
+    Le filtre est appliqué à la lecture du parquet : les lignes des autres blocs ne sont
+    jamais chargées en mémoire. C'est ce qui garantit, par construction, que l'entraînement
+    et le réglage (étapes 1.5 et 1.6) ne voient pas le test. Chaque bloc doit contenir les
+    deux classes ; son index est remis à zéro.
+    """
+    unknown = set(names) - set(SPLITS)
+    if unknown or not names:
+        raise ValueError(f"blocs inconnus ou liste vide : {sorted(unknown)}")
+    wanted = None if columns is None else list(dict.fromkeys([*columns, "split", "label"]))
+    df = pd.read_parquet(path, columns=wanted, filters=[("split", "in", list(names))])
+    split = df["split"].astype(str)
+    blocks = {}
+    for name in names:
+        block = df[split == name].reset_index(drop=True)
+        if block.empty or block["label"].nunique() != 2:
+            raise ValueError(f"bloc {name} vide ou sans les deux classes")
+        blocks[name] = block
+    return blocks
 
 
 # --------------------------------------------------------------------------- #
