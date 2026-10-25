@@ -1,0 +1,888 @@
+{
+  "metadata": {
+    "generated_at": "2026-10-25T16:45:10+00:00",
+    "report_version": "1.0.0",
+    "python": "3.12.10",
+    "pandas": "3.0.6",
+    "lightgbm": "4.7.0",
+    "dataset_sha256": "0310e419432c749350f01ce8e8841313f89d66ee82ef52082ff8e195c1a2a66f",
+    "splits_used": [
+      "train",
+      "validation"
+    ],
+    "lists": {
+      "brands": {
+        "version": "2026-10-25",
+        "count": 172
+      },
+      "shorteners": {
+        "version": "2026-10-25",
+        "count": 33
+      }
+    }
+  },
+  "rows": {
+    "train": {
+      "total": 98031,
+      "phishing": 19599,
+      "by_source": {
+        "commoncrawl": 7933,
+        "openphish": 853,
+        "phishtank": 18741,
+        "tranco": 70499,
+        "urlhaus": 5
+      }
+    },
+    "validation": {
+      "total": 21007,
+      "phishing": 4198,
+      "by_source": {
+        "commoncrawl": 1702,
+        "openphish": 182,
+        "phishtank": 4016,
+        "tranco": 15107
+      }
+    }
+  },
+  "features": [
+    {
+      "name": "is_https",
+      "group": "scheme",
+      "family": "base",
+      "description": "1 si le schéma est https"
+    },
+    {
+      "name": "host_is_ip",
+      "group": "host",
+      "family": "base",
+      "description": "1 si l'hôte est une adresse IPv6 ou se termine par un nombre (IPv4, y compris décimal ou hexadécimal, règle WHATWG)"
+    },
+    {
+      "name": "host_n_subdomains",
+      "group": "host",
+      "family": "base",
+      "description": "labels avant le domaine enregistré, sans un « www » initial"
+    },
+    {
+      "name": "host_n_hyphens",
+      "group": "host",
+      "family": "base",
+      "description": "tirets dans l'hôte (forme Unicode)"
+    },
+    {
+      "name": "host_n_digits",
+      "group": "host",
+      "family": "base",
+      "description": "chiffres dans l'hôte (forme Unicode)"
+    },
+    {
+      "name": "host_entropy",
+      "group": "host",
+      "family": "base",
+      "description": "entropie de Shannon des caractères de l'hôte (bits)"
+    },
+    {
+      "name": "host_kw_hits",
+      "group": "host",
+      "family": "base",
+      "description": "mots-clés de KEYWORDS présents dans l'hôte"
+    },
+    {
+      "name": "host_is_idn",
+      "group": "host",
+      "family": "base",
+      "description": "1 si l'hôte contient un label internationalisé"
+    },
+    {
+      "name": "has_userinfo",
+      "group": "host",
+      "family": "base",
+      "description": "1 si l'URL contient des identifiants avant l'hôte (@)"
+    },
+    {
+      "name": "has_port",
+      "group": "host",
+      "family": "base",
+      "description": "1 si un port différent du port par défaut est indiqué"
+    },
+    {
+      "name": "path_depth",
+      "group": "path",
+      "family": "base",
+      "description": "segments non vides du chemin"
+    },
+    {
+      "name": "query_n_params",
+      "group": "path",
+      "family": "base",
+      "description": "paramètres non vides de la requête"
+    },
+    {
+      "name": "path_n_digits",
+      "group": "path",
+      "family": "base",
+      "description": "chiffres dans le chemin et la requête décodés"
+    },
+    {
+      "name": "path_kw_hits",
+      "group": "path",
+      "family": "base",
+      "description": "mots-clés présents dans le chemin et la requête décodés"
+    },
+    {
+      "name": "path_has_embedded_url",
+      "group": "path",
+      "family": "base",
+      "description": "1 si le chemin ou la requête décodés contiennent « http: », « https: » ou « www. »"
+    },
+    {
+      "name": "host_len",
+      "group": "length",
+      "family": "base",
+      "description": "caractères de l'hôte (forme Unicode)"
+    },
+    {
+      "name": "path_len",
+      "group": "length",
+      "family": "base",
+      "description": "caractères du chemin brut"
+    },
+    {
+      "name": "query_len",
+      "group": "length",
+      "family": "base",
+      "description": "caractères de la requête brute"
+    },
+    {
+      "name": "brand_in_host",
+      "group": "host",
+      "family": "brand",
+      "description": "1 si un label de l'hôte (hors suffixe) contient une marque dont ce n'est pas le domaine officiel"
+    },
+    {
+      "name": "brand_min_distance",
+      "group": "host",
+      "family": "brand",
+      "description": "distance de Levenshtein entre le label du domaine et la marque la plus proche dont ce n'est pas le domaine officiel, plafonnée à BRAND_DISTANCE_CAP"
+    },
+    {
+      "name": "is_typosquat",
+      "group": "host",
+      "family": "brand",
+      "description": "1 si le label du domaine est à 1 modification d'une marque (2 pour un nom d'au moins 9 caractères), sans être la marque elle-même"
+    },
+    {
+      "name": "brand_in_path",
+      "group": "path",
+      "family": "brand",
+      "description": "1 si le chemin ou la requête décodés contiennent une marque dont l'hôte n'est pas le domaine officiel"
+    },
+    {
+      "name": "host_mixed_script",
+      "group": "host",
+      "family": "homograph",
+      "description": "1 si un label mêle des écritures non admises ensemble (UTS #39, Highly Restrictive)"
+    },
+    {
+      "name": "homograph_brand",
+      "group": "host",
+      "family": "homograph",
+      "description": "1 si l'hôte est internationalisé et que son squelette visuel contient une marque absente de sa forme réelle"
+    },
+    {
+      "name": "tld_phish_rate",
+      "group": "host",
+      "family": "tld",
+      "description": "part de phishing du TLD à l'entraînement, lissée (voir phishguard.urls.tld)"
+    },
+    {
+      "name": "is_shortener",
+      "group": "host",
+      "family": "shortener",
+      "description": "1 si l'hôte ou son domaine enregistré est un raccourcisseur connu"
+    }
+  ],
+  "extraction_us_per_url": 89.1,
+  "tld_table": {
+    "prior": 0.1999,
+    "tlds": 634
+  },
+  "config": {
+    "max_fpr": 0.01,
+    "n_estimators": 300,
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "seed": 42
+  },
+  "univariate": {
+    "is_https": {
+      "roc_auc": 0.3629,
+      "mean_legitimate": 0.9943,
+      "mean_phishing": 0.7201
+    },
+    "host_is_ip": {
+      "roc_auc": 0.5005,
+      "mean_legitimate": 0.0,
+      "mean_phishing": 0.001
+    },
+    "host_n_subdomains": {
+      "roc_auc": 0.6176,
+      "mean_legitimate": 0.0725,
+      "mean_phishing": 0.3109
+    },
+    "host_n_hyphens": {
+      "roc_auc": 0.7876,
+      "mean_legitimate": 0.0916,
+      "mean_phishing": 1.4607
+    },
+    "host_n_digits": {
+      "roc_auc": 0.7641,
+      "mean_legitimate": 0.1708,
+      "mean_phishing": 3.0555
+    },
+    "host_entropy": {
+      "roc_auc": 0.8966,
+      "mean_legitimate": 3.1729,
+      "mean_phishing": 3.8542
+    },
+    "host_kw_hits": {
+      "roc_auc": 0.5194,
+      "mean_legitimate": 0.0068,
+      "mean_phishing": 0.0481
+    },
+    "host_is_idn": {
+      "roc_auc": 0.4999,
+      "mean_legitimate": 0.001,
+      "mean_phishing": 0.0007
+    },
+    "has_userinfo": {
+      "roc_auc": 0.5,
+      "mean_legitimate": 0.0,
+      "mean_phishing": 0.0
+    },
+    "has_port": {
+      "roc_auc": 0.5,
+      "mean_legitimate": 0.0001,
+      "mean_phishing": 0.0
+    },
+    "path_depth": {
+      "roc_auc": 0.6136,
+      "mean_legitimate": 0.2785,
+      "mean_phishing": 0.5977
+    },
+    "query_n_params": {
+      "roc_auc": 0.5202,
+      "mean_legitimate": 0.0594,
+      "mean_phishing": 0.1251
+    },
+    "path_n_digits": {
+      "roc_auc": 0.546,
+      "mean_legitimate": 0.6887,
+      "mean_phishing": 1.935
+    },
+    "path_kw_hits": {
+      "roc_auc": 0.5121,
+      "mean_legitimate": 0.0054,
+      "mean_phishing": 0.03
+    },
+    "path_has_embedded_url": {
+      "roc_auc": 0.4984,
+      "mean_legitimate": 0.0042,
+      "mean_phishing": 0.001
+    },
+    "host_len": {
+      "roc_auc": 0.914,
+      "mean_legitimate": 13.0318,
+      "mean_phishing": 28.758
+    },
+    "path_len": {
+      "roc_auc": 0.6134,
+      "mean_legitimate": 4.9186,
+      "mean_phishing": 7.7863
+    },
+    "query_len": {
+      "roc_auc": 0.5203,
+      "mean_legitimate": 1.8885,
+      "mean_phishing": 5.6508
+    },
+    "brand_in_host": {
+      "roc_auc": 0.5175,
+      "mean_legitimate": 0.0079,
+      "mean_phishing": 0.0429
+    },
+    "brand_min_distance": {
+      "roc_auc": 0.4909,
+      "mean_legitimate": 2.9807,
+      "mean_phishing": 2.9345
+    },
+    "is_typosquat": {
+      "roc_auc": 0.5019,
+      "mean_legitimate": 0.0017,
+      "mean_phishing": 0.0055
+    },
+    "brand_in_path": {
+      "roc_auc": 0.5082,
+      "mean_legitimate": 0.003,
+      "mean_phishing": 0.0193
+    },
+    "host_mixed_script": {
+      "roc_auc": 0.5,
+      "mean_legitimate": 0.0,
+      "mean_phishing": 0.0
+    },
+    "homograph_brand": {
+      "roc_auc": 0.5,
+      "mean_legitimate": 0.0,
+      "mean_phishing": 0.0
+    },
+    "tld_phish_rate": {
+      "roc_auc": 0.851,
+      "mean_legitimate": 0.1315,
+      "mean_phishing": 0.5635
+    },
+    "is_shortener": {
+      "roc_auc": 0.5003,
+      "mean_legitimate": 0.0002,
+      "mean_phishing": 0.0007
+    }
+  },
+  "families_added": {
+    "base": {
+      "n_features": 18,
+      "pr_auc": 0.9515,
+      "roc_auc": 0.9809,
+      "recall_at_fpr_1pct": 0.804,
+      "recall_at_fpr_0_1pct": 0.5872,
+      "threshold": 0.757697,
+      "recall": 0.804,
+      "fpr_homepages": 0.0032,
+      "fpr_internal_pages": 0.0705,
+      "gain_share": {
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "host_entropy": 0.0415,
+        "host_is_idn": 0.0001,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0016,
+        "host_len": 0.5629,
+        "host_n_digits": 0.0409,
+        "host_n_hyphens": 0.0132,
+        "host_n_subdomains": 0.0717,
+        "is_https": 0.024,
+        "path_depth": 0.015,
+        "path_has_embedded_url": 0.0024,
+        "path_kw_hits": 0.0033,
+        "path_len": 0.1803,
+        "path_n_digits": 0.0139,
+        "query_len": 0.0128,
+        "query_n_params": 0.0165
+      }
+    },
+    "base+brand": {
+      "n_features": 22,
+      "pr_auc": 0.9522,
+      "roc_auc": 0.9811,
+      "recall_at_fpr_1pct": 0.8075,
+      "recall_at_fpr_0_1pct": 0.5677,
+      "threshold": 0.745364,
+      "recall": 0.8075,
+      "fpr_homepages": 0.0032,
+      "fpr_internal_pages": 0.0699,
+      "gain_share": {
+        "brand_in_host": 0.0012,
+        "brand_in_path": 0.0024,
+        "brand_min_distance": 0.0025,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "host_entropy": 0.0408,
+        "host_is_idn": 0.0001,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0016,
+        "host_len": 0.562,
+        "host_n_digits": 0.0406,
+        "host_n_hyphens": 0.0127,
+        "host_n_subdomains": 0.071,
+        "is_https": 0.0241,
+        "is_typosquat": 0.0003,
+        "path_depth": 0.015,
+        "path_has_embedded_url": 0.0022,
+        "path_kw_hits": 0.0033,
+        "path_len": 0.1794,
+        "path_n_digits": 0.013,
+        "query_len": 0.0119,
+        "query_n_params": 0.0158
+      }
+    },
+    "base+brand+homograph": {
+      "n_features": 24,
+      "pr_auc": 0.9522,
+      "roc_auc": 0.9811,
+      "recall_at_fpr_1pct": 0.8075,
+      "recall_at_fpr_0_1pct": 0.5677,
+      "threshold": 0.745364,
+      "recall": 0.8075,
+      "fpr_homepages": 0.0032,
+      "fpr_internal_pages": 0.0699,
+      "gain_share": {
+        "brand_in_host": 0.0012,
+        "brand_in_path": 0.0024,
+        "brand_min_distance": 0.0025,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.0408,
+        "host_is_idn": 0.0001,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0016,
+        "host_len": 0.562,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0406,
+        "host_n_hyphens": 0.0127,
+        "host_n_subdomains": 0.071,
+        "is_https": 0.0241,
+        "is_typosquat": 0.0003,
+        "path_depth": 0.015,
+        "path_has_embedded_url": 0.0022,
+        "path_kw_hits": 0.0033,
+        "path_len": 0.1794,
+        "path_n_digits": 0.013,
+        "query_len": 0.0119,
+        "query_n_params": 0.0158
+      }
+    },
+    "base+brand+homograph+tld": {
+      "n_features": 25,
+      "pr_auc": 0.9653,
+      "roc_auc": 0.986,
+      "recall_at_fpr_1pct": 0.8568,
+      "recall_at_fpr_0_1pct": 0.6887,
+      "threshold": 0.68668,
+      "recall": 0.8568,
+      "fpr_homepages": 0.0034,
+      "fpr_internal_pages": 0.0687,
+      "gain_share": {
+        "brand_in_host": 0.0014,
+        "brand_in_path": 0.002,
+        "brand_min_distance": 0.0007,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.0348,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0012,
+        "host_len": 0.4868,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0129,
+        "host_n_hyphens": 0.0088,
+        "host_n_subdomains": 0.0445,
+        "is_https": 0.0215,
+        "is_typosquat": 0.0001,
+        "path_depth": 0.0146,
+        "path_has_embedded_url": 0.002,
+        "path_kw_hits": 0.0026,
+        "path_len": 0.1453,
+        "path_n_digits": 0.0108,
+        "query_len": 0.0084,
+        "query_n_params": 0.0139,
+        "tld_phish_rate": 0.1876
+      }
+    },
+    "base+brand+homograph+tld+shortener": {
+      "n_features": 26,
+      "pr_auc": 0.9654,
+      "roc_auc": 0.9861,
+      "recall_at_fpr_1pct": 0.8533,
+      "recall_at_fpr_0_1pct": 0.6575,
+      "threshold": 0.703071,
+      "recall": 0.8533,
+      "fpr_homepages": 0.0034,
+      "fpr_internal_pages": 0.0687,
+      "gain_share": {
+        "brand_in_host": 0.0014,
+        "brand_in_path": 0.002,
+        "brand_min_distance": 0.0006,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.035,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0013,
+        "host_len": 0.487,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0128,
+        "host_n_hyphens": 0.0087,
+        "host_n_subdomains": 0.0445,
+        "is_https": 0.0216,
+        "is_shortener": 0.0,
+        "is_typosquat": 0.0001,
+        "path_depth": 0.0146,
+        "path_has_embedded_url": 0.002,
+        "path_kw_hits": 0.0026,
+        "path_len": 0.1452,
+        "path_n_digits": 0.0108,
+        "query_len": 0.0084,
+        "query_n_params": 0.0139,
+        "tld_phish_rate": 0.1874
+      }
+    }
+  },
+  "families_removed": {
+    "brand": {
+      "n_features": 22,
+      "pr_auc": 0.9649,
+      "roc_auc": 0.9859,
+      "recall_at_fpr_1pct": 0.8556,
+      "recall_at_fpr_0_1pct": 0.6308,
+      "threshold": 0.702449,
+      "recall": 0.8556,
+      "fpr_homepages": 0.0032,
+      "fpr_internal_pages": 0.0705,
+      "gain_share": {
+        "has_port": 0.0,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.0367,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0013,
+        "host_len": 0.4867,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0133,
+        "host_n_hyphens": 0.0091,
+        "host_n_subdomains": 0.0444,
+        "is_https": 0.0217,
+        "is_shortener": 0.0,
+        "path_depth": 0.0147,
+        "path_has_embedded_url": 0.0025,
+        "path_kw_hits": 0.0025,
+        "path_len": 0.1445,
+        "path_n_digits": 0.0109,
+        "query_len": 0.0087,
+        "query_n_params": 0.0143,
+        "tld_phish_rate": 0.1886
+      }
+    },
+    "homograph": {
+      "n_features": 24,
+      "pr_auc": 0.9654,
+      "roc_auc": 0.9861,
+      "recall_at_fpr_1pct": 0.8533,
+      "recall_at_fpr_0_1pct": 0.6575,
+      "threshold": 0.703071,
+      "recall": 0.8533,
+      "fpr_homepages": 0.0034,
+      "fpr_internal_pages": 0.0687,
+      "gain_share": {
+        "brand_in_host": 0.0014,
+        "brand_in_path": 0.002,
+        "brand_min_distance": 0.0006,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "host_entropy": 0.035,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0013,
+        "host_len": 0.487,
+        "host_n_digits": 0.0128,
+        "host_n_hyphens": 0.0087,
+        "host_n_subdomains": 0.0445,
+        "is_https": 0.0216,
+        "is_shortener": 0.0,
+        "is_typosquat": 0.0001,
+        "path_depth": 0.0146,
+        "path_has_embedded_url": 0.002,
+        "path_kw_hits": 0.0026,
+        "path_len": 0.1452,
+        "path_n_digits": 0.0108,
+        "query_len": 0.0084,
+        "query_n_params": 0.0139,
+        "tld_phish_rate": 0.1874
+      }
+    },
+    "tld": {
+      "n_features": 25,
+      "pr_auc": 0.9523,
+      "roc_auc": 0.9811,
+      "recall_at_fpr_1pct": 0.8075,
+      "recall_at_fpr_0_1pct": 0.5972,
+      "threshold": 0.746038,
+      "recall": 0.8075,
+      "fpr_homepages": 0.0032,
+      "fpr_internal_pages": 0.0699,
+      "gain_share": {
+        "brand_in_host": 0.0012,
+        "brand_in_path": 0.0024,
+        "brand_min_distance": 0.0025,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.0409,
+        "host_is_idn": 0.0001,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0016,
+        "host_len": 0.5618,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0406,
+        "host_n_hyphens": 0.0128,
+        "host_n_subdomains": 0.071,
+        "is_https": 0.0241,
+        "is_shortener": 0.0,
+        "is_typosquat": 0.0003,
+        "path_depth": 0.015,
+        "path_has_embedded_url": 0.0022,
+        "path_kw_hits": 0.0033,
+        "path_len": 0.1793,
+        "path_n_digits": 0.013,
+        "query_len": 0.012,
+        "query_n_params": 0.0158
+      }
+    },
+    "shortener": {
+      "n_features": 25,
+      "pr_auc": 0.9653,
+      "roc_auc": 0.986,
+      "recall_at_fpr_1pct": 0.8568,
+      "recall_at_fpr_0_1pct": 0.6887,
+      "threshold": 0.68668,
+      "recall": 0.8568,
+      "fpr_homepages": 0.0034,
+      "fpr_internal_pages": 0.0687,
+      "gain_share": {
+        "brand_in_host": 0.0014,
+        "brand_in_path": 0.002,
+        "brand_min_distance": 0.0007,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.0348,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0012,
+        "host_len": 0.4868,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0129,
+        "host_n_hyphens": 0.0088,
+        "host_n_subdomains": 0.0445,
+        "is_https": 0.0215,
+        "is_typosquat": 0.0001,
+        "path_depth": 0.0146,
+        "path_has_embedded_url": 0.002,
+        "path_kw_hits": 0.0026,
+        "path_len": 0.1453,
+        "path_n_digits": 0.0108,
+        "query_len": 0.0084,
+        "query_n_params": 0.0139,
+        "tld_phish_rate": 0.1876
+      }
+    }
+  },
+  "groups_removed": {
+    "all": {
+      "n_features": 26,
+      "pr_auc": 0.9654,
+      "roc_auc": 0.9861,
+      "recall_at_fpr_1pct": 0.8533,
+      "recall_at_fpr_0_1pct": 0.6575,
+      "threshold": 0.703071,
+      "recall": 0.8533,
+      "fpr_homepages": 0.0034,
+      "fpr_internal_pages": 0.0687,
+      "gain_share": {
+        "brand_in_host": 0.0014,
+        "brand_in_path": 0.002,
+        "brand_min_distance": 0.0006,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.035,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0013,
+        "host_len": 0.487,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0128,
+        "host_n_hyphens": 0.0087,
+        "host_n_subdomains": 0.0445,
+        "is_https": 0.0216,
+        "is_shortener": 0.0,
+        "is_typosquat": 0.0001,
+        "path_depth": 0.0146,
+        "path_has_embedded_url": 0.002,
+        "path_kw_hits": 0.0026,
+        "path_len": 0.1452,
+        "path_n_digits": 0.0108,
+        "query_len": 0.0084,
+        "query_n_params": 0.0139,
+        "tld_phish_rate": 0.1874
+      }
+    },
+    "without_scheme": {
+      "n_features": 25,
+      "pr_auc": 0.9569,
+      "roc_auc": 0.9814,
+      "recall_at_fpr_1pct": 0.838,
+      "recall_at_fpr_0_1pct": 0.641,
+      "threshold": 0.678952,
+      "recall": 0.838,
+      "fpr_homepages": 0.0037,
+      "fpr_internal_pages": 0.0658,
+      "gain_share": {
+        "brand_in_host": 0.0018,
+        "brand_in_path": 0.0023,
+        "brand_min_distance": 0.0007,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.0364,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0015,
+        "host_len": 0.4968,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.013,
+        "host_n_hyphens": 0.009,
+        "host_n_subdomains": 0.0465,
+        "is_shortener": 0.0,
+        "is_typosquat": 0.0001,
+        "path_depth": 0.0157,
+        "path_has_embedded_url": 0.0022,
+        "path_kw_hits": 0.0028,
+        "path_len": 0.1453,
+        "path_n_digits": 0.0113,
+        "query_len": 0.0088,
+        "query_n_params": 0.0146,
+        "tld_phish_rate": 0.191
+      }
+    },
+    "without_path": {
+      "n_features": 20,
+      "pr_auc": 0.9634,
+      "roc_auc": 0.9852,
+      "recall_at_fpr_1pct": 0.8511,
+      "recall_at_fpr_0_1pct": 0.6732,
+      "threshold": 0.705561,
+      "recall": 0.8511,
+      "fpr_homepages": 0.0032,
+      "fpr_internal_pages": 0.0705,
+      "gain_share": {
+        "brand_in_host": 0.0017,
+        "brand_min_distance": 0.0007,
+        "has_port": 0.0,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.0358,
+        "host_is_idn": 0.0,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0013,
+        "host_len": 0.4964,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0137,
+        "host_n_hyphens": 0.0086,
+        "host_n_subdomains": 0.0457,
+        "is_https": 0.0219,
+        "is_shortener": 0.0,
+        "is_typosquat": 0.0001,
+        "path_len": 0.1578,
+        "query_len": 0.0241,
+        "tld_phish_rate": 0.192
+      }
+    },
+    "without_length": {
+      "n_features": 23,
+      "pr_auc": 0.9562,
+      "roc_auc": 0.9813,
+      "recall_at_fpr_1pct": 0.8249,
+      "recall_at_fpr_0_1pct": 0.6572,
+      "threshold": 0.714137,
+      "recall": 0.8249,
+      "fpr_homepages": 0.0034,
+      "fpr_internal_pages": 0.0687,
+      "gain_share": {
+        "brand_in_host": 0.0019,
+        "brand_in_path": 0.0019,
+        "brand_min_distance": 0.0009,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.4767,
+        "host_is_idn": 0.0003,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0023,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0142,
+        "host_n_hyphens": 0.0136,
+        "host_n_subdomains": 0.0532,
+        "is_https": 0.0256,
+        "is_shortener": 0.0001,
+        "is_typosquat": 0.0002,
+        "path_depth": 0.1506,
+        "path_has_embedded_url": 0.0032,
+        "path_kw_hits": 0.0023,
+        "path_n_digits": 0.0135,
+        "query_n_params": 0.0206,
+        "tld_phish_rate": 0.2189
+      }
+    },
+    "without_path_and_length": {
+      "n_features": 17,
+      "pr_auc": 0.9019,
+      "roc_auc": 0.9485,
+      "recall_at_fpr_1pct": 0.7218,
+      "recall_at_fpr_0_1pct": 0.5993,
+      "threshold": 0.656659,
+      "recall": 0.7218,
+      "fpr_homepages": 0.0065,
+      "fpr_internal_pages": 0.0411,
+      "gain_share": {
+        "brand_in_host": 0.0038,
+        "brand_min_distance": 0.0027,
+        "has_port": 0.0001,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.5914,
+        "host_is_idn": 0.0005,
+        "host_is_ip": 0.0,
+        "host_kw_hits": 0.0038,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0232,
+        "host_n_hyphens": 0.0159,
+        "host_n_subdomains": 0.0401,
+        "is_https": 0.0388,
+        "is_shortener": 0.0028,
+        "is_typosquat": 0.0007,
+        "tld_phish_rate": 0.2763
+      }
+    },
+    "host_only": {
+      "n_features": 16,
+      "pr_auc": 0.8921,
+      "roc_auc": 0.9428,
+      "recall_at_fpr_1pct": 0.7025,
+      "recall_at_fpr_0_1pct": 0.5889,
+      "threshold": 0.661392,
+      "recall": 0.7025,
+      "fpr_homepages": 0.0071,
+      "fpr_internal_pages": 0.0358,
+      "gain_share": {
+        "brand_in_host": 0.004,
+        "brand_min_distance": 0.0028,
+        "has_port": 0.0,
+        "has_userinfo": 0.0,
+        "homograph_brand": 0.0,
+        "host_entropy": 0.6176,
+        "host_is_idn": 0.0006,
+        "host_is_ip": 0.0001,
+        "host_kw_hits": 0.004,
+        "host_mixed_script": 0.0,
+        "host_n_digits": 0.0257,
+        "host_n_hyphens": 0.0165,
+        "host_n_subdomains": 0.0379,
+        "is_shortener": 0.0031,
+        "is_typosquat": 0.0006,
+        "tld_phish_rate": 0.2871
+      }
+    }
+  }
+}
