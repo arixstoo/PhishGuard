@@ -72,6 +72,7 @@ python scripts/train_sms_baseline.py    # download the dataset (SHA-256 verified
 python scripts/fetch_feeds.py           # collect timestamped phishing and legitimate feeds into data/raw/
 python scripts/build_dataset.py         # build data/processed/urls.parquet (normalized, deduplicated)
 python scripts/audit_bias.py            # look for dataset shortcuts before training (docs/data-bias.md)
+python scripts/split_dataset.py         # temporal, domain-grouped train/validation/test split (docs/split.md)
 ```
 
 ## Roadmap
@@ -105,6 +106,7 @@ data/, models/    generated locally, never committed
 
 - [Phishing 101](docs/phishing-101.md): how phishing works and how to spot it (French)
 - [Data bias audit](docs/data-bias.md): shortcuts found in the URL dataset and how they are handled (French)
+- [Train / validation / test split](docs/split.md): temporal and grouped by registered domain, with no domain leakage (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History

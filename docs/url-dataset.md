@@ -86,7 +86,7 @@ Les chiffres à jour sont dans `docs/metrics/urls_dataset.json`.
 Ces limites sont mesurées, chiffres à l'appui, dans [`data-bias.md`](data-bias.md) (étape 1.3).
 
 - **Biais de chemin et de schéma.** Tranco ne fournit que des domaines, matérialisés en `https://<domaine>/`. Les pages internes Common Crawl (étape 1.3 bis) atténuent le biais sans le supprimer : elles ne forment que 10 % du légitime, et presque toutes sont en `https`.
-- **Dates non comparables entre classes.** Les dates PhishTank remontent à 2011 alors que les domaines Tranco datent tous de nos collectes. Un split temporel naïf mettrait presque tout le légitime dans le test : il faudra découper par classe, ou sur la date de collecte.
+- **Dates non comparables entre classes.** Les dates PhishTank remontent à 2011 alors que les domaines Tranco datent tous de nos collectes. Un split temporel naïf mettrait presque tout le légitime dans le test : l'étape 1.4 découpe donc chaque source séparément ([`split.md`](split.md)).
 - **Limite par domaine et plateformes.** Avec 5 URLs au plus, le phishing hébergé sur `google.com` (Sites, Forms) ou derrière un raccourcisseur est fortement sous-représenté par rapport à la réalité.
-- **Domaines partagés entre classes.** Les 515 domaines présents dans les deux classes devront rester d'un seul côté du split groupé.
+- **Domaines partagés entre classes.** Les 515 domaines présents dans les deux classes restent d'un seul côté du split groupé ([`split.md`](split.md)).
 - **Reproductibilité.** La liste des suffixes vient de l'instantané embarqué dans `tldextract` : sa version figure dans le rapport, la changer peut modifier `registered_domain`.

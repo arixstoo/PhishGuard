@@ -37,8 +37,8 @@ Sauf mention contraire : split groupé par domaine enregistré, 20 % des domaine
 | :--- | :--- | :--- | :--- |
 | Structure (chemin, schéma, sous-domaine, longueur) | Pages internes légitimes signalées à tort : **89 % → 27 %**. Longueur de l'URL seule : ROC-AUC 0,96 → 0,89 | Élevée → moyenne | Pages internes Common Crawl ajoutées (1.3 bis) ; scores rapportés pour chaque représentation ; features groupées ; FPR sur pages internes mesuré à chaque modèle |
 | Source | R@1%FPR sans PhishTank à l'entraînement : 0,92 → 0,63 **avant**, 0,84 → 0,42 **après** | Élevée | Évaluation croisée entre sources dans chaque rapport ; collecte quotidienne poursuivie |
-| Fuite par domaine | Test aléatoire partageant un domaine avec l'entraînement : 5,5 % → 15,2 % | Faible ici | Split groupé obligatoire (étape 1.4) |
-| Temps | Phishing antérieur à la première URL légitime : 96 % → 89 % | Bloquant pour un split temporel naïf | Split temporel par classe (étape 1.4) |
+| Fuite par domaine | Test aléatoire partageant un domaine avec l'entraînement : 5,5 % → 15,2 % | Faible ici | Split groupé obligatoire : fait (étape 1.4, [`split.md`](split.md)) |
+| Temps | Phishing antérieur à la première URL légitime : 96 % → 89 % | Bloquant pour un split temporel naïf | Split temporel par source : fait (étape 1.4), 20 % de phishing dans chaque bloc |
 | PhiUSIIL comme remède | Ses URLs légitimes n'ont **aucun** chemin | — | Remède du plan écarté ; jeu gardé comme comparaison externe |
 
 ## 1. Biais de structure (« biais de chemin »)
@@ -176,7 +176,7 @@ L'écart est modeste (2 points de rappel) parce que l'étape 1.2 limite déjà c
 
 ### Ce qu'on fait
 
-1. **Split groupé par `registered_domain` obligatoire** pour tout modèle URL, avec un test unitaire qui vérifie l'absence de recouvrement (étape 1.4). `grouped_holdout` en donne déjà une version testée par propriétés (Hypothesis).
+1. **Split groupé par `registered_domain` obligatoire** pour tout modèle URL, avec un test unitaire qui vérifie l'absence de recouvrement. **Fait (étape 1.4)** : `temporal_group_split`, testé par propriétés (Hypothesis), voir [`split.md`](split.md).
 2. Un domaine présent dans les deux classes est placé d'un seul côté du split, ses deux classes ensemble.
 
 ## 4. Biais temporel
@@ -195,9 +195,9 @@ Split naïf : tri global par `first_seen`, puis découpage 70 / 15 / 15 :
 
 La validation ne contient quasiment aucun phishing : on ne pourrait ni régler un seuil ni mesurer un rappel.
 
-### Ce qu'on fait (étape 1.4)
+### Ce qu'on fait (étape 1.4, fait : voir [`split.md`](split.md))
 
-1. **Découper dans le temps à l'intérieur de chaque classe** (70 / 15 / 15 du phishing et du légitime séparément), puis appliquer la contrainte de groupe par domaine.
+1. **Découper dans le temps à l'intérieur de chaque classe**, et plus finement de chaque source (70 / 15 / 15 de chacune séparément), sous la contrainte de groupe par domaine. Résultat : 20,0 % de phishing dans chacun des trois blocs, et la même composition de sources partout.
 2. Signaler dans le rapport d'évaluation que la dimension temporelle ne porte vraiment que sur le phishing : le légitime ne couvre que trois semaines (captures Common Crawl comprises). Avec la collecte quotidienne, la liste Tranco change et cette limite s'atténuera.
 
 ## Limites de cet audit
