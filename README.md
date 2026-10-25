@@ -74,7 +74,10 @@ python scripts/build_dataset.py         # build data/processed/urls.parquet (nor
 python scripts/audit_bias.py            # look for dataset shortcuts before training (docs/data-bias.md)
 python scripts/split_dataset.py         # temporal, domain-grouped train/validation/test split (docs/split.md)
 python scripts/evaluate_url_features.py # measure what each URL feature adds, on validation (docs/url-features.md)
+make train-url                          # train and compare logistic regression, Random Forest, LightGBM (docs/url-models.md)
 ```
+
+Run `make help` to list the available commands.
 
 ## Roadmap
 
@@ -109,6 +112,7 @@ data/, models/    generated locally, never committed
 - [Data bias audit](docs/data-bias.md): shortcuts found in the URL dataset and how they are handled (French)
 - [Train / validation / test split](docs/split.md): temporal and grouped by registered domain, with no domain leakage (French)
 - [URL features](docs/url-features.md): 26 offline lexical features (typosquatting, homographs, TLD, shorteners) and what each one adds (French)
+- [URL models](docs/url-models.md): logistic regression vs Random Forest vs LightGBM, tuned on validation, with recall at 1 % FPR and inference cost (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History

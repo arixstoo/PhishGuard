@@ -255,3 +255,40 @@ def test_quotas_always_sum_to_the_number_of_rows():
     for rows in range(50):
         assert S._quotas(rows, (0.7, 0.15, 0.15)).sum() == rows
     assert np.array_equal(S._quotas(100, (0.7, 0.15, 0.15)), [70, 15, 15])
+
+
+# --------------------------------------------------------------------------- #
+# Lecture des blocs
+# --------------------------------------------------------------------------- #
+
+
+def _split_parquet(tmp_path: Path) -> Path:
+    df = frame(
+        [(f"d{i}.com", i % 2, "tranco" if i % 2 == 0 else "phishtank", i) for i in range(60)]
+    )
+    path = tmp_path / "urls_split.parquet"
+    df.assign(split=S.temporal_group_split(df)).to_parquet(path, index=False)
+    return path
+
+
+def test_read_split_blocks_loads_only_the_requested_blocks(tmp_path):
+    path = _split_parquet(tmp_path)
+    blocks = S.read_split_blocks(path, ("train", "validation"), ["url", "source"])
+    assert list(blocks) == ["train", "validation"]
+    for name, block in blocks.items():
+        assert set(block["split"].astype(str)) == {name}
+        assert {"url", "source", "label", "split"} == set(block.columns)
+        assert block.index.equals(pd.RangeIndex(len(block)))
+    full = pd.read_parquet(path)
+    assert sum(len(b) for b in blocks.values()) == int((full["split"] != "test").sum())
+
+
+def test_read_split_blocks_rejects_unknown_or_single_class_blocks(tmp_path):
+    path = _split_parquet(tmp_path)
+    with pytest.raises(ValueError, match="inconnus"):
+        S.read_split_blocks(path, ("holdout",))
+    one_class = pd.read_parquet(path)
+    one_class.loc[one_class["split"] == "test", "label"] = 0
+    one_class.to_parquet(path, index=False)
+    with pytest.raises(ValueError, match="deux classes"):
+        S.read_split_blocks(path, ("test",))

@@ -30,6 +30,20 @@ def recall_at_fpr(y_true: ArrayLike, y_score: ArrayLike, max_fpr: float = 0.01) 
     return float(tpr[fpr <= max_fpr].max())
 
 
+def threshold_at_fpr(legitimate_scores: ArrayLike, max_fpr: float) -> float:
+    """Plus petit seuil laissant au plus ``max_fpr`` des scores légitimes au-dessus.
+
+    La règle de décision associée est stricte : une URL est signalée si son score est
+    **strictement supérieur** au seuil.
+    """
+    if not 0.0 <= max_fpr <= 1.0:
+        raise ValueError("max_fpr doit être compris entre 0 et 1")
+    scores = np.asarray(legitimate_scores, dtype=float)
+    if scores.size == 0:
+        raise ValueError("aucun score légitime")
+    return float(np.quantile(scores, 1 - max_fpr, method="higher"))
+
+
 def binary_report(
     y_true: ArrayLike, y_score: ArrayLike, *, threshold: float = 0.5, digits: int = 4
 ) -> dict:
