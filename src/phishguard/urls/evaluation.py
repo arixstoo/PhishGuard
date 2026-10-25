@@ -1,0 +1,204 @@
+"""Évaluation réaliste du modèle URL sur le test (étape 1.7).
+
+Trois questions, dans cet ordre :
+
+1. **Point de fonctionnement.** Avec les seuils réglés sur la validation (étape 1.6),
+   quel rappel et quel taux de faux positifs obtient-on sur le test ? Le FPR est donné
+   pour tout le légitime, pour les pages d'accueil (Tranco) et pour les pages internes
+   (Common Crawl), avec un intervalle de confiance de Wilson.
+2. **Prévalence.** Que vaut la précision quand le phishing n'est plus 20 % des URLs mais
+   1 % ou 0,1 % (:mod:`phishguard.evaluation.prevalence`) ?
+3. **Seuil de décision.** :func:`choose_decision_threshold` applique une règle écrite à
+   l'avance, **sur la validation** : le test ne sert qu'à mesurer le seuil choisi.
+
+S'y ajoutent deux mesures de biais promises à l'étape 1.5 : le rappel par source de
+phishing et le FPR par rang de popularité Tranco (:func:`popularity_report`).
+"""
+
+from __future__ import annotations
+
+import csv
+import math
+from collections.abc import Iterable, Mapping, Sequence
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+from phishguard.data.bias import HOMEPAGE_SOURCE, INTERNAL_PAGE_SOURCE
+from phishguard.data.urls import LABEL_LEGITIMATE, LABEL_PHISHING
+from phishguard.evaluation.prevalence import (
+    REALISTIC_PREVALENCES,
+    alerts_per_urls,
+    precision_at_prevalence,
+    resample_at_prevalence,
+    wilson_interval,
+)
+
+# Règle de choix du seuil : au moins une alerte vraie sur deux quand 1 % des URLs sont
+# du phishing. En dessous, l'utilisateur apprend à ignorer les alertes.
+DECISION_PREVALENCE = 0.01
+DECISION_MIN_PRECISION = 0.5
+# Rangs Tranco : du plus visité au moins visité.
+RANK_BUCKETS: tuple[tuple[int, int], ...] = ((1, 1_000), (1_001, 10_000), (10_001, 100_000))
+
+
+def _rate(flagged: np.ndarray) -> dict[str, Any]:
+    n, k = int(flagged.size), int(flagged.sum())
+    if n == 0:
+        return {"n": 0, "flagged": 0, "rate": math.nan, "low": math.nan, "high": math.nan}
+    low, high = wilson_interval(k, n)
+    return {"n": n, "flagged": k, "rate": k / n, "low": low, "high": high}
+
+
+def operating_point(
+    y: np.ndarray, scores: np.ndarray, sources: np.ndarray, threshold: float
+) -> dict[str, Any]:
+    """Rappel et FPR (global, pages d'accueil, pages internes) à un seuil fixé."""
+    flagged = scores > threshold
+    legit = y == LABEL_LEGITIMATE
+    return {
+        "threshold": float(threshold),
+        "recall": _rate(flagged[y == LABEL_PHISHING]),
+        "fpr": _rate(flagged[legit]),
+        "fpr_homepages": _rate(flagged[legit & (sources == HOMEPAGE_SOURCE)]),
+        "fpr_internal_pages": _rate(flagged[legit & (sources == INTERNAL_PAGE_SOURCE)]),
+    }
+
+
+def operating_points(
+    y: np.ndarray, scores: np.ndarray, sources: np.ndarray, thresholds: Mapping[str, float]
+) -> dict[str, dict[str, Any]]:
+    return {name: operating_point(y, scores, sources, t) for name, t in thresholds.items()}
+
+
+def prevalence_table(
+    y: np.ndarray,
+    scores: np.ndarray,
+    sources: np.ndarray,
+    threshold: float,
+    prevalences: Sequence[float] = REALISTIC_PREVALENCES,
+    *,
+    rounds: int = 2000,
+    seed: int = 0,
+) -> list[dict[str, Any]]:
+    """Précision et alertes attendues à chaque prévalence, pour un seuil.
+
+    Deux hypothèses sur le légitime visité : celui du test (90 % de pages d'accueil), ou
+    uniquement des pages internes, plus proche de la navigation réelle et plus sévère.
+    """
+    point = operating_point(y, scores, sources, threshold)
+    recall = point["recall"]["rate"]
+    flagged = scores > threshold
+    rows = []
+    for p in prevalences:
+        resampled = resample_at_prevalence(y, flagged, p, rounds=rounds, seed=seed)
+        row: dict[str, Any] = {
+            "prevalence": p,
+            "precision": precision_at_prevalence(recall, point["fpr"]["rate"], p),
+            "precision_resampled": resampled,
+            **{
+                f"per_10k_{k}": v
+                for k, v in alerts_per_urls(recall, point["fpr"]["rate"], p).items()
+            },
+        }
+        internal = point["fpr_internal_pages"]["rate"]
+        if not math.isnan(internal):
+            row["precision_internal_pages"] = precision_at_prevalence(recall, internal, p)
+            row["false_per_true_internal_pages"] = alerts_per_urls(recall, internal, p)[
+                "false_per_true"
+            ]
+        rows.append(row)
+    return rows
+
+
+def choose_decision_threshold(
+    validation_points: Mapping[str, Mapping[str, Any]],
+    *,
+    prevalence: float = DECISION_PREVALENCE,
+    min_precision: float = DECISION_MIN_PRECISION,
+) -> dict[str, Any]:
+    """Seuil de décision, choisi sur la **validation**.
+
+    Parmi les seuils dont la précision attendue à ``prevalence`` atteint
+    ``min_precision``, celui qui a le meilleur rappel. Si aucun ne l'atteint, le seuil le
+    plus précis, et ``meets_target`` vaut ``False``.
+    """
+    if not validation_points:
+        raise ValueError("aucun seuil candidat")
+    candidates = []
+    for name, point in validation_points.items():
+        recall, fpr = point["recall"]["rate"], point["fpr"]["rate"]
+        precision = precision_at_prevalence(recall, fpr, prevalence)
+        candidates.append((name, recall, -1.0 if math.isnan(precision) else precision))
+    eligible = [c for c in candidates if c[2] >= min_precision]
+    if eligible:
+        name, recall, precision = max(eligible, key=lambda c: (c[1], c[2]))
+    else:
+        name, recall, precision = max(candidates, key=lambda c: (c[2], c[1]))
+    return {
+        "name": name,
+        "rule": {"prevalence": prevalence, "min_precision": min_precision},
+        "meets_target": bool(eligible),
+        "validation_recall": recall,
+        "validation_precision_at_prevalence": precision,
+    }
+
+
+def per_source(
+    y: np.ndarray, scores: np.ndarray, sources: np.ndarray, threshold: float
+) -> dict[str, dict[str, Any]]:
+    """Rappel par source de phishing, FPR par source de légitime."""
+    flagged = scores > threshold
+    result = {}
+    for source in sorted(set(sources.tolist())):
+        mask = sources == source
+        label = int(np.bincount(y[mask]).argmax())
+        metric = "recall" if label == LABEL_PHISHING else "fpr"
+        result[source] = {"label": label, "metric": metric, **_rate(flagged[mask])}
+    return result
+
+
+# --------------------------------------------------------------------------- #
+# Popularité (rang Tranco)
+# --------------------------------------------------------------------------- #
+
+
+def read_tranco_ranks(path: Path) -> dict[str, int]:
+    """Rang de chaque domaine d'un fichier Tranco (``rang,domaine`` sans en-tête)."""
+    ranks: dict[str, int] = {}
+    with Path(path).open(encoding="utf-8", newline="") as handle:
+        for row in csv.reader(handle):
+            if len(row) >= 2 and row[0].strip().isdigit():
+                ranks.setdefault(row[1].strip().lower(), int(row[0]))
+    return ranks
+
+
+def latest_tranco_file(raw_dir: Path) -> Path | None:
+    files = sorted(Path(raw_dir).glob("tranco_*.csv"), key=lambda p: p.stat().st_mtime)
+    return files[-1] if files else None
+
+
+def popularity_report(
+    domains: Iterable[str],
+    scores: np.ndarray,
+    threshold: float,
+    ranks: Mapping[str, int],
+    buckets: Sequence[tuple[int, int]] = RANK_BUCKETS,
+) -> dict[str, dict[str, Any]]:
+    """FPR des pages d'accueil légitimes par tranche de rang Tranco.
+
+    Mesure le biais de popularité de l'étape 1.5 : si le modèle a appris « nom court =
+    légitime », le FPR monte quand on descend dans le classement.
+    """
+    domains = list(domains)
+    if len(domains) != len(scores):
+        raise ValueError("domains et scores doivent avoir la même taille")
+    rank = np.array([ranks.get(d, 0) for d in domains])
+    flagged = np.asarray(scores) > threshold
+    report = {}
+    for low, high in buckets:
+        mask = (rank >= low) & (rank <= high)
+        report[f"{low}-{high}"] = _rate(flagged[mask])
+    report["unranked"] = _rate(flagged[rank == 0])
+    return report

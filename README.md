@@ -75,6 +75,7 @@ python scripts/audit_bias.py            # look for dataset shortcuts before trai
 python scripts/split_dataset.py         # temporal, domain-grouped train/validation/test split (docs/split.md)
 python scripts/evaluate_url_features.py # measure what each URL feature adds, on validation (docs/url-features.md)
 make train-url                          # train and compare logistic regression, Random Forest, LightGBM (docs/url-models.md)
+make evaluate-url                       # test-set evaluation at realistic phishing prevalence (docs/evaluation.md)
 ```
 
 Run `make help` to list the available commands.
@@ -113,6 +114,7 @@ data/, models/    generated locally, never committed
 - [Train / validation / test split](docs/split.md): temporal and grouped by registered domain, with no domain leakage (French)
 - [URL features](docs/url-features.md): 26 offline lexical features (typosquatting, homographs, TLD, shorteners) and what each one adds (French)
 - [URL models](docs/url-models.md): logistic regression vs Random Forest vs LightGBM, tuned on validation, with recall at 1 % FPR and inference cost (French)
+- [Realistic evaluation](docs/evaluation.md): precision at 1 % and 0.1 % phishing prevalence, and how the decision threshold is chosen (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History
