@@ -1,0 +1,461 @@
+{
+  "metadata": {
+    "generated_at": "2026-10-25T12:04:38+00:00",
+    "audit_version": "1.1.0",
+    "python": "3.12.10",
+    "pandas": "3.0.6",
+    "scikit_learn": "1.9.1",
+    "dataset_sha256": "c2dad5a271736f12b5e5a2f0c6c9ab1f9ff08f1c6fd457f741cba654ac1847d5",
+    "external_dataset": {
+      "name": "UCI PhiUSIIL",
+      "sha256": "a236549cd369cd80bd478ff8e1779cbf44c58d5c3f79f7a51a1adbed7d06d1c6",
+      "rows_raw": 235795,
+      "invalid_url": 0,
+      "unknown_suffix": 0,
+      "label_conflicts": 1,
+      "duplicates_removed": 897,
+      "rows": 234896
+    }
+  },
+  "config": {
+    "ngram_range": [
+      3,
+      5
+    ],
+    "min_df": 3,
+    "max_features": 262144,
+    "C": 1.0,
+    "test_size": 0.2,
+    "seed": 42,
+    "min_source_rows": 200
+  },
+  "dataset": {
+    "rows": 140042,
+    "rows_by_label": {
+      "0": 112045,
+      "1": 27997
+    },
+    "rows_by_source": {
+      "tranco": 100713,
+      "phishtank": 26773,
+      "commoncrawl": 11332,
+      "openphish": 1218,
+      "urlhaus": 6
+    }
+  },
+  "structure": {
+    "by_label": {
+      "0": {
+        "is_http": 0.0057,
+        "has_path": 0.0965,
+        "has_query": 0.0261,
+        "has_fragment": 0.0,
+        "has_userinfo": 0.0,
+        "has_port": 0.0001,
+        "is_ip": 0.0,
+        "has_www": 0.0263,
+        "has_subdomain": 0.0888,
+        "subdomain_depth_median": 0.0,
+        "path_depth_median": 0.0,
+        "url_length_median": 22.0,
+        "rows": 112045
+      },
+      "1": {
+        "is_http": 0.1557,
+        "has_path": 0.4378,
+        "has_query": 0.0856,
+        "has_fragment": 0.0148,
+        "has_userinfo": 0.0003,
+        "has_port": 0.0021,
+        "is_ip": 0.0018,
+        "has_www": 0.0531,
+        "has_subdomain": 0.3013,
+        "subdomain_depth_median": 0.0,
+        "path_depth_median": 0.0,
+        "url_length_median": 41.0,
+        "rows": 27997
+      }
+    },
+    "by_source": {
+      "commoncrawl": {
+        "is_http": 0.0565,
+        "has_path": 0.9542,
+        "has_query": 0.2584,
+        "has_fragment": 0.0001,
+        "has_userinfo": 0.0,
+        "has_port": 0.0011,
+        "is_ip": 0.0,
+        "has_www": 0.2571,
+        "has_subdomain": 0.8778,
+        "subdomain_depth_median": 1.0,
+        "path_depth_median": 2.0,
+        "url_length_median": 68.0,
+        "rows": 11332
+      },
+      "openphish": {
+        "is_http": 0.3998,
+        "has_path": 0.2767,
+        "has_query": 0.0698,
+        "has_fragment": 0.009,
+        "has_userinfo": 0.0,
+        "has_port": 0.0,
+        "is_ip": 0.0,
+        "has_www": 0.1248,
+        "has_subdomain": 0.2504,
+        "subdomain_depth_median": 0.0,
+        "path_depth_median": 0.0,
+        "url_length_median": 45.0,
+        "rows": 1218
+      },
+      "phishtank": {
+        "is_http": 0.1446,
+        "has_path": 0.445,
+        "has_query": 0.0864,
+        "has_fragment": 0.0151,
+        "has_userinfo": 0.0003,
+        "has_port": 0.0022,
+        "is_ip": 0.0019,
+        "has_www": 0.0499,
+        "has_subdomain": 0.3037,
+        "subdomain_depth_median": 0.0,
+        "path_depth_median": 0.0,
+        "url_length_median": 41.0,
+        "rows": 26773
+      },
+      "tranco": {
+        "is_http": 0.0,
+        "has_path": 0.0,
+        "has_query": 0.0,
+        "has_fragment": 0.0,
+        "has_userinfo": 0.0,
+        "has_port": 0.0,
+        "is_ip": 0.0,
+        "has_www": 0.0003,
+        "has_subdomain": 0.0,
+        "subdomain_depth_median": 0.0,
+        "path_depth_median": 0.0,
+        "url_length_median": 21.0,
+        "rows": 100713
+      },
+      "urlhaus": {
+        "is_http": 0.1667,
+        "has_path": 1.0,
+        "has_query": 0.0,
+        "has_fragment": 0.0,
+        "has_userinfo": 0.0,
+        "has_port": 0.0,
+        "is_ip": 0.0,
+        "has_www": 0.0,
+        "has_subdomain": 0.1667,
+        "subdomain_depth_median": 0.0,
+        "path_depth_median": 1.0,
+        "url_length_median": 50.0,
+        "rows": 6
+      }
+    },
+    "trait_auc": {
+      "is_http": 0.575,
+      "has_path": 0.6707,
+      "has_query": 0.5297,
+      "has_fragment": 0.5074,
+      "has_userinfo": 0.5001,
+      "has_port": 0.501,
+      "is_ip": 0.5009,
+      "has_www": 0.5134,
+      "has_subdomain": 0.6063,
+      "subdomain_depth": 0.6057,
+      "path_depth": 0.6594,
+      "url_length": 0.8856
+    },
+    "representation_ablation": {
+      "url": {
+        "train_rows": 112154,
+        "test_rows": 27888,
+        "test_phishing_rate": 0.1931,
+        "pr_auc": 0.9572,
+        "roc_auc": 0.9815,
+        "recall_at_fpr_1pct": 0.8366,
+        "recall_at_fpr_0_1pct": 0.7083
+      },
+      "origin": {
+        "train_rows": 112154,
+        "test_rows": 27888,
+        "test_phishing_rate": 0.1931,
+        "pr_auc": 0.9169,
+        "roc_auc": 0.9556,
+        "recall_at_fpr_1pct": 0.7664,
+        "recall_at_fpr_0_1pct": 0.6513
+      },
+      "host": {
+        "train_rows": 112154,
+        "test_rows": 27888,
+        "test_phishing_rate": 0.1931,
+        "pr_auc": 0.8992,
+        "roc_auc": 0.9482,
+        "recall_at_fpr_1pct": 0.7425,
+        "recall_at_fpr_0_1pct": 0.6229
+      },
+      "registered_domain": {
+        "train_rows": 112154,
+        "test_rows": 27888,
+        "test_phishing_rate": 0.1931,
+        "pr_auc": 0.8747,
+        "roc_auc": 0.9288,
+        "recall_at_fpr_1pct": 0.72,
+        "recall_at_fpr_0_1pct": 0.559
+      },
+      "structural_traits_only": {
+        "train_rows": 112154,
+        "test_rows": 27888,
+        "test_phishing_rate": 0.1931,
+        "pr_auc": 0.6447,
+        "roc_auc": 0.9086,
+        "recall_at_fpr_1pct": 0.0765,
+        "recall_at_fpr_0_1pct": 0.0082
+      }
+    },
+    "internal_page_fpr": {
+      "max_fpr_on_homepages": 0.01,
+      "test_rows": {
+        "homepages": 20226,
+        "internal_pages": 2276,
+        "phishing": 5386
+      },
+      "without_internal_pages": {
+        "train_rows": 103098,
+        "threshold": 0.442739,
+        "fpr_homepages": 0.01,
+        "fpr_internal_pages": 0.8924,
+        "recall_phishing": 0.9276,
+        "fpr_internal_pages_at_0_5": 0.8673,
+        "recall_phishing_at_0_5": 0.9203
+      },
+      "with_internal_pages": {
+        "train_rows": 112154,
+        "threshold": 0.450267,
+        "fpr_homepages": 0.01,
+        "fpr_internal_pages": 0.268,
+        "recall_phishing": 0.9075,
+        "fpr_internal_pages_at_0_5": 0.2232,
+        "recall_phishing_at_0_5": 0.8949
+      }
+    }
+  },
+  "source": {
+    "cross_source": {
+      "openphish": {
+        "with_target": {
+          "train_rows": 117168,
+          "test_rows": 22609,
+          "test_phishing_rate": 0.0111,
+          "pr_auc": 0.81,
+          "roc_auc": 0.9842,
+          "recall_at_fpr_1pct": 0.852,
+          "recall_at_fpr_0_1pct": 0.66
+        },
+        "without_target": {
+          "train_rows": 116203,
+          "test_rows": 22609,
+          "test_phishing_rate": 0.0111,
+          "pr_auc": 0.7695,
+          "roc_auc": 0.9775,
+          "recall_at_fpr_1pct": 0.808,
+          "recall_at_fpr_0_1pct": 0.62
+        },
+        "pr_auc_drop": 0.0405
+      },
+      "phishtank": {
+        "with_target": {
+          "train_rows": 112007,
+          "test_rows": 27753,
+          "test_phishing_rate": 0.1944,
+          "pr_auc": 0.9536,
+          "roc_auc": 0.9791,
+          "recall_at_fpr_1pct": 0.8385,
+          "recall_at_fpr_0_1pct": 0.6758
+        },
+        "without_target": {
+          "train_rows": 90804,
+          "test_rows": 27753,
+          "test_phishing_rate": 0.1944,
+          "pr_auc": 0.8015,
+          "roc_auc": 0.9242,
+          "recall_at_fpr_1pct": 0.4162,
+          "recall_at_fpr_0_1pct": 0.2021
+        },
+        "pr_auc_drop": 0.1521
+      }
+    },
+    "fingerprint_roc_auc": {
+      "openphish": 0.9389
+    }
+  },
+  "domain": {
+    "shared_between_labels": {
+      "domains": 517,
+      "rows": 1867,
+      "phishing_rows": 1350
+    },
+    "leakage": {
+      "random": {
+        "test_rows_with_domain_in_train": 4265,
+        "test_share_with_domain_in_train": 0.1523,
+        "train_rows": 112033,
+        "test_rows": 28009,
+        "test_phishing_rate": 0.1999,
+        "pr_auc": 0.9651,
+        "roc_auc": 0.9852,
+        "recall_at_fpr_1pct": 0.8546,
+        "recall_at_fpr_0_1pct": 0.7123
+      },
+      "grouped_by_domain": {
+        "test_rows_with_domain_in_train": 0,
+        "test_share_with_domain_in_train": 0.0,
+        "train_rows": 112154,
+        "test_rows": 27888,
+        "test_phishing_rate": 0.1931,
+        "pr_auc": 0.9572,
+        "roc_auc": 0.9815,
+        "recall_at_fpr_1pct": 0.8366,
+        "recall_at_fpr_0_1pct": 0.7083
+      }
+    }
+  },
+  "time": {
+    "by_source": {
+      "commoncrawl": {
+        "rows": 11332,
+        "min": "2026-10-05T10:57:10+00:00",
+        "median": "2026-10-11T15:35:16+00:00",
+        "max": "2026-10-18T04:44:53+00:00"
+      },
+      "openphish": {
+        "rows": 1218,
+        "min": "2026-10-21T20:17:40+00:00",
+        "median": "2026-10-23T09:12:07+00:00",
+        "max": "2026-10-25T10:19:34+00:00"
+      },
+      "phishtank": {
+        "rows": 26773,
+        "min": "2011-02-18T10:50:32+00:00",
+        "median": "2026-05-16T22:51:31+00:00",
+        "max": "2026-10-25T09:06:23+00:00"
+      },
+      "tranco": {
+        "rows": 100713,
+        "min": "2026-10-22T09:15:54+00:00",
+        "median": "2026-10-22T09:15:54+00:00",
+        "max": "2026-10-25T10:19:34+00:00"
+      },
+      "urlhaus": {
+        "rows": 6,
+        "min": "2026-09-30T15:14:39+00:00",
+        "median": "2026-10-19T15:32:10+00:00",
+        "max": "2026-10-21T12:05:10+00:00"
+      }
+    },
+    "naive_temporal_split": {
+      "train": {
+        "rows": 98029,
+        "phishing_rate": 0.2732
+      },
+      "validation": {
+        "rows": 21007,
+        "phishing_rate": 0.0019
+      },
+      "test": {
+        "rows": 21006,
+        "phishing_rate": 0.0561
+      }
+    },
+    "phishing_share_before_first_legitimate": 0.8856
+  },
+  "external_validation": {
+    "rows": 234896,
+    "rows_excluded_known_domain": 31944,
+    "structure_by_label": {
+      "0": {
+        "is_http": 0.0,
+        "has_path": 0.0,
+        "has_query": 0.0,
+        "has_fragment": 0.0,
+        "has_userinfo": 0.0,
+        "has_port": 0.0,
+        "is_ip": 0.0,
+        "has_www": 1.0,
+        "has_subdomain": 0.9997,
+        "subdomain_depth_median": 1.0,
+        "path_depth_median": 0.0,
+        "url_length_median": 28.0,
+        "rows": 134849
+      },
+      "1": {
+        "is_http": 0.5148,
+        "has_path": 0.2726,
+        "has_query": 0.0607,
+        "has_fragment": 0.0083,
+        "has_userinfo": 0.0001,
+        "has_port": 0.0003,
+        "is_ip": 0.006,
+        "has_www": 0.4159,
+        "has_subdomain": 0.6387,
+        "subdomain_depth_median": 1.0,
+        "path_depth_median": 0.0,
+        "url_length_median": 34.0,
+        "rows": 100047
+      }
+    },
+    "trait_auc": {
+      "is_http": 0.7574,
+      "has_path": 0.6363,
+      "has_query": 0.5303,
+      "has_fragment": 0.5042,
+      "has_userinfo": 0.5,
+      "has_port": 0.5001,
+      "is_ip": 0.503,
+      "has_www": 0.208,
+      "has_subdomain": 0.3195,
+      "subdomain_depth": 0.3772,
+      "path_depth": 0.6363,
+      "url_length": 0.7105
+    },
+    "probe": {
+      "url": {
+        "train_rows": 140042,
+        "test_rows": 202952,
+        "test_phishing_rate": 0.4036,
+        "pr_auc": 0.9687,
+        "roc_auc": 0.9618,
+        "recall_at_fpr_1pct": 0.8795,
+        "recall_at_fpr_0_1pct": 0.7907
+      },
+      "origin": {
+        "train_rows": 140042,
+        "test_rows": 202952,
+        "test_phishing_rate": 0.4036,
+        "pr_auc": 0.9209,
+        "roc_auc": 0.8995,
+        "recall_at_fpr_1pct": 0.7444,
+        "recall_at_fpr_0_1pct": 0.5623
+      },
+      "host": {
+        "train_rows": 140042,
+        "test_rows": 202952,
+        "test_phishing_rate": 0.4036,
+        "pr_auc": 0.7005,
+        "roc_auc": 0.6889,
+        "recall_at_fpr_1pct": 0.2775,
+        "recall_at_fpr_0_1pct": 0.2005
+      },
+      "registered_domain": {
+        "train_rows": 140042,
+        "test_rows": 202952,
+        "test_phishing_rate": 0.4036,
+        "pr_auc": 0.7765,
+        "roc_auc": 0.7782,
+        "recall_at_fpr_1pct": 0.3705,
+        "recall_at_fpr_0_1pct": 0.2726
+      }
+    }
+  }
+}

@@ -20,7 +20,7 @@ La logique est dans `src/phishguard/data/urls.py`, testée par `tests/test_url_d
 | :--- | :--- | :--- |
 | `url` | `str` | URL normalisée (voir plus bas), unique dans le jeu |
 | `label` | `int8` | `1` = phishing, `0` = légitime |
-| `source` | `str` | `phishtank`, `openphish`, `urlhaus` ou `tranco` : la source qui a vu l'URL en premier |
+| `source` | `str` | `phishtank`, `openphish`, `urlhaus`, `tranco` ou `commoncrawl` : la source qui a vu l'URL en premier |
 | `first_seen` | `datetime64[UTC]` | Plus ancienne observation connue (voir plus bas) |
 | `host` | `str` | Hôte en minuscules, sans port, sans identifiants, sans point final |
 | `registered_domain` | `str` | Domaine enregistré (clé de regroupement pour le split de l'étape 1.4) |
@@ -43,8 +43,9 @@ Le fichier est trié par `first_seen` puis `url`.
    - une adresse IP est son propre domaine ;
    - un hôte sans suffixe connu (`localhost`) est écarté.
 6. **Conflits d'étiquette.** Une URL vue à la fois comme phishing et comme légitime (par exemple une page d'accueil du top Tranco signalée à PhishTank) est retirée.
-7. **Doublons exacts** fusionnés : on garde la plus ancienne observation et sa source. À date égale : PhishTank (validé par des humains), puis OpenPhish, URLhaus, Tranco.
-8. **Limite par domaine.** Au plus 5 URLs par couple (étiquette, `registered_domain`), tirées au hasard avec une graine fixe (`--seed`, défaut 42). Le tirage aléatoire préserve la répartition dans le temps ; la limite par étiquette évite qu'un domaine qui héberge du phishing (`sites.google.com`) fasse disparaître sa page d'accueil légitime.
+7. **Doublons exacts** fusionnés : on garde la plus ancienne observation et sa source. À date égale : PhishTank (validé par des humains), puis OpenPhish, URLhaus, Tranco, Common Crawl.
+8. **Pages crawlées des domaines qui hébergent du phishing** retirées : sur `google.com` (Sites, Forms), une page interne peut avoir été déposée par n'importe qui. La page d'accueil Tranco du domaine reste.
+9. **Limite par domaine.** Au plus 5 URLs par couple (étiquette, `registered_domain`), tirées au hasard avec une graine fixe (`--seed`, défaut 42). Le tirage aléatoire préserve la répartition dans le temps ; la limite par étiquette évite qu'un domaine qui héberge du phishing (`sites.google.com`) fasse disparaître sa page d'accueil légitime.
 
 ## Sens de `first_seen`
 
@@ -52,34 +53,40 @@ Le fichier est trié par `first_seen` puis `url`.
 | :--- | :--- |
 | PhishTank | `submission_time` (date du signalement) |
 | URLhaus | `dateadded` |
+| Common Crawl | Date de capture par le robot de Common Crawl |
 | OpenPhish, Tranco | Date de la collecte (`collected_at` du manifeste) |
 
 Une date annoncée par la source est bornée par la date de collecte, et la remplace si elle est absente ou illisible.
 
-## Instantané du 24/10/2026
+## Instantané du 25/10/2026
 
-Huit collectes (21 au 24/10), 810 822 observations :
+Neuf collectes des flux (21 au 25/10) et une collecte Common Crawl (crawl `CC-MAIN-2026-43`, 5 000 premiers domaines Tranco), soit 981 633 observations :
 
 | Étape | URLs |
 | :--- | ---: |
-| URLhaus écartées (malware) | 240 955 |
-| URLs invalides | 49 |
-| Suffixe inconnu | 8 |
+| URLhaus écartées (malware) | 324 899 |
+| URLs invalides | 56 |
+| Suffixe inconnu | 10 |
 | URLs en conflit d'étiquette | 7 |
-| Doublons fusionnés | 649 375 |
-| Retirées par la limite par domaine | 32 718 |
-| **Jeu final** | **128 588** |
+| Doublons fusionnés | 805 569 |
+| Pages Common Crawl d'un domaine qui héberge du phishing | 492 |
+| Retirées par la limite par domaine | 35 365 |
+| **Jeu final** | **140 042** |
 
-- 27 733 phishing (`1`) et 100 855 légitimes (`0`) ;
-- 123 670 domaines enregistrés distincts, dont 515 présents dans les deux classes ;
-- les plus gros domaines limités sont des hébergeurs ou raccourcisseurs : `google.com` (6 114 URLs de phishing avant limite), `qrco.de`, `q-r.to`, `ead.me`, `weebly.com`, `bit.ly`.
+- 27 997 phishing (`1`) et 112 045 légitimes (`0`), dont 100 713 pages d'accueil Tranco et 11 332 pages internes Common Crawl ;
+- 124 195 domaines enregistrés distincts, dont 517 présents dans les deux classes ;
+- les plus gros domaines limités sont des hébergeurs ou raccourcisseurs : `google.com` (plus de 6 000 URLs de phishing avant limite), `qrco.de`, `q-r.to`, `ead.me`, `weebly.com`, `bit.ly`.
+
+Instantané précédent (24/10, sans Common Crawl) : 128 588 URLs, dont 100 855 légitimes, toutes des pages d'accueil.
 
 Les chiffres à jour sont dans `docs/metrics/urls_dataset.json`.
 
 ## Limites connues (à traiter aux étapes 1.3 et 1.4)
 
-- **Biais de chemin et de schéma.** Tranco ne fournit que des domaines, matérialisés en `https://<domaine>/` : aucune URL légitime n'a de chemin ni de `http`.
-- **Dates non comparables entre classes.** Les dates PhishTank remontent à 2011 alors que les domaines Tranco datent tous de nos collectes. Un split temporel naïf mettrait presque tout le légitime dans le test : il faudra découper par classe, ou sur la date de collecte.
+Ces limites sont mesurées, chiffres à l'appui, dans [`data-bias.md`](data-bias.md) (étape 1.3).
+
+- **Biais de chemin et de schéma.** Tranco ne fournit que des domaines, matérialisés en `https://<domaine>/`. Les pages internes Common Crawl (étape 1.3 bis) atténuent le biais sans le supprimer : elles ne forment que 10 % du légitime, et presque toutes sont en `https`.
+- **Dates non comparables entre classes.** Les dates PhishTank remontent à 2011 alors que les domaines Tranco datent tous de nos collectes. Un split temporel naïf mettrait presque tout le légitime dans le test : l'étape 1.4 découpe donc chaque source séparément ([`split.md`](split.md)).
 - **Limite par domaine et plateformes.** Avec 5 URLs au plus, le phishing hébergé sur `google.com` (Sites, Forms) ou derrière un raccourcisseur est fortement sous-représenté par rapport à la réalité.
-- **Domaines partagés entre classes.** Les 515 domaines présents dans les deux classes devront rester d'un seul côté du split groupé.
+- **Domaines partagés entre classes.** Les 515 domaines présents dans les deux classes restent d'un seul côté du split groupé ([`split.md`](split.md)).
 - **Reproductibilité.** La liste des suffixes vient de l'instantané embarqué dans `tldextract` : sa version figure dans le rapport, la changer peut modifier `registered_domain`.

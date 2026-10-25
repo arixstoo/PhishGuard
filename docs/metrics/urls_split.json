@@ -1,0 +1,223 @@
+{
+  "metadata": {
+    "generated_at": "2026-10-25T16:15:29+00:00",
+    "split_version": "1.0.0",
+    "python": "3.12.10",
+    "pandas": "3.0.6",
+    "dataset_sha256": "c2dad5a271736f12b5e5a2f0c6c9ab1f9ff08f1c6fd457f741cba654ac1847d5"
+  },
+  "params": {
+    "fractions": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "strata": [
+      "label",
+      "source"
+    ],
+    "group": "registered_domain",
+    "time": "first_seen",
+    "seed": 42
+  },
+  "rows": 140042,
+  "domains": 124195,
+  "domains_in_several_blocks": 0,
+  "blocks": {
+    "train": {
+      "rows": 98031,
+      "share": 0.7,
+      "domains": 87023,
+      "phishing_rate": 0.1999,
+      "legitimate_with_path": 7754,
+      "by_source": {
+        "tranco": 70499,
+        "phishtank": 18741,
+        "commoncrawl": 7933,
+        "openphish": 853,
+        "urlhaus": 5
+      },
+      "first_seen": {
+        "min": "2011-02-18T10:50:32+00:00",
+        "max": "2026-10-25T10:19:34+00:00"
+      }
+    },
+    "validation": {
+      "rows": 21007,
+      "share": 0.15,
+      "domains": 18551,
+      "phishing_rate": 0.1998,
+      "legitimate_with_path": 1659,
+      "by_source": {
+        "tranco": 15107,
+        "phishtank": 4016,
+        "commoncrawl": 1702,
+        "openphish": 182
+      },
+      "first_seen": {
+        "min": "2026-07-12T17:46:37+00:00",
+        "max": "2026-10-25T10:19:34+00:00"
+      }
+    },
+    "test": {
+      "rows": 21004,
+      "share": 0.15,
+      "domains": 18621,
+      "phishing_rate": 0.2,
+      "legitimate_with_path": 1623,
+      "by_source": {
+        "tranco": 15107,
+        "phishtank": 4016,
+        "commoncrawl": 1697,
+        "openphish": 183,
+        "urlhaus": 1
+      },
+      "first_seen": {
+        "min": "2024-06-07T14:44:58+00:00",
+        "max": "2026-10-25T10:19:34+00:00"
+      }
+    }
+  },
+  "strata": {
+    "1/urlhaus": {
+      "rows": 6,
+      "target_rows": {
+        "train": 4,
+        "validation": 1,
+        "test": 1
+      },
+      "rows_per_block": {
+        "train": 5,
+        "validation": 0,
+        "test": 1
+      },
+      "rows_placed_by_smaller_stratum": 0,
+      "first_seen": {
+        "train": {
+          "min": "2026-09-30T15:14:39+00:00",
+          "max": "2026-10-19T15:32:12+00:00"
+        },
+        "validation": {
+          "min": null,
+          "max": null
+        },
+        "test": {
+          "min": "2026-10-21T12:05:10+00:00",
+          "max": "2026-10-21T12:05:10+00:00"
+        }
+      }
+    },
+    "1/openphish": {
+      "rows": 1218,
+      "target_rows": {
+        "train": 853,
+        "validation": 182,
+        "test": 183
+      },
+      "rows_per_block": {
+        "train": 853,
+        "validation": 182,
+        "test": 183
+      },
+      "rows_placed_by_smaller_stratum": 0,
+      "first_seen": {
+        "train": {
+          "min": "2026-10-21T20:17:40+00:00",
+          "max": "2026-10-25T10:19:34+00:00"
+        },
+        "validation": {
+          "min": "2026-10-24T08:45:11+00:00",
+          "max": "2026-10-25T10:19:34+00:00"
+        },
+        "test": {
+          "min": "2026-10-25T10:19:34+00:00",
+          "max": "2026-10-25T10:19:34+00:00"
+        }
+      }
+    },
+    "0/commoncrawl": {
+      "rows": 11332,
+      "target_rows": {
+        "train": 7932,
+        "validation": 1700,
+        "test": 1700
+      },
+      "rows_per_block": {
+        "train": 7933,
+        "validation": 1702,
+        "test": 1697
+      },
+      "rows_placed_by_smaller_stratum": 0,
+      "first_seen": {
+        "train": {
+          "min": "2026-10-05T10:57:10+00:00",
+          "max": "2026-10-18T04:44:53+00:00"
+        },
+        "validation": {
+          "min": "2026-10-09T23:24:03+00:00",
+          "max": "2026-10-18T04:15:23+00:00"
+        },
+        "test": {
+          "min": "2026-10-11T23:59:29+00:00",
+          "max": "2026-10-18T04:44:40+00:00"
+        }
+      }
+    },
+    "1/phishtank": {
+      "rows": 26773,
+      "target_rows": {
+        "train": 18741,
+        "validation": 4016,
+        "test": 4016
+      },
+      "rows_per_block": {
+        "train": 18741,
+        "validation": 4016,
+        "test": 4016
+      },
+      "rows_placed_by_smaller_stratum": 83,
+      "first_seen": {
+        "train": {
+          "min": "2011-02-18T10:50:32+00:00",
+          "max": "2026-10-24T05:28:47+00:00"
+        },
+        "validation": {
+          "min": "2026-07-12T17:46:37+00:00",
+          "max": "2026-10-25T07:59:16+00:00"
+        },
+        "test": {
+          "min": "2024-06-07T14:44:58+00:00",
+          "max": "2026-10-25T09:06:23+00:00"
+        }
+      }
+    },
+    "0/tranco": {
+      "rows": 100713,
+      "target_rows": {
+        "train": 70499,
+        "validation": 15107,
+        "test": 15107
+      },
+      "rows_per_block": {
+        "train": 70499,
+        "validation": 15107,
+        "test": 15107
+      },
+      "rows_placed_by_smaller_stratum": 2980,
+      "first_seen": {
+        "train": {
+          "min": "2026-10-22T09:15:54+00:00",
+          "max": "2026-10-25T10:19:34+00:00"
+        },
+        "validation": {
+          "min": "2026-10-22T09:15:54+00:00",
+          "max": "2026-10-22T09:15:54+00:00"
+        },
+        "test": {
+          "min": "2026-10-22T09:15:54+00:00",
+          "max": "2026-10-25T10:19:34+00:00"
+        }
+      }
+    }
+  }
+}

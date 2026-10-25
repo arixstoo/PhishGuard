@@ -34,7 +34,7 @@ from phishguard.data.urls import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-BUILDER_VERSION = "1.0.0"
+BUILDER_VERSION = "1.1.0"
 
 logger = logging.getLogger("build_dataset")
 
