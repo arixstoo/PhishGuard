@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from phishguard.data import urls as U
@@ -131,6 +131,7 @@ def test_normalize_url_does_not_treat_query_scheme_as_scheme():
 
 
 @given(st.from_regex(r"https?://[a-zA-Z0-9.-]{1,20}\.[a-z]{2,5}(/[a-zA-Z0-9._~%-]*){0,3}"))
+@example("http://0.aa%A")  # urlsplit garde la casse après « % » dans l'hôte
 def test_normalize_url_is_idempotent(raw):
     first = U.normalize_url(raw)
     if first is not None:

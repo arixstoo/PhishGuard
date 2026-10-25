@@ -308,7 +308,8 @@ def normalize_url(raw: str) -> tuple[str, str] | None:
         return None
 
     scheme = parts.scheme.lower()
-    host = (parts.hostname or "").rstrip(".")
+    # ``hostname`` garde la casse après un ``%`` (zone IPv6) : on la retire comme pour l'URL.
+    host = (parts.hostname or "").rstrip(".").lower()
     if scheme not in ALLOWED_SCHEMES or not host:
         return None
 
