@@ -27,6 +27,7 @@ __all__ = [
     "DatasetIntegrityError",
     "deduplicate",
     "download_sms_collection",
+    "load_fr_ar_sms",
     "load_sms_collection",
     "sha256_bytes",
 ]
@@ -96,3 +97,23 @@ def deduplicate(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
         "conflicting_texts": len(conflicting),
     }
     return clean, stats
+
+
+FR_AR_COLUMNS = ("lang", "label", "theme", "text")
+
+
+def load_fr_ar_sms(path: Path) -> pd.DataFrame:
+    """Charge le petit jeu complémentaire français / arabe (``datasets/sms_fr_ar.csv``).
+
+    Colonnes : ``lang`` (``fr`` ou ``ar``), ``label`` (1 = smishing), ``theme``, ``text``.
+    Voir ``docs/sms-fr-ar.md`` pour sa constitution et ses limites.
+    """
+    df = pd.read_csv(path, dtype={"label": int}, keep_default_na=False, encoding="utf-8")
+    missing = set(FR_AR_COLUMNS) - set(df.columns)
+    if missing:
+        raise ValueError(f"colonnes manquantes : {sorted(missing)}")
+    if not set(df["label"]) <= {0, 1}:
+        raise ValueError("label doit valoir 0 ou 1")
+    if (df["text"].str.strip().str.len() == 0).any():
+        raise ValueError("message vide détecté")
+    return df[list(FR_AR_COLUMNS)]

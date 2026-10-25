@@ -31,6 +31,10 @@ dev = [
     "pre-commit",
     "hypothesis",
 ]
+# Étape 1.9, approche optionnelle : embeddings multilingues (télécharge ~470 Mo de modèle).
+embeddings = [
+    "sentence-transformers",
+]
 
 [project.urls]
 Repository = "https://github.com/arixstoo/PhishGuard"
