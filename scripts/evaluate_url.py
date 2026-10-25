@@ -175,7 +175,9 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         (
             f"Précision attendue quand {fr_percent(p1, 0)} ou {fr_percent(p01)} des URLs sont "
-            "du phishing (formule ; entre crochets, intervalle bootstrap à 95 %). « Pages "
+            "du phishing (formule ; entre crochets, intervalle bootstrap à 95 % : dispersion "
+            "de la précision sur un échantillon de cette taille, rappel et FPR fixés, voir "
+            "[Méthode](#prévalence-et-précision)). « Pages "
             "internes » : même calcul si le légitime visité ne contenait que des pages "
             "internes, plus proche de la navigation réelle."
         ),
@@ -270,6 +272,8 @@ def render_markdown(report: dict[str, Any]) -> str:
 def _bucket(name: str) -> str:
     if name == "unranked":
         return "hors liste"
+    if name.endswith("+"):
+        return f"au-delà de {fr_int(int(name[:-1]) - 1)}"
     low, high = (int(v) for v in name.split("-"))
     return f"{fr_int(low)} à {fr_int(high)}"
 

@@ -95,21 +95,26 @@ def test_per_source():
 
 def test_tranco_ranks_and_popularity(tmp_path):
     path = tmp_path / "tranco_abc_100_x.csv"
-    path.write_text("1,google.com\n2,Example.org\n5000,rare.net\nbad,line\n", encoding="utf-8")
+    path.write_text(
+        "1,google.com\n2,Example.org\n5000,rare.net\n250000,tail.org\nbad,line\n", encoding="utf-8"
+    )
     ranks = E.read_tranco_ranks(path)
-    assert ranks == {"google.com": 1, "example.org": 2, "rare.net": 5000}
+    assert ranks == {"google.com": 1, "example.org": 2, "rare.net": 5000, "tail.org": 250000}
     assert E.latest_tranco_file(tmp_path) == path
     assert E.latest_tranco_file(tmp_path / "absent") is None
 
     report = E.popularity_report(
-        ["google.com", "example.org", "rare.net", "unknown.io"],
-        np.array([0.1, 0.9, 0.9, 0.1]),
+        ["google.com", "example.org", "rare.net", "tail.org", "unknown.io"],
+        np.array([0.1, 0.9, 0.9, 0.9, 0.1]),
         0.5,
         ranks,
     )
     assert report["1-1000"]["n"] == 2 and report["1-1000"]["flagged"] == 1
     assert report["1001-10000"]["rate"] == 1.0
+    assert report["100001+"]["n"] == 1 and report["100001+"]["flagged"] == 1
     assert report["unranked"]["n"] == 1
+    # Chaque domaine est compté dans une seule tranche, y compris au-delà de 100 000.
+    assert sum(bucket["n"] for bucket in report.values()) == 5
     with pytest.raises(ValueError):
         E.popularity_report(["a.com"], np.array([0.1, 0.2]), 0.5, ranks)
 

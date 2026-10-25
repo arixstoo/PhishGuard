@@ -15,7 +15,7 @@ Deux calculs, qui doivent concorder :
   mesurés ;
 - :func:`resample_at_prevalence` : on simule des échantillons à la prévalence voulue en
   tirant avec remise dans le légitime et dans le phishing du test (bootstrap), ce qui
-  donne aussi un intervalle de confiance. Tirer ``k`` URLs avec remise parmi des URLs dont
+  donne aussi la dispersion de la précision sur un échantillon de cette taille. Tirer ``k`` URLs avec remise parmi des URLs dont
   une part ``r`` est signalée revient à tirer une loi binomiale ``B(k, r)`` : c'est ce qui
   est fait, sans matérialiser les échantillons.
 """
@@ -91,6 +91,11 @@ def resample_at_prevalence(
     ``k`` URLs de phishing, avec ``k`` choisi pour atteindre la prévalence. Retourne la
     précision moyenne et l'intervalle à 95 % (percentiles 2,5 et 97,5) ; un échantillon
     sans aucune alerte est ignoré (précision indéfinie).
+
+    Le rappel et le FPR sont fixés à leurs valeurs observées : l'intervalle décrit la
+    dispersion de la précision mesurée sur **un échantillon de cette taille** (souvent
+    quelques dizaines d'URLs de phishing seulement), pas l'incertitude sur le rappel et le
+    FPR du modèle, que donne :func:`wilson_interval`.
     """
     _check_rate("prevalence", prevalence, open_interval=True)
     y = np.asarray(y_true).astype(int)

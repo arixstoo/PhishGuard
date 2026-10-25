@@ -39,8 +39,14 @@ from phishguard.evaluation.prevalence import (
 # du phishing. En dessous, l'utilisateur apprend à ignorer les alertes.
 DECISION_PREVALENCE = 0.01
 DECISION_MIN_PRECISION = 0.5
-# Rangs Tranco : du plus visité au moins visité.
-RANK_BUCKETS: tuple[tuple[int, int], ...] = ((1, 1_000), (1_001, 10_000), (10_001, 100_000))
+# Rangs Tranco : du plus visité au moins visité. ``None`` : sans borne haute, pour que les
+# listes de plus de 100 000 domaines (top 1 million) soient comptées en entier.
+RANK_BUCKETS: tuple[tuple[int, int | None], ...] = (
+    (1, 1_000),
+    (1_001, 10_000),
+    (10_001, 100_000),
+    (100_001, None),
+)
 
 
 def _rate(flagged: np.ndarray) -> dict[str, Any]:
@@ -184,12 +190,14 @@ def popularity_report(
     scores: np.ndarray,
     threshold: float,
     ranks: Mapping[str, int],
-    buckets: Sequence[tuple[int, int]] = RANK_BUCKETS,
+    buckets: Sequence[tuple[int, int | None]] = RANK_BUCKETS,
 ) -> dict[str, dict[str, Any]]:
     """FPR des pages d'accueil légitimes par tranche de rang Tranco.
 
     Mesure le biais de popularité de l'étape 1.5 : si le modèle a appris « nom court =
-    légitime », le FPR monte quand on descend dans le classement.
+    légitime », le FPR monte quand on descend dans le classement. Chaque domaine tombe
+    dans exactement une tranche : celle de son rang, ou ``unranked`` s'il est absent de
+    la liste. Une tranche sans borne haute s'écrit ``"100001+"``.
     """
     domains = list(domains)
     if len(domains) != len(scores):
@@ -198,7 +206,7 @@ def popularity_report(
     flagged = np.asarray(scores) > threshold
     report = {}
     for low, high in buckets:
-        mask = (rank >= low) & (rank <= high)
-        report[f"{low}-{high}"] = _rate(flagged[mask])
+        mask = rank >= low if high is None else (rank >= low) & (rank <= high)
+        report[f"{low}+" if high is None else f"{low}-{high}"] = _rate(flagged[mask])
     report["unranked"] = _rate(flagged[rank == 0])
     return report

@@ -70,7 +70,30 @@ Mesuré sur un seul fil, comme en production (une requête = une URL) :
 ## Résultats
 
 <!-- generated:train-url:start -->
-*Pas encore généré : lancez `make train-url` sur le jeu de l'étape 1.4. Ce bloc est réécrit à chaque exécution.*
+*Généré par `scripts/train_url.py` le 2026-10-25 (jeu `0310e419432c`, validation : 21 007 URLs dont 4 198 de phishing). Chiffres complets : [`metrics/url_v1.json`](metrics/url_v1.json).*
+
+### Les trois modèles (jeu de features « sans schéma »)
+
+| Modèle | Hyperparamètres retenus | PR-AUC | R@1%FPR | R@0,1%FPR | FPR pages internes | Latence p50 (1 URL) | Modèle seul (lot) | Taille |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Régression logistique | `C=0.1` | 0,893 | 0,681 | 0,353 | 6,4 % | 2,09 ms | 0,2 µs | 2 Kio |
+| Random Forest | `n_estimators=300, max_depth=None, min_samples_leaf=5` | 0,954 | 0,831 | 0,661 | 6,2 % | 13,18 ms | 21,7 µs | 14 072 Kio |
+| LightGBM **(retenu)** | `n_estimators=300, learning_rate=0.05, num_leaves=63, min_child_samples=20` | 0,956 | 0,841 | 0,671 | 6,8 % | 1,80 ms | 18,4 µs | 852 Kio |
+
+### Rappel à 1 % FPR selon le jeu de features
+
+Meilleur réglage de chaque modèle pour chaque jeu ; entre parenthèses, le taux de faux positifs sur les pages internes légitimes au même seuil.
+
+| Jeu de features | Régression logistique | Random Forest | LightGBM |
+| :--- | ---: | ---: | ---: |
+| toutes | 0,686 (6,9 %) | 0,852 (6,3 %) | 0,861 (7,0 %) |
+| sans schéma | 0,681 (6,4 %) | 0,831 (6,2 %) | 0,841 (6,8 %) |
+| sans chemin | 0,691 (5,1 %) | 0,846 (6,3 %) | 0,852 (7,3 %) |
+| sans longueur | 0,654 (6,1 %) | 0,825 (7,0 %) | 0,831 (6,6 %) |
+| sans chemin ni longueur | 0,659 (3,9 %) | 0,721 (4,6 %) | 0,727 (3,5 %) |
+| hôte seul | 0,650 (2,9 %) | 0,703 (4,0 %) | 0,706 (4,3 %) |
+
+**Modèle retenu** : LightGBM (`n_estimators=300, learning_rate=0.05, num_leaves=63, min_child_samples=20`), 25 features. Seuil à 1 % FPR sur la validation : 0,6960 ; à 0,1 % : 0,9719.
 <!-- generated:train-url:end -->
 
 ## Lecture

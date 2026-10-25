@@ -36,7 +36,12 @@ fausses alertes par vraie alerte = (1 − p) × F / (p × R)
 
 À 0,1 % de prévalence, un FPR de 1 % et un rappel de 85 % donnent une précision de 7,8 % : **douze fausses alertes pour une vraie**. Le FPR doit descendre sous le millième pour qu'une alerte sur deux soit vraie.
 
-Le plan demande de **rééchantillonner** le test à 1 % et 0,1 % de phishing. Le script le fait par bootstrap : chaque échantillon garde autant d'URLs légitimes que le test et le nombre d'URLs de phishing qui donne la prévalence voulue (environ 170 à 1 %, 17 à 0,1 %), tirées avec remise. 2 000 échantillons donnent la précision moyenne, qui concorde avec la formule, et surtout un **intervalle de confiance** : à 0,1 %, 17 URLs de phishing par échantillon rendent la précision très instable, et il faut le voir.
+Le plan demande de **rééchantillonner** le test à 1 % et 0,1 % de phishing. Le script le fait par bootstrap : chaque échantillon garde autant d'URLs légitimes que le test et le nombre d'URLs de phishing qui donne la prévalence voulue (environ 170 à 1 %, 17 à 0,1 %), tirées avec remise. 2 000 échantillons donnent la précision moyenne, qui concorde avec la formule, et un **intervalle à 95 %** (percentiles 2,5 et 97,5).
+
+Ce que mesure cet intervalle, précisément : le rappel et le FPR sont **fixés** à leurs valeurs mesurées sur le test, et l'on regarde comment varie la précision **d'un échantillon de cette taille** à cette prévalence. C'est la dispersion qu'on observerait en évaluant le modèle sur un seul jeu qui aurait le légitime du test et 17 URLs de phishing : à 0,1 %, une ou deux détections de plus ou de moins font bouger la précision de plusieurs points, et il faut le voir. Ce n'est **pas** un intervalle de confiance sur la précision du modèle en conditions réelles :
+
+- l'incertitude sur le rappel et le FPR eux-mêmes est donnée par les intervalles de Wilson du tableau des seuils (sur tout le phishing du test, donc bien plus serrée côté rappel) ;
+- l'incertitude due au choix des sources et à la prévalence supposée n'est mesurée nulle part (voir [Limites](#limites)).
 
 ### Deux légitimes différents
 
@@ -64,7 +69,61 @@ Ce que la règle implique pour la suite :
 ## Résultats
 
 <!-- generated:evaluate-url:start -->
-*Pas encore généré : lancez `make evaluate-url` après `make train-url`. Ce bloc est réécrit à chaque exécution.*
+*Généré par `scripts/evaluate_url.py` le 2026-10-25 (modèle `70b7838415a3`, jeu `0310e419432c`, test : 21 004 URLs dont 4 200 de phishing, soit 20,0 %). Chiffres complets : [`metrics/url_v1_test.json`](metrics/url_v1_test.json).*
+
+### Sur le test, sans seuil
+
+| PR-AUC | ROC-AUC | R@1%FPR | R@0,1%FPR |
+| ---: | ---: | ---: | ---: |
+| 0,939 | 0,975 | 0,755 | 0,582 |
+
+### Seuils réglés sur la validation, mesurés sur le test
+
+Intervalles de confiance à 95 % (Wilson) entre crochets.
+
+| Seuil | Score | Rappel | FPR légitime | FPR pages d'accueil | FPR pages internes |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| FPR 5 % (val.) | 0,1892 | 90,7 % [89,8–91,6 %] | 5,60 % [5,26–5,96 %] | 1,82 % [1,62–2,05 %] | 39,2 % [36,9–41,6 %] |
+| FPR 2 % (val.) | 0,5063 | 82,9 % [81,7–84,0 %] | 2,54 % [2,31–2,79 %] | 0,78 % [0,65–0,93 %] | 18,2 % [16,4–20,1 %] |
+| FPR 1 % (val.) | 0,6960 | 78,9 % [77,6–80,1 %] | 1,43 % [1,26–1,62 %] | 0,44 % [0,35–0,56 %] | 10,2 % [8,8–11,7 %] |
+| FPR 0,5 % (val.) **(décision)** | 0,8263 | 73,9 % [72,6–75,2 %] | 0,83 % [0,71–0,98 %] | 0,21 % [0,15–0,30 %] | 6,4 % [5,3–7,6 %] |
+| FPR 0,2 % (val.) | 0,9342 | 65,0 % [63,5–66,4 %] | 0,27 % [0,21–0,36 %] | 0,05 % [0,03–0,10 %] | 2,2 % [1,6–3,1 %] |
+| FPR 0,1 % (val.) | 0,9719 | 58,1 % [56,6–59,6 %] | 0,09 % [0,05–0,15 %] | 0,03 % [0,01–0,07 %] | 0,6 % [0,4–1,2 %] |
+
+### Prévalence et précision
+
+Précision attendue quand 1 % ou 0,1 % des URLs sont du phishing (formule ; entre crochets, intervalle bootstrap à 95 % : dispersion de la précision sur un échantillon de cette taille, rappel et FPR fixés, voir [Méthode](#prévalence-et-précision)). « Pages internes » : même calcul si le légitime visité ne contenait que des pages internes, plus proche de la navigation réelle.
+
+| Seuil | Précision au test (20 %) | Précision à 1 % | Précision à 0,1 % | Fausses alertes par vraie à 0,1 % | Précision à 1 %, pages internes | Fausses par vraie à 0,1 %, pages internes |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| FPR 5 % (val.) | 80,2 % | 14,1 % [13,2–15,1 %] | 1,6 % [1,3–1,8 %] | 61,7 | 2,3 % | 432,2 |
+| FPR 2 % (val.) | 89,1 % | 24,8 % [22,7–27,0 %] | 3,2 % [2,4–3,9 %] | 30,6 | 4,4 % | 219,5 |
+| FPR 1 % (val.) | 93,2 % | 35,8 % [32,6–39,5 %] | 5,2 % [3,9–6,6 %] | 18,1 | 7,2 % | 129,1 |
+| FPR 0,5 % (val.) **(décision)** | 95,7 % | 47,3 % [42,8–52,4 %] | 8,2 % [5,8–10,8 %] | 11,3 | 10,5 % | 86,0 |
+| FPR 0,2 % (val.) | 98,3 % | 70,6 % [64,3–77,0 %] | 19,2 % [12,5–27,7 %] | 4,2 | 22,7 % | 34,4 |
+| FPR 0,1 % (val.) | 99,4 % | 86,8 % [80,5–92,5 %] | 39,5 % [25,9–58,3 %] | 1,5 | 47,5 % | 11,1 |
+
+**Seuil de décision** : `fpr_0_5pct` (score > 0,8263). Règle appliquée sur la validation : meilleur rappel parmi les seuils dont la précision attendue à 1 % de phishing atteint 50 % ; précision attendue sur la validation : 61,8 %, rappel 80,1 %.
+
+### Par source (seuil de décision)
+
+| Source | Classe | Mesure | URLs | Valeur |
+| :--- | :--- | :--- | ---: | ---: |
+| `commoncrawl` | légitime | FPR | 1 697 | 6,4 % [5,3–7,6 %] |
+| `openphish` | phishing | rappel | 183 | 78,1 % [71,6–83,5 %] |
+| `phishtank` | phishing | rappel | 4 016 | 73,7 % [72,3–75,1 %] |
+| `tranco` | légitime | FPR | 15 107 | 0,2 % [0,2–0,3 %] |
+| `urlhaus` | phishing | rappel | 1 | 0,0 % [0,0–79,3 %] |
+
+### Pages d'accueil légitimes par rang Tranco (seuil de décision)
+
+| Rang Tranco | URLs | FPR |
+| :--- | ---: | ---: |
+| 1 à 1 000 | 110 | 0,91 % [0,16–4,97 %] |
+| 1 001 à 10 000 | 1 249 | 0,00 % [0,00–0,31 %] |
+| 10 001 à 100 000 | 13 557 | 0,22 % [0,16–0,32 %] |
+| au-delà de 100 000 | 0 | n/d |
+| hors liste | 191 | 0,52 % [0,09–2,91 %] |
 <!-- generated:evaluate-url:end -->
 
 ## Lecture
@@ -79,7 +138,7 @@ Ce que la règle implique pour la suite :
 
 ## Limites
 
-- Le bootstrap mesure l'incertitude due à la taille du test, pas celle due au choix des sources : un test tiré des mêmes flux que l'entraînement reste optimiste face à des campagnes nouvelles.
+- L'intervalle bootstrap mesure la variabilité d'un petit échantillon à la prévalence voulue, à rappel et FPR fixés (voir [Prévalence et précision](#prévalence-et-précision)) ; il ne couvre ni l'erreur sur le rappel et le FPR mesurés, ni le choix des sources : un test tiré des mêmes flux que l'entraînement reste optimiste face à des campagnes nouvelles.
 - La prévalence réelle n'est pas mesurée, elle est supposée (1 % et 0,1 %). Elle varie selon le canal (navigation, email, SMS) et selon l'utilisateur.
 - Les pages internes viennent des 5 000 domaines les plus visités (Common Crawl, étape 1.3 bis) : les sites peu connus, sur lesquels le modèle se trompe probablement plus, n'y sont pas.
 - Le FPR par rang Tranco demande la liste Tranco brute (`data/raw/tranco_*.csv`), non versionnée.
