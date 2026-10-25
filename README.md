@@ -76,6 +76,7 @@ python scripts/split_dataset.py         # temporal, domain-grouped train/validat
 python scripts/evaluate_url_features.py # measure what each URL feature adds, on validation (docs/url-features.md)
 make train-url                          # train and compare logistic regression, Random Forest, LightGBM (docs/url-models.md)
 make evaluate-url                       # test-set evaluation at realistic phishing prevalence (docs/evaluation.md)
+make errors-url                         # classify the 50 worst false positives and false negatives (docs/error-analysis-url.md)
 ```
 
 Run `make help` to list the available commands.
@@ -115,6 +116,7 @@ data/, models/    generated locally, never committed
 - [URL features](docs/url-features.md): 26 offline lexical features (typosquatting, homographs, TLD, shorteners) and what each one adds (French)
 - [URL models](docs/url-models.md): logistic regression vs Random Forest vs LightGBM, tuned on validation, with recall at 1 % FPR and inference cost (French)
 - [Realistic evaluation](docs/evaluation.md): precision at 1 % and 0.1 % phishing prevalence, and how the decision threshold is chosen (French)
+- [URL error analysis](docs/error-analysis-url.md): the worst errors by category, and why static features alone cannot catch phishing on trusted platforms (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History
