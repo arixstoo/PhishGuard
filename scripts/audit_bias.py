@@ -27,7 +27,7 @@ from phishguard.data.integrity import sha256_file
 from phishguard.data.phiusiil import download_phiusiil, load_phiusiil
 
 ROOT = Path(__file__).resolve().parents[1]
-AUDIT_VERSION = "1.0.0"
+AUDIT_VERSION = "1.1.0"
 
 logger = logging.getLogger("audit_bias")
 
@@ -73,6 +73,20 @@ def print_summary(report: dict) -> None:
     print(header)
     for name, metrics in structure["representation_ablation"].items():
         print(_row(name, metrics))
+
+    internal = structure.get("internal_page_fpr")
+    if internal:
+        print(
+            "\nPages internes légitimes signalées à tort "
+            f"(seuil : {internal['max_fpr_on_homepages']:.0%} FPR sur les pages d'accueil) :"
+        )
+        print(f"  {'':<24}{'FPR accueil':>12}{'FPR internes':>14}{'rappel':>9}")
+        for name in ("without_internal_pages", "with_internal_pages"):
+            m = internal[name]
+            print(
+                f"  {name:<24}{m['fpr_homepages']:>12.3f}"
+                f"{m['fpr_internal_pages']:>14.3f}{m['recall_phishing']:>9.3f}"
+            )
 
     print("\nFuite par domaine :")
     print(header)

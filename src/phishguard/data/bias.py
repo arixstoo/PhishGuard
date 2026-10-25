@@ -363,6 +363,78 @@ def source_fingerprint(df: pd.DataFrame, cfg: ProbeConfig, level: str = "url") -
 
 
 # --------------------------------------------------------------------------- #
+# Faux positifs sur les pages internes légitimes
+# --------------------------------------------------------------------------- #
+
+HOMEPAGE_SOURCE = "tranco"
+INTERNAL_PAGE_SOURCE = "commoncrawl"
+
+
+def _flagged(scores: np.ndarray, threshold: float) -> float:
+    return round(float(np.mean(scores > threshold)), 4)
+
+
+def internal_page_fpr(
+    df: pd.DataFrame, cfg: ProbeConfig, level: str = "url", max_fpr: float = 0.01
+) -> dict[str, Any]:
+    """Faux positifs du modèle sonde sur des pages internes légitimes jamais vues.
+
+    Un même split groupé par domaine départage deux modèles :
+
+    - ``without_internal_pages`` : entraîné sans les pages Common Crawl, comme avant
+      l'étape 1.3 bis (le légitime n'est fait que de pages d'accueil) ;
+    - ``with_internal_pages`` : entraîné avec.
+
+    Le seuil de chaque modèle est réglé pour ``max_fpr`` faux positifs sur les pages
+    d'accueil du test, c'est-à-dire tel qu'on l'aurait validé avec Tranco seul. On mesure
+    alors la part des pages internes du test signalées à tort, et le rappel du phishing.
+    Un modèle qui a appris « chemin = phishing » signale beaucoup plus de pages internes
+    que de pages d'accueil.
+    """
+    if not (df["source"] == INTERNAL_PAGE_SOURCE).any():
+        return {}
+    train_pos, test_pos = grouped_holdout(df, cfg.test_size, cfg.seed)
+    train, test = df.iloc[train_pos], df.iloc[test_pos]
+    groups = {
+        "homepages": test[
+            (test["label"] == LABEL_LEGITIMATE) & (test["source"] == HOMEPAGE_SOURCE)
+        ],
+        "internal_pages": test[test["source"] == INTERNAL_PAGE_SOURCE],
+        "phishing": test[test["label"] == LABEL_PHISHING],
+    }
+    if any(group.empty for group in groups.values()):
+        logger.warning("pages internes : une catégorie est absente du test, mesure ignorée")
+        return {}
+
+    trainings = {
+        "without_internal_pages": train[train["source"] != INTERNAL_PAGE_SOURCE],
+        "with_internal_pages": train,
+    }
+    results: dict[str, Any] = {
+        "max_fpr_on_homepages": max_fpr,
+        "test_rows": {name: len(group) for name, group in groups.items()},
+    }
+    for name, training in trainings.items():
+        logger.info("pages internes : modèle %s", name)
+        model = make_probe(cfg).fit(represent(training, level), training["label"])
+        scores = {
+            key: model.predict_proba(represent(group, level))[:, 1] for key, group in groups.items()
+        }
+        # Plus petit seuil laissant au plus max_fpr des pages d'accueil au-dessus.
+        threshold = float(np.quantile(scores["homepages"], 1 - max_fpr, method="higher"))
+        results[name] = {
+            "train_rows": len(training),
+            "threshold": round(threshold, 6),
+            "fpr_homepages": _flagged(scores["homepages"], threshold),
+            "fpr_internal_pages": _flagged(scores["internal_pages"], threshold),
+            "recall_phishing": _flagged(scores["phishing"], threshold),
+            "fpr_internal_pages_at_0_5": _flagged(scores["internal_pages"], 0.5),
+            "recall_phishing_at_0_5": _flagged(scores["phishing"], 0.5),
+        }
+    return results
+
+
+# --------------------------------------------------------------------------- #
 # Temps et domaines partagés
 # --------------------------------------------------------------------------- #
 
@@ -480,6 +552,7 @@ def audit(
             "by_source": structure_profile(df, "source"),
             "trait_auc": trait_auc(df),
             "representation_ablation": representation_ablation(df, cfg),
+            "internal_page_fpr": internal_page_fpr(df, cfg),
         },
         "source": {
             "cross_source": cross_source(df, cfg),

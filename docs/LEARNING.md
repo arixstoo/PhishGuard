@@ -54,6 +54,6 @@ Trois lignes par étape : ce que j'ai fait, ce que j'ai appris, ce qui m'a bloqu
 - **Bloqué** : le remède du plan (PhiUSIIL) ne marche pas, ses URLs légitimes n'ont aucun chemin. Leçon : vérifier une source avant de la croire, même quand le plan la recommande.
 
 ### 1.3 bis — Source d'URLs légitimes avec chemin (Common Crawl)
-- **Fait** : `scripts/fetch_commoncrawl.py` échantillonne des pages internes des domaines du top Tranco dans l'index de Common Crawl.
-- **Appris** : à compléter après l'audit.
-- **Bloqué** : à compléter après l'audit.
+- **Fait** : `scripts/fetch_commoncrawl.py` échantillonne des pages internes des 5 000 premiers domaines Tranco dans l'index de Common Crawl (13 934 URLs, 11 332 gardées dans le jeu). L'audit mesure désormais le taux de faux positifs sur des pages internes légitimes jamais vues.
+- **Appris** : un modèle validé à « 1 % de faux positifs » sur des pages d'accueil en signalait **89 %** sur des liens profonds légitimes ; avec les pages internes, 27 %. La métrique hors ligne n'a de sens que si le légitime du test ressemble à celui du terrain. Retirer un raccourci fait apparaître d'autres biais : sans « chemin = phishing », le biais de source est plus fort qu'on ne le croyait (rappel sans PhishTank 0,84 → 0,42).
+- **Bloqué** : un premier essai sans limite de débit a fait bloquer mon adresse IP par le CDN de Common Crawl (HTTP 403), et le script affichait quand même « OK ». Corrigé : 2 requêtes par seconde, arrêt au premier 403, manifeste honnête sur une collecte partielle. Une coupure réseau a ensuite interrompu une collecte : le garde-fou a gardé le préfixe propre, et la relance (même graine) a retrouvé 99,6 % des mêmes URLs.

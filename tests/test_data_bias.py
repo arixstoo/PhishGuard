@@ -237,6 +237,42 @@ def test_external_validation_excludes_known_domains():
     assert result["trait_auc"]["has_path"] == 1.0
 
 
+def with_internal_pages(df: pd.DataFrame, seed: int = 3) -> pd.DataFrame:
+    """Ajoute deux pages internes Common Crawl à chaque domaine légitime.
+
+    Leur chemin a la même forme que celui du phishing de :func:`biased_dataset` : seul
+    le domaine les distingue.
+    """
+    rng = np.random.default_rng(seed)
+    entries = [
+        (
+            f"https://{domain}/{random_word(rng, 5)}/{page}.php?id={k}",
+            0,
+            "commoncrawl",
+            "2026-10-10",
+        )
+        for k, domain in enumerate(df.loc[df["label"] == 0, "registered_domain"])
+        for page in ("verify", "account")
+    ]
+    return pd.concat([df, rows(*entries)], ignore_index=True)
+
+
+def test_internal_page_fpr_shows_the_path_shortcut_and_its_fix():
+    result = B.internal_page_fpr(with_internal_pages(biased_dataset(200)), FAST)
+
+    before, after = result["without_internal_pages"], result["with_internal_pages"]
+    assert before["train_rows"] < after["train_rows"]
+    assert before["fpr_homepages"] <= 0.01 and after["fpr_homepages"] <= 0.01
+    # Sans pages internes, la sonde a appris « chemin = phishing ».
+    assert before["fpr_internal_pages"] > 0.5
+    assert after["fpr_internal_pages"] < before["fpr_internal_pages"] / 2
+    assert result["test_rows"]["internal_pages"] > 0
+
+
+def test_internal_page_fpr_is_skipped_without_internal_pages():
+    assert B.internal_page_fpr(biased_dataset(50), FAST) == {}
+
+
 def test_audit_requires_both_labels():
     df = biased_dataset(10)
     with pytest.raises(ValueError, match="deux classes"):

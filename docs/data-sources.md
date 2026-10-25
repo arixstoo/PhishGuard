@@ -127,13 +127,14 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
 - **Garde-fous** :
   - **premier parti uniquement** : une URL n'est gardée que si son domaine enregistré est exactement le domaine Tranco. Sous `amazonaws.com` ou `github.io`, un sous-domaine appartient à un client de la plateforme (`ec2-….compute.amazonaws.com`), pas à l'entreprise ;
   - **domaines qui hébergent du phishing** : `build_dataset.py` retire les pages crawlées d'un domaine qui apparaît aussi côté phishing (`google.com` via Sites et Forms, `weebly.com`…) ; sa page d'accueil Tranco est conservée ;
+  - **débit limité** : 2 requêtes par seconde par défaut (`--rate`, 5 au plus), soit ≈ 45 minutes pour 5 000 domaines. Un premier essai sans limite a fait bloquer l'adresse IP par le CDN (HTTP 403) après ≈ 2 300 domaines. La collecte s'arrête désormais au premier 403 et ne garde que les domaines traités avant l'incident, avec `success: false` et la raison (`aborted`) dans le manifeste ;
   - réponses vérifiées (statut 206, taille exacte), noms de fichiers d'index contrôlés, tailles bornées, `cluster.idx` écrit sous un nom temporaire puis renommé.
 - **Reproductibilité** : le manifeste note l'identifiant du crawl, l'empreinte de `cluster.idx`, la liste Tranco utilisée (nom et SHA-256), la graine et les paramètres. Mêmes entrées, même graine : mêmes URLs.
 - **`first_seen`** : date de capture par Common Crawl.
 - **Limites** :
   - une page crawlée n'est pas garantie saine : un site légitime peut être compromis et héberger du spam. Le risque est réduit en se limitant au haut du classement Tranco, pas éliminé ;
   - les pages d'un domaine viennent d'un ou deux blocs de l'index, donc d'une même zone alphabétique de chemins : la diversité est bonne entre domaines, moindre au sein d'un domaine ;
-  - un domaine technique (CDN, API) n'a souvent aucune page HTML : environ 45 % des domaines du top ne donnent rien.
+  - un domaine technique (CDN, API) n'a souvent aucune page HTML : environ 40 % des domaines du top ne donnent rien (3 042 domaines sur 5 000 ont donné des URLs le 25/10/2026).
 - **Fréquence** : un crawl par mois environ. Relancer le script après chaque nouveau crawl (`https://index.commoncrawl.org/collinfo.json`).
 
 ---
