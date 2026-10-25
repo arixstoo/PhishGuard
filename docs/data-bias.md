@@ -128,10 +128,11 @@ Lecture :
 
 1. **Chaque évaluation de modèle URL rapportera l'ablation par représentation** (étapes 1.6 et 1.7), avec le domaine enregistré comme référence. Un gain qui n'existe que sur l'URL complète est considéré comme suspect.
 2. **Chaque évaluation rapportera aussi le FPR sur les pages internes légitimes**, séparément du FPR global, et le seuil de décision sera réglé sur un légitime qui contient des pages internes (étape 1.4 : les pages internes doivent être présentes dans la validation).
-3. **Les features URL seront rangées en groupes** (hôte, chemin, schéma, longueur) à l'étape 1.5, pour entraîner et comparer les modèles avec et sans les groupes de chemin et de longueur, comme le demande le plan.
-4. **La longueur sera mesurée par composant** (longueur de l'hôte, longueur du chemin) plutôt que sur l'URL entière, qui mélange les deux.
+3. **Les features URL sont rangées en groupes** (hôte, chemin, schéma, longueur), pour entraîner et comparer les modèles avec et sans les groupes de chemin et de longueur, comme le demande le plan. **Fait (étape 1.5)**, voir [`url-features.md`](url-features.md#groupes-retirés) : au seuil de 1 % de faux positifs, les pages internes en reçoivent encore 6,9 % (0,3 % pour les pages d'accueil) ; sans chemin ni longueur, 4,1 %, pour 13 points de rappel perdus.
+4. **La longueur est mesurée par composant** (hôte, chemin, requête) plutôt que sur l'URL entière, qui mélange les deux. **Fait (étape 1.5).**
 5. **Remède de données : fait (étape 1.3 bis)**, avec des pages internes réelles tirées de l'index de Common Crawl, premier parti uniquement, et sans les domaines qui hébergent du phishing (`sites.google.com`, `weebly.com`…). Pistes pour aller plus loin : interroger davantage de domaines Tranco (`--tranco-top`) et plus de pages par domaine, pour rapprocher la part de pages internes de celle du phishing avec chemin (44 %).
 6. **Écarté** : fabriquer des URLs légitimes avec chemin en ajoutant `www.` ou un chemin inventé aux domaines Tranco. On remplacerait un raccourci par un autre, puisque ces chemins ne ressembleraient à rien de réel.
+7. **Deux raccourcis trouvés à l'étape 1.5** ([`url-features.md`](url-features.md#lecture)) : le schéma des URLs Tranco est fabriqué (`https://<domaine>/`, donc 100 % https contre 94 % pour les pages Common Crawl), et la longueur de l'hôte reflète la popularité (les domaines du haut de Tranco sont courts). À traiter : récupérer le schéma réel des pages d'accueil, et tester sur des domaines moins visités (étape 1.7).
 
 ## 2. Biais de source
 
