@@ -1,0 +1,233 @@
+{
+  "metadata": {
+    "generated_at": "2026-10-24T17:58:04+00:00",
+    "builder_version": "1.0.0",
+    "python": "3.12.10",
+    "pandas": "3.0.6",
+    "tldextract": "5.4.0",
+    "params": {
+      "max_per_domain": 5,
+      "seed": 42,
+      "psl_private_domains": true,
+      "urlhaus_phishing_tags": [
+        "pdf-link-phishing",
+        "phishing"
+      ],
+      "sha256_verified": true
+    }
+  },
+  "inputs": [
+    {
+      "source": "openphish",
+      "file": "openphish_20261021_201740.txt",
+      "sha256": null,
+      "collected_at": "2026-10-21T20:17:40+00:00",
+      "rows": 300
+    },
+    {
+      "source": "openphish",
+      "file": "openphish_20261021_203815.txt",
+      "sha256": "73bace25a8781f52c8e0f6fb05733bc1c8ae7eac26be6ceae46f68fe16ea0398",
+      "collected_at": "2026-10-21T20:38:15+00:00",
+      "rows": 300
+    },
+    {
+      "source": "phishtank",
+      "file": "phishtank_20261021_203815.csv",
+      "sha256": "267b7eed9b361ee933bd084ef9cb4a826b282ad442ae9ae77ec4ec4b8d990273",
+      "collected_at": "2026-10-21T20:38:15+00:00",
+      "rows": 59001
+    },
+    {
+      "source": "openphish",
+      "file": "openphish_20261021_205153.txt",
+      "sha256": "73bace25a8781f52c8e0f6fb05733bc1c8ae7eac26be6ceae46f68fe16ea0398",
+      "collected_at": "2026-10-21T20:51:53+00:00",
+      "rows": 300
+    },
+    {
+      "source": "phishtank",
+      "file": "phishtank_20261021_205153.csv",
+      "sha256": "267b7eed9b361ee933bd084ef9cb4a826b282ad442ae9ae77ec4ec4b8d990273",
+      "collected_at": "2026-10-21T20:51:53+00:00",
+      "rows": 59001
+    },
+    {
+      "source": "openphish",
+      "file": "openphish_20261021_205431.txt",
+      "sha256": "73bace25a8781f52c8e0f6fb05733bc1c8ae7eac26be6ceae46f68fe16ea0398",
+      "collected_at": "2026-10-21T20:54:31+00:00",
+      "rows": 300
+    },
+    {
+      "source": "phishtank",
+      "file": "phishtank_20261021_205431.csv",
+      "sha256": "267b7eed9b361ee933bd084ef9cb4a826b282ad442ae9ae77ec4ec4b8d990273",
+      "collected_at": "2026-10-21T20:54:31+00:00",
+      "rows": 59001
+    },
+    {
+      "source": "urlhaus",
+      "file": "urlhaus_recent_20261021_205431.csv",
+      "sha256": "a9c740fc1bba788ad74a0380b9166b1f1e99e680225d3aa2ae3ade5604fd9979",
+      "collected_at": "2026-10-21T20:54:31+00:00",
+      "rows": 6
+    },
+    {
+      "source": "openphish",
+      "file": "openphish_20261022_091554.txt",
+      "sha256": "867c145bbe7597cf7292294d7ead967c10bfc1ea32647d299122659d1f1cd3c1",
+      "collected_at": "2026-10-22T09:15:54+00:00",
+      "rows": 300
+    },
+    {
+      "source": "phishtank",
+      "file": "phishtank_20261022_091554.csv",
+      "sha256": "7f977bc59bc56d31949c818afb8e12efdf30f1d3114dbaa4171764ad8f862d6c",
+      "collected_at": "2026-10-22T09:15:54+00:00",
+      "rows": 58707
+    },
+    {
+      "source": "tranco",
+      "file": "tranco_746PX_100000_20261022_091554.csv",
+      "sha256": "f1f8031d7f2602b5469751447ca299c54e05522b4097436f929a08631085e160",
+      "collected_at": "2026-10-22T09:15:54+00:00",
+      "rows": 100000
+    },
+    {
+      "source": "urlhaus",
+      "file": "urlhaus_recent_20261022_091554.csv",
+      "sha256": "6bb4bb5c52af4b12c6da48651ce97849dfe415a952061a234585ae42b3138e06",
+      "collected_at": "2026-10-22T09:15:54+00:00",
+      "rows": 6
+    },
+    {
+      "source": "openphish",
+      "file": "openphish_20261023_091207.txt",
+      "sha256": "ae5ddae9af4d09f29002c489796b2b55b5cba77a4bfe31c27aec61423cf06533",
+      "collected_at": "2026-10-23T09:12:07+00:00",
+      "rows": 300
+    },
+    {
+      "source": "phishtank",
+      "file": "phishtank_20261023_091207.csv",
+      "sha256": "1125651d7bb1231f6b05c108a02e314312ec2aa383282bd783a00a41cc83fb78",
+      "collected_at": "2026-10-23T09:12:07+00:00",
+      "rows": 57973
+    },
+    {
+      "source": "tranco",
+      "file": "tranco_56Z8N_100000_20261023_091207.csv",
+      "sha256": "37f4eb4ac0b0e9ec29de0d21ca9009ecfee0d5848e1b39a965e3fcdb4daf5fbb",
+      "collected_at": "2026-10-23T09:12:07+00:00",
+      "rows": 100000
+    },
+    {
+      "source": "urlhaus",
+      "file": "urlhaus_recent_20261023_091207.csv",
+      "sha256": "49ad8d4f9e7c6e0b1e43f37eadf3e4da911e9102bbb818addab4df10ebb294c2",
+      "collected_at": "2026-10-23T09:12:07+00:00",
+      "rows": 6
+    },
+    {
+      "source": "openphish",
+      "file": "openphish_20261024_084511.txt",
+      "sha256": "377052f845922a85bc62eace4b5d5f271c74fea1f2d9a9644523171c8d139cdb",
+      "collected_at": "2026-10-24T08:45:11+00:00",
+      "rows": 300
+    },
+    {
+      "source": "phishtank",
+      "file": "phishtank_20261024_084511.csv",
+      "sha256": "2c4647c66256e9217e19f765cf255b472972b3e5a6cf36a2ead6e271c4ebd00b",
+      "collected_at": "2026-10-24T08:45:11+00:00",
+      "rows": 57392
+    },
+    {
+      "source": "tranco",
+      "file": "tranco_262N9_100000_20261024_084511.csv",
+      "sha256": "3e1e1c150a932a22892752bd48dd4b9f70d7af2b7011e8266d03f782cb73221f",
+      "collected_at": "2026-10-24T08:45:11+00:00",
+      "rows": 100000
+    },
+    {
+      "source": "urlhaus",
+      "file": "urlhaus_recent_20261024_084511.csv",
+      "sha256": "2599d3fd0db84c766658bdd4f88c55f47721c95de7fc40e1570c6eddeeba6566",
+      "collected_at": "2026-10-24T08:45:11+00:00",
+      "rows": 6
+    },
+    {
+      "source": "openphish",
+      "file": "openphish_20261024_102632.txt",
+      "sha256": "377052f845922a85bc62eace4b5d5f271c74fea1f2d9a9644523171c8d139cdb",
+      "collected_at": "2026-10-24T10:26:32+00:00",
+      "rows": 300
+    },
+    {
+      "source": "phishtank",
+      "file": "phishtank_20261024_102632.csv",
+      "sha256": "cd697ba661c2736ec8a14958e48cea472a6f1e7236bc3b4363ba89bd97d5731d",
+      "collected_at": "2026-10-24T10:26:32+00:00",
+      "rows": 57317
+    },
+    {
+      "source": "tranco",
+      "file": "tranco_262N9_100000_20261024_102632.csv",
+      "sha256": "3e1e1c150a932a22892752bd48dd4b9f70d7af2b7011e8266d03f782cb73221f",
+      "collected_at": "2026-10-24T10:26:32+00:00",
+      "rows": 100000
+    },
+    {
+      "source": "urlhaus",
+      "file": "urlhaus_recent_20261024_102632.csv",
+      "sha256": "08fe2378dbed28a5306528a834bff100f5640b20d924fd5776a342283ea00cb0",
+      "collected_at": "2026-10-24T10:26:32+00:00",
+      "rows": 6
+    }
+  ],
+  "warnings": [
+    "manifest_20261021_203815.json : fichier absent tranco_262W9_100000_20261021_203815.csv",
+    "manifest_20261021_205153.json : fichier absent tranco_262W9_100000_20261021_205153.csv",
+    "manifest_20261021_205431.json : fichier absent tranco_GQG5K_100000_20261021_205431.csv"
+  ],
+  "steps": {
+    "observations": 810822,
+    "urlhaus_malware_excluded": 240955,
+    "invalid_url": 49,
+    "unknown_suffix": 8,
+    "label_conflicts": 7,
+    "duplicates_merged": 649375,
+    "capped_by_domain": 32718,
+    "rows": 128588
+  },
+  "dataset": {
+    "rows": 128588,
+    "rows_by_label": {
+      "0": 100855,
+      "1": 27733
+    },
+    "rows_by_source": {
+      "openphish": 1010,
+      "phishtank": 26717,
+      "tranco": 100855,
+      "urlhaus": 6
+    },
+    "registered_domains": 123670,
+    "registered_domains_by_label": {
+      "0": 100855,
+      "1": 23330
+    },
+    "registered_domains_in_both_labels": 515,
+    "first_seen_by_label": {
+      "0": {
+        "min": "2026-10-22T09:15:54+00:00",
+        "max": "2026-10-24T08:45:11+00:00"
+      },
+      "1": {
+        "min": "2011-02-18T10:50:32+00:00",
+        "max": "2026-10-24T08:45:11+00:00"
+      }
+    }
+  }
+}

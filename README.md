@@ -69,6 +69,8 @@ pip install -e '.[dev]'
 
 pytest --cov=phishguard                 # run the tests
 python scripts/train_sms_baseline.py    # download the dataset (SHA-256 verified) and reproduce the metrics
+python scripts/fetch_feeds.py           # collect timestamped phishing and legitimate feeds into data/raw/
+python scripts/build_dataset.py         # build data/processed/urls.parquet (normalized, deduplicated)
 ```
 
 ## Roadmap
