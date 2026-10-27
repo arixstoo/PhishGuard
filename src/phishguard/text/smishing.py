@@ -13,6 +13,7 @@ Fonctions pures, sans réseau ni état, comme les features URL : elles seront po
 l'identique dans l'extension et le bot (module 5). :data:`FEATURES` en est le contrat.
 
 Normalisation avant la recherche des mots-clés (:func:`normalize`) : minuscules (casefold),
+caractères de format invisibles retirés (espace sans chasse U+200B…),
 accents latins retirés (``sécurité`` → ``securite``), signes diacritiques arabes (tashkil,
 tatwil) retirés et formes de l'alif unifiées (``أ إ آ`` → ``ا``). Un mot-clé latin doit
 commencer un mot (``free`` dans ``freedom`` compte, dans ``carefree`` non) ; un mot-clé
@@ -175,6 +176,9 @@ FEATURE_NAMES: tuple[str, ...] = tuple(f.name for f in FEATURES)
 def normalize(text: str) -> str:
     """Forme de recherche des mots-clés (voir le module)."""
     text = unicodedata.normalize("NFKC", text).translate(_DIGITS).casefold()
+    # Les caractères de format invisibles (U+200B…, catégorie Cf) servent à couper les
+    # mots-clés pour tromper les filtres : « bloqu\u200bé » doit rester « bloque ».
+    text = "".join(c for c in text if unicodedata.category(c) != "Cf")
     text = _ARABIC_DIACRITICS_RE.sub("", text).translate(_ALIF_FORMS)
     # NFD sépare les accents (et la hamza portée par ؤ ou ئ) de leur lettre ; on les retire.
     return "".join(c for c in unicodedata.normalize("NFD", text) if not unicodedata.combining(c))

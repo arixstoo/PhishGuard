@@ -12,11 +12,10 @@ import unicodedata
 from pathlib import Path
 
 import httpx
-import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedGroupKFold
 
 from phishguard.data.integrity import DatasetIntegrityError, download_zip_member, sha256_bytes
+from phishguard.evaluation.splits import stratified_group_blocks
 
 UCI_ZIP_URL = "https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip"
 ZIP_MEMBER = "SMSSpamCollection"
@@ -134,24 +133,14 @@ def split_sms(
 
     Stratifié par étiquette et groupé par :func:`template_key` : aucun gabarit n'est
     dans deux blocs. Le corpus UCI n'a pas de date, le split ne peut pas être temporel.
-    Les messages sont répartis en 20 plis équilibrés (``StratifiedGroupKFold``), puis les
-    plis sont attribués aux blocs selon ``fractions`` (multiples de 5 %).
+    Voir :func:`phishguard.evaluation.splits.stratified_group_blocks` (parts multiples
+    de 5 %).
     """
-    n_folds = 20
-    counts = [round(f * n_folds) for f in fractions]
-    exact = all(np.isclose(f * n_folds, c) for f, c in zip(fractions, counts, strict=False))
-    if len(fractions) != len(SMS_SPLITS) or not exact or sum(counts) != n_folds or min(counts) < 1:
-        raise ValueError("fractions : trois parts positives, multiples de 0,05, de somme 1")
     if df.empty:
         raise ValueError("jeu vide")
-
-    groups = df["text"].map(template_key)
-    folds = np.empty(len(df), dtype=np.int64)
-    splitter = StratifiedGroupKFold(n_splits=n_folds, shuffle=True, random_state=seed)
-    for fold, (_, members) in enumerate(splitter.split(df["text"], df["label"], groups)):
-        folds[members] = fold
-    bounds = np.cumsum(counts)
-    codes = np.searchsorted(bounds, folds, side="right")
+    codes = stratified_group_blocks(
+        df["label"].to_numpy(), df["text"].map(template_key).to_numpy(), fractions, seed
+    )
     return pd.Series(
         pd.Categorical.from_codes(codes, categories=list(SMS_SPLITS)), index=df.index, name="split"
     )

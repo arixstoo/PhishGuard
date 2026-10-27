@@ -148,3 +148,10 @@ def test_features_never_use_the_network(monkeypatch):
 
     monkeypatch.setattr(socket.socket, "connect", refuse)
     S.SmishingFeatureExtractor().extract("http://example.com bit.ly/x 87121 £5")
+
+
+def test_invisible_format_characters_do_not_split_keywords():
+    # U+200B (espace sans chasse) et U+2060 glissés pour couper « urgent » et « compte ».
+    v = f("URG\u200bENT : votre com\u2060pte est bloqu\u200bé")
+    assert v["urgency_hits"] >= 2 and v["account_hits"] >= 1
+    assert S.normalize("a\u200bb\u202ec") == "abc"

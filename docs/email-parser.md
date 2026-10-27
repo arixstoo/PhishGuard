@@ -13,9 +13,9 @@ python -m pytest tests/test_email_parser.py
 from phishguard.email import parse_eml
 
 email = parse_eml(open("message.eml", "rb").read())
-email.auth.dmarc                 # "pass", "fail", "none"… ou "unknown"
-email.reply_to_differs           # Reply-To sur un autre domaine que From
-[l.text_domain for l in email.mismatched_links]   # domaines affichés qui ne sont pas la cible
+email.auth.dmarc  # "pass", "fail", "none"… ou "unknown"
+email.reply_to_differs  # Reply-To sur un autre domaine que From
+[l.text_domain for l in email.mismatched_links]  # domaines affichés qui ne sont pas la cible
 ```
 
 | Fichier | Rôle |

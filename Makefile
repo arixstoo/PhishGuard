@@ -10,7 +10,7 @@ SPLIT := data/processed/urls_split.parquet
 URL_MODEL := models/url_v1.joblib
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format test split train-url evaluate-url errors-url train-text email-samples
+.PHONY: help install lint format test split train-url evaluate-url errors-url train-text email-samples email-corpora train-email
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -57,3 +57,9 @@ train-text: ## Compare les modèles SMS (UCI + jeu FR/AR) et enregistre le meill
 
 email-samples: ## Télécharge des emails de phishing réels (Phishing Pot, non versionnés) (étape 1.10)
 	$(PYTHON) scripts/fetch_email_samples.py
+
+email-corpora: ## Télécharge SpamAssassin (légitime) et Nazario (phishing), non versionnés (étape 1.11)
+	$(PYTHON) scripts/fetch_email_corpora.py
+
+train-email: ## Compare règles et modèles du score email, enregistre le modèle (étape 1.11)
+	$(PYTHON) scripts/train_email.py
