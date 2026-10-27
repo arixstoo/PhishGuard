@@ -1,0 +1,2 @@
+# Emails de test : octets exacts (fins de ligne CRLF de la norme), jamais convertis.
+*.eml -text

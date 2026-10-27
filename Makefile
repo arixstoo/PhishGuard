@@ -10,7 +10,7 @@ SPLIT := data/processed/urls_split.parquet
 URL_MODEL := models/url_v1.joblib
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format test split train-url evaluate-url errors-url train-text
+.PHONY: help install lint format test split train-url evaluate-url errors-url train-text email-samples
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -54,3 +54,6 @@ $(URL_MODEL): $(SPLIT)
 
 train-text: ## Compare les modèles SMS (UCI + jeu FR/AR) et enregistre le meilleur (étape 1.9)
 	$(PYTHON) scripts/train_text.py
+
+email-samples: ## Télécharge des emails de phishing réels (Phishing Pot, non versionnés) (étape 1.10)
+	$(PYTHON) scripts/fetch_email_samples.py

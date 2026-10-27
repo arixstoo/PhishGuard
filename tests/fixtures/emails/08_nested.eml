@@ -1,0 +1,62 @@
+From: a@example.com
+Subject: imbrication
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="n0"
+
+--n0
+Content-Type: multipart/mixed; boundary="n1"
+
+--n1
+Content-Type: multipart/mixed; boundary="n2"
+
+--n2
+Content-Type: multipart/mixed; boundary="n3"
+
+--n3
+Content-Type: multipart/mixed; boundary="n4"
+
+--n4
+Content-Type: multipart/mixed; boundary="n5"
+
+--n5
+Content-Type: multipart/mixed; boundary="n6"
+
+--n6
+Content-Type: multipart/mixed; boundary="n7"
+
+--n7
+Content-Type: multipart/mixed; boundary="n8"
+
+--n8
+Content-Type: multipart/mixed; boundary="n9"
+
+--n9
+Content-Type: multipart/mixed; boundary="n10"
+
+--n10
+Content-Type: multipart/mixed; boundary="n11"
+
+--n11
+Content-Type: multipart/mixed; boundary="n12"
+
+--n12
+Content-Type: multipart/mixed; boundary="n13"
+
+--n13
+Content-Type: text/plain; charset="utf-8"
+
+fond
+--n13--
+--n12--
+--n11--
+--n10--
+--n9--
+--n8--
+--n7--
+--n6--
+--n5--
+--n4--
+--n3--
+--n2--
+--n1--
+--n0--

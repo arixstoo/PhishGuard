@@ -1,0 +1,25 @@
+Authentication-Results: mx.example.org; spf=pass smtp.mailfrom=shop.example.com;
+ dkim=pass header.d=shop.example.com; dmarc=pass header.from=shop.example.com
+Return-Path: <bounce@shop.example.com>
+From: Boutique Exemple <news@shop.example.com>
+To: client@example.org
+Subject: =?utf-8?q?Votre_commande_est_exp=C3=A9di=C3=A9e?=
+Date: Mon, 26 Oct 2026 09:00:00 +0100
+Message-ID: <0001@shop.example.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="b1"
+
+--b1
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Bonjour, votre commande 1234 est expédiée. Suivi : https://shop.example.com/suivi/1234
+--b1
+Content-Type: text/html; charset="utf-8"
+
+<html><body><div style="display:none">Votre colis arrive jeudi</div>
+<p>Bonjour, votre commande est expédiée.</p>
+<a href="https://shop.example.com/suivi/1234">Suivre ma commande</a>
+<a href="https://www.shop.example.com/compte">www.shop.example.com</a>
+</body></html>
+--b1--

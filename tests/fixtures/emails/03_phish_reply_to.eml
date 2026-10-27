@@ -1,0 +1,10 @@
+Authentication-Results: mx.example.org; spf=softfail smtp.mailfrom=mailer.example.net;
+ dkim=none; dmarc=none header.from=company.example.com
+Return-Path: <bounce@mailer.example.net>
+From: Directeur General <ceo@company.example.com>
+Reply-To: ceo.company.urgent@example.net
+To: compta@company.example.com
+Subject: Virement urgent et confidentiel
+Content-Type: text/plain; charset="utf-8"
+
+Bonjour, j'ai besoin d'un virement urgent aujourd'hui. Répondez-moi directement.

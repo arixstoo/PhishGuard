@@ -1,0 +1,10 @@
+Authentication-Results: mx.example.org; spf=fail smtp.mailfrom=paypa1-secure.example.net;
+ dkim=none; dmarc=fail (p=reject) header.from=paypa1-secure.example.net
+From: PayPal <service@paypa1-secure.example.net>
+To: victime@example.org
+Subject: Votre compte est limité
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<p>Votre compte PayPal est limité. Confirmez votre identité sous 24h :</p>
+<a href="http://paypa1-secure.example.net/login?id=7">https://www.paypal.com/signin</a>

@@ -78,6 +78,7 @@ make train-url                          # train and compare logistic regression,
 make evaluate-url                       # test-set evaluation at realistic phishing prevalence (docs/evaluation.md)
 make errors-url                         # classify the 50 worst false positives and false negatives (docs/error-analysis-url.md)
 make train-text                         # compare SMS text models, English corpus + French/Arabic set (docs/text-models.md)
+python scripts/parse_email.py msg.eml   # SPF/DKIM/DMARC, sender mismatches, deceptive links, risky attachments (docs/email-parser.md)
 ```
 
 Run `make help` to list the available commands.
@@ -119,6 +120,7 @@ data/, models/    generated locally, never committed
 - [Realistic evaluation](docs/evaluation.md): precision at 1 % and 0.1 % phishing prevalence, and how the decision threshold is chosen (French)
 - [URL error analysis](docs/error-analysis-url.md): the worst errors by category, and why static features alone cannot catch phishing on trusted platforms (French)
 - [SMS text models](docs/text-models.md): word vs character n-grams vs hand-written smishing features, and how they transfer to French and Arabic (French)
+- [Email parser](docs/email-parser.md): defensive `.eml` parsing, authentication results, deceptive links, hidden text and risky attachments (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History
