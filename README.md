@@ -77,6 +77,7 @@ python scripts/evaluate_url_features.py # measure what each URL feature adds, on
 make train-url                          # train and compare logistic regression, Random Forest, LightGBM (docs/url-models.md)
 make evaluate-url                       # test-set evaluation at realistic phishing prevalence (docs/evaluation.md)
 make errors-url                         # classify the 50 worst false positives and false negatives (docs/error-analysis-url.md)
+make train-text                         # compare SMS text models, English corpus + French/Arabic set (docs/text-models.md)
 ```
 
 Run `make help` to list the available commands.
@@ -117,6 +118,7 @@ data/, models/    generated locally, never committed
 - [URL models](docs/url-models.md): logistic regression vs Random Forest vs LightGBM, tuned on validation, with recall at 1 % FPR and inference cost (French)
 - [Realistic evaluation](docs/evaluation.md): precision at 1 % and 0.1 % phishing prevalence, and how the decision threshold is chosen (French)
 - [URL error analysis](docs/error-analysis-url.md): the worst errors by category, and why static features alone cannot catch phishing on trusted platforms (French)
+- [SMS text models](docs/text-models.md): word vs character n-grams vs hand-written smishing features, and how they transfer to French and Arabic (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History

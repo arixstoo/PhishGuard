@@ -1,0 +1,101 @@
+id,lang,label,category,text
+fr-001,fr,1,colis,"Votre colis est en attente : frais de réexpédition de 1,99 € à régler sous 24h sur https://suivi-colis-livraison.example/r/8F2K"
+fr-002,fr,1,colis,"La Poste : votre colis n'a pas pu être livré, adresse incomplète. Reprogrammez la livraison : laposte-suivi.example/colis"
+fr-003,fr,1,colis,"Chronopost : dernier rappel, votre paquet sera retourné à l'expéditeur. Confirmez vos informations ici https://chrono-relivraison.example"
+fr-004,fr,1,colis,"Mondial Relay : colis bloqué en douane, droits de 2,49 EUR à payer immédiatement : mr-douane.example/paiement"
+fr-005,fr,1,colis,Votre livraison est suspendue. Merci de vérifier votre adresse avant ce soir : https://colis-fr.example/verif?id=55120
+fr-006,fr,1,administration,"Ameli : un remboursement de 147,90 € est en attente. Mettez à jour vos coordonnées bancaires : https://ameli-remboursement.example"
+fr-007,fr,1,administration,Assurance Maladie : votre carte Vitale expire. Commandez la nouvelle carte sous 48h sur carte-vitale-renouvellement.example
+fr-008,fr,1,administration,ANTAI : avis de contravention impayé. Réglez 35 € avant majoration sur https://antai-amende.example/payer
+fr-009,fr,1,administration,Impôts : vous êtes éligible à un remboursement de 320 €. Remplissez le formulaire : impots-remboursement.example
+fr-010,fr,1,administration,Mon Compte Formation : vos 1 450 € de droits CPF expirent demain. Validez-les sur https://cpf-droits.example
+fr-011,fr,1,administration,CAF : une anomalie bloque le versement de vos aides. Connectez-vous immédiatement : caf-verification.example
+fr-012,fr,1,banque,"Banque : une opération de 849 € a été détectée. Si ce n'est pas vous, annulez-la ici https://secure-banque-opposition.example"
+fr-013,fr,1,banque,Votre accès en ligne est suspendu suite à 3 tentatives. Réactivez votre compte : https://espace-client-securite.example/login
+fr-014,fr,1,banque,Credit Agricole : votre clé digitale expire aujourd'hui. Vérifiez votre identifiant sur ca-cle-digitale.example
+fr-015,fr,1,banque,Alerte sécurité : votre carte bancaire a été bloquée. Appelez notre service au 01 99 00 12 34 avec votre code confidentiel.
+fr-016,fr,1,banque,Un conseiller va vous appeler pour sécuriser votre compte. Ne raccrochez pas et communiquez le code reçu par SMS.
+fr-017,fr,1,operateur,"SFR : votre facture de 59,99 € n'a pas pu être prélevée. Évitez la suspension de votre ligne : sfr-facture.example"
+fr-018,fr,1,operateur,Orange : vous avez cumulé 2 500 points fidélité qui expirent ce soir. Échangez-les contre un cadeau : orange-points.example
+fr-019,fr,1,operateur,Free Mobile : votre forfait sera résilié sous 24h. Mettez à jour votre moyen de paiement : https://free-mobile-paiement.example
+fr-020,fr,1,gain,Félicitations ! Vous avez gagné un iPhone 16. Réclamez votre cadeau avant minuit : https://jeu-concours-gagnant.example
+fr-021,fr,1,gain,"Vous êtes notre 1 000 000e visiteur ! Un bon d'achat de 500 € vous attend, frais de port 1 € : bon-cadeau.example"
+fr-022,fr,1,gain,"GRATUIT : recevez votre box beauté offerte, il ne reste que 3 exemplaires ! www.box-offerte.example"
+fr-023,fr,1,famille,"Coucou maman, j'ai cassé mon téléphone, c'est mon nouveau numéro. Tu peux m'écrire sur WhatsApp au 06 39 98 41 22 ?"
+fr-024,fr,1,famille,"Papa c'est moi, je suis bloqué et j'ai besoin que tu fasses un virement de 380 € urgent, je t'explique après"
+fr-025,fr,1,famille,"Salut c'est Léa, nouveau numéro. Tu pourrais me payer une facture ? Je te rembourse demain promis"
+fr-026,fr,1,emploi,"Bonjour, nous recrutons pour un travail à domicile payé 300 € par jour. Contactez-nous au 06 39 98 07 15"
+fr-027,fr,1,colis,"DHL : votre envoi 4589 est en attente de paiement des frais de douane (3,20 €). https://dhl-frais.example"
+fr-028,fr,1,administration,"Pôle emploi : votre dossier est incomplet, vos allocations seront suspendues. Vérifiez : francetravail-dossier.example"
+fr-029,fr,1,banque,PayPal : votre compte a été limité. Confirmez votre identité dans les 24h : https://paypal-confirmation.example
+fr-030,fr,1,operateur,"Bouygues Telecom : remboursement de 23,50 € suite à un trop-perçu. Indiquez votre carte : bouygues-rembourse.example"
+fr-031,fr,0,otp,"Votre code de vérification est 482913. Ne le communiquez à personne, même à un conseiller."
+fr-032,fr,0,otp,Code de connexion : 7714. Il expire dans 10 minutes.
+fr-033,fr,0,otp,"Pour valider votre paiement de 42,00 € chez LIBRAIRIE DU CENTRE, saisissez le code 559102."
+fr-034,fr,0,livraison,Votre commande a été expédiée. Livraison prévue jeudi entre 9h et 13h. Suivi sur https://www.transporteur.example/suivi
+fr-035,fr,0,livraison,Votre colis est disponible en point relais jusqu'au 30/10. Présentez le code de retrait 8812.
+fr-036,fr,0,livraison,"Le livreur passera demain matin. En cas d'absence, le colis sera déposé chez votre voisin."
+fr-037,fr,0,rdv,"Rappel : rendez-vous chez le Dr Martin demain à 14h30. Pour annuler, appelez le cabinet."
+fr-038,fr,0,rdv,Votre rendez-vous au garage est confirmé pour samedi 9h. Pensez à apporter la carte grise.
+fr-039,fr,0,rdv,Rappel : réunion parents-professeurs lundi à 18h en salle 12.
+fr-040,fr,0,perso,"Je suis en retard de 10 minutes, commence sans moi"
+fr-041,fr,0,perso,Tu peux acheter du pain en rentrant ? Merci !
+fr-042,fr,0,perso,Bon anniversaire ! On se voit ce week-end pour fêter ça ?
+fr-043,fr,0,perso,"Le match est décalé à 20h, on se retrouve devant le stade"
+fr-044,fr,0,perso,"J'ai bien reçu ton virement, merci pour le resto d'hier"
+fr-045,fr,0,perso,On mange à quelle heure ce soir ?
+fr-046,fr,0,banque_info,"Votre virement de 250,00 € vers COMPTE EPARGNE a été effectué."
+fr-047,fr,0,banque_info,"Solde de votre compte au 26/10 : 1 245,32 €. Consultez le détail dans votre application."
+fr-048,fr,0,banque_info,Votre nouvelle carte est arrivée en agence. Vous pouvez la retirer aux heures d'ouverture.
+fr-049,fr,0,operateur,"Votre facture du mois d'octobre de 19,99 € est disponible dans votre espace client."
+fr-050,fr,0,operateur,Vous avez consommé 80 % de votre forfait data. Il se renouvelle le 1er du mois.
+fr-051,fr,0,administration,Votre demande de passeport est prête. Retrait en mairie sur rendez-vous.
+fr-052,fr,0,administration,Votre déclaration de revenus a bien été enregistrée. Accusé de réception disponible sur votre espace.
+fr-053,fr,0,commerce,Votre table pour 4 personnes est réservée ce soir à 20h. À bientôt !
+fr-054,fr,0,commerce,Les soldes commencent mercredi dans votre magasin. -30 % sur une sélection d'articles.
+fr-055,fr,0,commerce,Merci pour votre achat. Votre ticket est disponible sur https://www.enseigne.example/tickets
+fr-056,fr,0,travail,La réunion de 15h est déplacée en salle B. Merci de prévenir l'équipe.
+fr-057,fr,0,travail,Le serveur sera en maintenance ce soir de 22h à minuit.
+fr-058,fr,0,sante,Votre ordonnance est prête à la pharmacie. Elle sera conservée 7 jours.
+fr-059,fr,0,transport,Votre train de 18h12 a un retard estimé de 15 minutes. Nous vous prions de nous excuser.
+fr-060,fr,0,transport,Votre vol AF1234 embarque porte 34 à 10h05.
+ar-061,ar,1,poste,بريد الجزائر: تم تعليق بطاقتك الذهبية. يرجى تحديث معلوماتك فوراً عبر الرابط https://edahabia-tahdith.example
+ar-062,ar,1,poste,عاجل: حسابك البريدي الجاري معرض للإيقاف. تحقق من هويتك خلال 24 ساعة: baridimob-tahakkuk.example
+ar-063,ar,1,poste,بريدي موب: تم رصد عملية سحب بقيمة 25000 دج. إذا لم تكن أنت، ألغِ العملية هنا https://baridi-ilgha.example
+ar-064,ar,1,poste,عزيزي الزبون، لديك تعويض بقيمة 8000 دج من بريد الجزائر. أدخل رقم بطاقتك لاستلامه: tawid-bareed.example
+ar-065,ar,1,operateur,موبيليس: مبروك! ربحت رصيداً مجانياً بقيمة 2000 دج. فعّله الآن عبر mobilis-hadiya.example
+ar-066,ar,1,operateur,جيزي: سيتم إيقاف خطك اليوم بسبب فاتورة غير مدفوعة. ادفع فوراً: djezzy-fatoura.example
+ar-067,ar,1,operateur,أوريدو: فزت بهاتف جديد في السحب الشهري. اتصل بنا على 0550000017 لاستلام الجائزة
+ar-068,ar,1,gain,مبروك! تم اختيارك للفوز بجائزة 50000 دج. أرسل اسمك ورقم بطاقتك لاستلامها
+ar-069,ar,1,gain,هدية مجانية لأول 100 مشترك! سجل الآن قبل انتهاء العرض: hadiya-majania.example
+ar-070,ar,1,colis,طردك محجوز في الجمارك. ادفع رسوم 350 دج لإتمام التوصيل: https://jamarik-tard.example
+ar-071,ar,1,colis,لم نتمكن من توصيل طردك بسبب عنوان غير مكتمل. أكد عنوانك هنا tawsil-tard.example/x
+ar-072,ar,1,banque,بنكك: تم تجميد حسابك لأسباب أمنية. أرسل كلمة السر ورمز التحقق لإعادة التفعيل
+ar-073,ar,1,banque,تنبيه أمني: محاولة دخول مشبوهة إلى حسابك. تأكيد الهوية مطلوب فوراً https://amn-hisab.example
+ar-074,ar,1,famille,ماما هذا رقمي الجديد، هاتفي تعطل. أرسلي لي رصيد 1000 دج ضروري
+ar-075,ar,1,famille,أخي أنا في مشكلة، حول لي 5000 دج على هذا الرقم 0770000023 وسأشرح لك لاحقاً
+ar-076,ar,1,administration,وزارة الداخلية: ملفك ناقص. استكمل التسجيل قبل آخر أجل وإلا سيتم تعليق المنحة: minha-tasjil.example
+ar-077,ar,1,administration,غرامة مرورية غير مدفوعة بقيمة 2000 دج. ادفعها الآن لتجنب الزيادة: gharama-murur.example
+ar-078,ar,1,emploi,مطلوب عمال للعمل من المنزل براتب 60000 دج شهرياً. اتصل على 0660000031
+ar-079,ar,1,operateur,عرض خاص: احصل على 100 جيغا مجاناً. أدخل رمز التحقق الذي سيصلك لتفعيل العرض
+ar-080,ar,1,poste,بريد الجزائر: رصيدك غير كافٍ لاستلام الحوالة. تحقق من حسابك على https://hawala-bareed.example
+ar-081,ar,0,otp,رمز التحقق الخاص بك هو 4821. لا تشاركه مع أي شخص.
+ar-082,ar,0,otp,رمز الدخول إلى تطبيقك: 905532. صالح لمدة 5 دقائق.
+ar-083,ar,0,otp,لتأكيد عملية الدفع بقيمة 1200 دج أدخل الرمز 3307
+ar-084,ar,0,operateur,تم شحن رصيدك بمبلغ 500 دج. رصيدك الحالي 730 دج.
+ar-085,ar,0,operateur,استهلكت 80% من باقة الإنترنت الخاصة بك. تتجدد الباقة يوم 1 من الشهر.
+ar-086,ar,0,operateur,فاتورتك لشهر أكتوبر متوفرة في فضاء الزبون.
+ar-087,ar,0,poste,تم إيداع راتبك في حسابك البريدي الجاري.
+ar-088,ar,0,poste,بطاقتك الذهبية الجديدة جاهزة. يمكنك استلامها من مكتب البريد.
+ar-089,ar,0,rdv,تذكير: موعدك عند الطبيب غداً على الساعة 10 صباحاً.
+ar-090,ar,0,rdv,تم تأكيد حجزك ليوم السبت على الساعة 9.
+ar-091,ar,0,perso,سأتأخر قليلاً، ابدأوا بدوني
+ar-092,ar,0,perso,هل تشتري الخبز وأنت راجع؟ شكراً
+ar-093,ar,0,perso,عيد ميلاد سعيد! نلتقي في نهاية الأسبوع
+ar-094,ar,0,perso,وصلت إلى البيت، تصبح على خير
+ar-095,ar,0,perso,المباراة على الساعة 8 مساءً، نلتقي أمام الملعب
+ar-096,ar,0,livraison,طلبيتك في الطريق، سيتصل بك عامل التوصيل قبل الوصول.
+ar-097,ar,0,livraison,تم توصيل طلبيتك. شكراً لثقتك. التفاصيل على https://www.matjar.example/talabat
+ar-098,ar,0,travail,الاجتماع مؤجل إلى الساعة 3 بعد الظهر في القاعة ب.
+ar-099,ar,0,sante,وصفتك الطبية جاهزة في الصيدلية.
+ar-100,ar,0,transport,رحلتك رقم AH1020 تقلع على الساعة 10:05 من البوابة 4.
