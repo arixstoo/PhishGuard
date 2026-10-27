@@ -100,8 +100,6 @@ def test_tranco_ranks_and_popularity(tmp_path):
     )
     ranks = E.read_tranco_ranks(path)
     assert ranks == {"google.com": 1, "example.org": 2, "rare.net": 5000, "tail.org": 250000}
-    assert E.latest_tranco_file(tmp_path) == path
-    assert E.latest_tranco_file(tmp_path / "absent") is None
 
     report = E.popularity_report(
         ["google.com", "example.org", "rare.net", "tail.org", "unknown.io"],
@@ -117,6 +115,52 @@ def test_tranco_ranks_and_popularity(tmp_path):
     assert sum(bucket["n"] for bucket in report.values()) == 5
     with pytest.raises(ValueError):
         E.popularity_report(["a.com"], np.array([0.1, 0.2]), 0.5, ranks)
+
+
+def _dataset_report(tmp_path, files):
+    """Rapport de jeu minimal : ``files`` = [(nom, contenu, date de collecte)]."""
+    inputs = [{"source": "phishtank", "file": "phishtank_x.csv", "collected_at": "2026-10-01"}]
+    for name, content, collected_at in files:
+        (tmp_path / name).write_text(content, encoding="utf-8")
+        sha = E.sha256_file(tmp_path / name)
+        inputs.append(
+            {"source": "tranco", "file": name, "sha256": sha, "collected_at": collected_at}
+        )
+    report = tmp_path / "urls_dataset.json"
+    report.write_text(json.dumps({"inputs": inputs}), encoding="utf-8")
+    return report
+
+
+def test_dataset_tranco_files_come_from_the_dataset_report(tmp_path):
+    # Listés dans le désordre : triés par date de collecte, pas par nom ni par mtime.
+    report = _dataset_report(
+        tmp_path,
+        [("tranco_B.csv", "1,b.com\n", "2026-10-23"), ("tranco_A.csv", "1,a.com\n", "2026-10-22")],
+    )
+    # Une liste plus récente collectée après la construction du jeu est ignorée.
+    (tmp_path / "tranco_C.csv").write_text("1,c.com\n", encoding="utf-8")
+    files = E.dataset_tranco_files(report, tmp_path)
+    assert [p.name for p in files] == ["tranco_A.csv", "tranco_B.csv"]
+    assert E.dataset_tranco_files(tmp_path / "absent.json", tmp_path) == []
+
+
+def test_dataset_tranco_files_need_every_file_with_its_fingerprint(tmp_path):
+    report = _dataset_report(
+        tmp_path,
+        [("tranco_A.csv", "1,a.com\n", "2026-10-22"), ("tranco_B.csv", "1,b.com\n", "2026-10-23")],
+    )
+    (tmp_path / "tranco_B.csv").write_text("1,changed.com\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="empreinte"):
+        E.dataset_tranco_files(report, tmp_path)
+    (tmp_path / "tranco_B.csv").unlink()
+    assert E.dataset_tranco_files(report, tmp_path) == []
+
+
+def test_merge_tranco_ranks_prefers_the_most_recent_list(tmp_path):
+    old, new = tmp_path / "old.csv", tmp_path / "new.csv"
+    old.write_text("1,a.com\n2,gone.com\n", encoding="utf-8")
+    new.write_text("5,a.com\n", encoding="utf-8")
+    assert E.merge_tranco_ranks([old, new]) == {"a.com": 5, "gone.com": 2}
 
 
 # --------------------------------------------------------------------------- #
@@ -154,6 +198,7 @@ def test_script_end_to_end(tmp_path, split_dataset_path, trained_model):
     assert report["decision"]["name"] in report["test"]["operating_points"]
     assert set(report["test"]["prevalence"]) == set(report["test"]["operating_points"])
     assert report["test"]["popularity"]["buckets"]["1-1000"]["n"] > 0
+    assert report["test"]["popularity"]["tranco_files"] == [tranco.name]
     assert not any(host in text for host in df["host"].unique())
 
     rendered = doc.read_text(encoding="utf-8")
@@ -165,7 +210,7 @@ def test_script_without_tranco_list(tmp_path, split_dataset_path, trained_model)
     report_path = tmp_path / "report.json"
     args = ["--dataset", str(split_dataset_path), "--model", str(trained_model)]
     args += ["--report", str(report_path), "--doc", "none", "--raw-dir", str(tmp_path)]
-    args += ["--rounds", "50"]
+    args += ["--dataset-report", str(tmp_path / "absent.json"), "--rounds", "50"]
     assert evaluate_script.main(args) == 0
     assert "popularity" not in json.loads(report_path.read_text(encoding="utf-8"))["test"]
 

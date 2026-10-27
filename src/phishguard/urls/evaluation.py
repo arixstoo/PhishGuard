@@ -18,6 +18,7 @@ phishing et le FPR par rang de popularité Tranco (:func:`popularity_report`).
 from __future__ import annotations
 
 import csv
+import json
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -26,6 +27,7 @@ from typing import Any
 import numpy as np
 
 from phishguard.data.bias import HOMEPAGE_SOURCE, INTERNAL_PAGE_SOURCE
+from phishguard.data.integrity import sha256_file
 from phishguard.data.urls import LABEL_LEGITIMATE, LABEL_PHISHING
 from phishguard.evaluation.prevalence import (
     REALISTIC_PREVALENCES,
@@ -180,9 +182,45 @@ def read_tranco_ranks(path: Path) -> dict[str, int]:
     return ranks
 
 
-def latest_tranco_file(raw_dir: Path) -> Path | None:
-    files = sorted(Path(raw_dir).glob("tranco_*.csv"), key=lambda p: p.stat().st_mtime)
-    return files[-1] if files else None
+def dataset_tranco_files(dataset_report: Path, raw_dir: Path) -> list[Path]:
+    """Listes Tranco qui ont servi à construire le jeu, de la plus ancienne à la plus récente.
+
+    Elles sont lues dans le rapport du jeu (``docs/metrics/urls_dataset.json``, étape 1.2),
+    pas devinées dans ``data/raw/`` : la collecte quotidienne y ajoute des listes qui n'ont
+    pas servi, et la date de modification d'un fichier change quand on le copie. L'empreinte
+    SHA-256 de chaque fichier est vérifiée. Retourne une liste vide si le rapport est absent
+    ou si l'un des fichiers manque (un rang partiel fausserait les tranches).
+    """
+    dataset_report = Path(dataset_report)
+    if not dataset_report.is_file():
+        return []
+    inputs = json.loads(dataset_report.read_text(encoding="utf-8")).get("inputs", [])
+    entries = sorted(
+        (i for i in inputs if i.get("source") == HOMEPAGE_SOURCE), key=lambda i: i["collected_at"]
+    )
+    files = []
+    for entry in entries:
+        path = Path(raw_dir) / entry["file"]
+        if not path.is_file():
+            return []
+        if entry.get("sha256") and sha256_file(path) != entry["sha256"]:
+            raise ValueError(f"{path.name} : empreinte différente de celle du rapport du jeu")
+        files.append(path)
+    return files
+
+
+def merge_tranco_ranks(paths: Sequence[Path]) -> dict[str, int]:
+    """Rang de chaque domaine dans la liste la plus récente qui le contient.
+
+    ``paths`` va de la plus ancienne à la plus récente. Le jeu réunit plusieurs listes
+    quotidiennes : un domaine sorti de la dernière garde le rang de la précédente, au lieu
+    d'être compté « hors liste ».
+    """
+    ranks: dict[str, int] = {}
+    for path in reversed(list(paths)):
+        for domain, rank in read_tranco_ranks(path).items():
+            ranks.setdefault(domain, rank)
+    return ranks
 
 
 def popularity_report(

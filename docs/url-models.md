@@ -8,13 +8,15 @@ python scripts/train_url.py --quick    # grilles réduites, pour vérifier le pi
 python -m pytest tests/test_url_training.py tests/test_url_model.py
 ```
 
-La grille complète (3 modèles × 6 jeux de features × 4 à 8 réglages, soit 96 entraînements) prend environ 4 minutes pour 140 000 URLs sur 4 cœurs.
+La grille complète (3 modèles × 6 jeux de features × 4 à 8 réglages, soit 96 entraînements) prend environ 3 minutes sur les 119 000 URLs d'entraînement et de validation (mesuré le 27/10/2026 sur un poste à 20 cœurs logiques, dont un peu plus de 2 minutes d'entraînement). Deux exécutions sur le même jeu donnent les 96 mêmes essais au chiffre près ; seule l'empreinte de `models/url_v1.joblib` change, car le fichier contient sa date d'entraînement.
 
 | Sortie | Contenu | Versionné |
 | :--- | :--- | :--- |
 | `models/url_v1.joblib` | Modèle retenu, liste de ses features, table des TLD, seuils réglés sur la validation | Non (régénéré par `make train-url`) |
 | `docs/metrics/url_v1.json` | Tous les essais (modèle × jeu de features × hyperparamètres), le choix final, l'empreinte SHA-256 du jeu et du modèle | Oui : aucune URL ni aucun domaine |
 | Bloc généré de ce document | Tableaux de la section [Résultats](#résultats) | Oui |
+
+Le cahier des charges nomme le modèle `models/url_lgbm_v1.joblib`. Le fichier s'appelle `url_v1.joblib` parce que la famille de modèle n'est pas fixée à l'avance : c'est la recherche qui la choisit (LightGBM sur le jeu actuel), et elle est enregistrée dans les métadonnées du fichier.
 
 ```python
 from phishguard.urls.model import UrlModel
@@ -98,11 +100,17 @@ Meilleur réglage de chaque modèle pour chaque jeu ; entre parenthèses, le tau
 
 ## Lecture
 
-*À rédiger après la première exécution sur le jeu réel*, en répondant à ces questions :
+Lecture de l'exécution du 25/10/2026 (jeu `0310e419432c`), chiffres de validation.
 
-- Le gain de LightGBM sur la régression logistique justifie-t-il sa taille et sa latence ?
-- Le classement des modèles est-il le même pour chaque jeu de features ?
-- Que coûte, en rappel, de retirer chemin et longueur, et que gagne-t-on en faux positifs sur les pages internes ?
+**Le gain de LightGBM sur la régression logistique justifie-t-il sa taille et sa latence ?** Oui. À 1 % FPR, LightGBM détecte 84 % du phishing contre 68 % pour la régression logistique (+16 points), et à 0,1 % FPR l'écart double (67 % contre 35 %) : un modèle linéaire ne sait pas combiner les features (un TLD risqué *et* un sous-domaine long, par exemple). Le coût est acceptable : 852 Kio au lieu de 2 Kio, et une latence d'une URL identique (1,8 ms contre 2,1 ms), parce qu'elle vient surtout de l'extraction des features et du coût fixe d'un appel `predict_proba`, pas de l'estimateur. Random Forest atteint presque la même qualité (83 %), mais pour 14 Mo et 13 ms par URL : il n'a pas sa place dans l'extension.
+
+**Le classement des modèles est-il le même pour chaque jeu de features ?** Oui : LightGBM ≥ Random Forest > régression logistique sur les six jeux. Mais l'écart entre LightGBM et Random Forest ne dépasse jamais un point de rappel, ce qui n'est pas significatif avec une seule graine (voir [Limites](#limites)). Ce qui départage vraiment les deux, c'est la taille et la latence.
+
+**Que coûte de retirer chemin et longueur, et que gagne-t-on sur les pages internes ?** Pour LightGBM, retirer le chemin seul ne coûte rien (85 % de rappel), car les features de longueur (`url_len`…) mesurent encore le chemin. Retirer chemin **et** longueur fait perdre 11 points (84 % → 73 %) et divise par deux les faux positifs sur les pages internes légitimes (6,8 % → 3,5 %). C'est la mesure directe du biais de chemin de l'étape 1.3 : au seuil qui donne 1 % de faux positifs au global, le modèle retenu en donne 0,3 % sur les pages d'accueil mais 6,8 % sur les pages internes, vingt fois plus. Une bonne partie de ce que le modèle appelle « phishing » est donc « a un chemin ».
+
+**Décision pour `url_v1`.** On garde le jeu « sans schéma » : retirer `is_https` coûte 2 points de rappel (86 % → 84 %), mais ces 2 points venaient d'un artefact de construction, pas du phishing. On ne retire pas chemin et longueur à ce stade : sans eux, le modèle ne fait guère mieux que la référence « hôte seul » (73 % contre 71 % de rappel), et une partie du signal du chemin est réelle (mots-clés, imitation de pages de connexion), même si ces données ne permettent pas de la séparer du biais. Le taux de faux positifs sur les pages internes est le chiffre à surveiller : il est mesuré sur le test à l'étape 1.7, et le remède durable est d'ajouter davantage de pages internes légitimes à l'entraînement, pas de retirer les features.
+
+**Vérification de la table des TLD.** `tld_phish_rate` est appris sur l'entraînement puis appliqué à ces mêmes lignes, ce qui peut faire surestimer la feature au modèle. Contrôle fait le 27/10/2026 : en remplaçant, pour l'entraînement seulement, la table par un encodage hors-pli (5 plis groupés par domaine enregistré), le rappel à 1 % FPR de LightGBM sur la validation passe de 0,841 à 0,834, et celui des deux autres modèles bouge de moins d'un point. Le lissage (m = 20) suffit : l'encodage simple est conservé.
 
 ## Limites
 

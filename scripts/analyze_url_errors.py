@@ -80,6 +80,13 @@ def _count(n: int, word: str) -> str:
     return f"{fr_int(n)} {word}{'s' if n > 1 else ''}"
 
 
+def _all(category: dict[str, Any]) -> str:
+    """Effectif et part de la catégorie sur toutes les erreurs du seuil."""
+    if category.get("count_all") is None:
+        return "n/d"
+    return f"{fr_int(category['count_all'])} ({fr_percent(category['share_all'], 0)})"
+
+
 def _worst(analyzed: int, total: int) -> str:
     if analyzed == total:
         return "toutes sont classées"
@@ -110,7 +117,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             ]
         rows = []
         for category in entry["categories"].values():
-            if category["count"] == 0:
+            if category["count"] == 0 and not category.get("count_all"):
                 continue
             sources = ", ".join(f"{k} {v}" for k, v in category["by_source"].items())
             examples = "<br>".join(f"`{e}`" for e in category["examples"]) or "—"
@@ -119,6 +126,7 @@ def render_markdown(report: dict[str, Any]) -> str:
                     category["label"],
                     fr_int(category["count"]),
                     fr_percent(category["share"], 0),
+                    _all(category),
                     fr_number(category["median_score"], 3),
                     sources,
                     examples,
@@ -127,9 +135,17 @@ def render_markdown(report: dict[str, Any]) -> str:
         if rows:
             lines.append(
                 markdown_table(
-                    ["Catégorie", "Erreurs", "Part", "Score médian", "Sources", "Exemples"],
+                    [
+                        "Catégorie",
+                        "Erreurs",
+                        "Part",
+                        "Toutes les erreurs",
+                        "Score médian",
+                        "Sources",
+                        "Exemples",
+                    ],
                     rows,
-                    ["left", "right", "right", "right", "left", "left"],
+                    ["left", "right", "right", "right", "right", "left", "left"],
                 )
             )
         else:
@@ -199,6 +215,8 @@ def main(argv: list[str] | None = None) -> int:
         X.FALSE_POSITIVE: int(((labels == 0) & (scores > threshold)).sum()),
         X.FALSE_NEGATIVE: int(((labels == 1) & (scores <= threshold)).sum()),
     }
+    # Toutes les erreurs au seuil, pour comparer leur répartition à celle des pires.
+    every_error = X.analyze(block, scores, threshold, extractor, ctx, n=max(1, *totals.values()))
     report = {
         "metadata": {
             "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -212,7 +230,7 @@ def main(argv: list[str] | None = None) -> int:
         },
         "decision": {**decision, "threshold": threshold},
         "categories": X.category_definitions(),
-        "errors": X.summarize(errors, totals),
+        "errors": X.summarize(errors, totals, all_errors=every_error),
     }
 
     args.details_dir.mkdir(parents=True, exist_ok=True)

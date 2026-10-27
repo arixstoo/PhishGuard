@@ -116,13 +116,18 @@ def _risky_tld(f: Mapping[str, float], ctx: Context) -> bool:
     )
 
 
+def _brand_signal(f: Mapping[str, float]) -> bool:
+    """Une feature de marque (étape 1.5) s'est déclenchée sur l'hôte."""
+    return bool(f.get("brand_in_host") or f.get("is_typosquat") or f.get("homograph_brand"))
+
+
 def _clean_host(f: Mapping[str, float], ctx: Context) -> bool:
     """Hôte sans aucun des signaux lexicaux que le modèle sait lire."""
     return (
         f["host_kw_hits"] == 0
         and f["host_n_hyphens"] <= 1
         and f["host_n_digits"] <= 1
-        and not f.get("brand_in_host", 0)
+        and not _brand_signal(f)
         and not f["host_is_ip"]
         and not _risky_tld(f, ctx)
     )
@@ -131,15 +136,6 @@ def _clean_host(f: Mapping[str, float], ctx: Context) -> bool:
 CATEGORIES: tuple[ErrorCategory, ...] = (
     # --- faux positifs --------------------------------------------------------- #
     ErrorCategory(
-        "legit_brand_lookalike",
-        FALSE_POSITIVE,
-        "Nom proche d'une marque",
-        "`brand_in_host` ou `is_typosquat`",
-        "Compléter `brands.json` avec les domaines secondaires et filiales des marques ; "
-        "liste d'autorisation des domaines les plus visités.",
-        lambda f, p, ctx: bool(f.get("brand_in_host") or f.get("is_typosquat")),
-    ),
-    ErrorCategory(
         "legit_hosted_platform",
         FALSE_POSITIVE,
         "Page légitime sur une plateforme d'hébergement",
@@ -147,6 +143,15 @@ CATEGORIES: tuple[ErrorCategory, ...] = (
         "Ne pas juger le domaine de la plateforme mais le sous-domaine ou le chemin ; "
         "réputation du compte (module 2).",
         lambda f, p, ctx: on_platform(p.host, ctx.platforms),
+    ),
+    ErrorCategory(
+        "legit_brand_lookalike",
+        FALSE_POSITIVE,
+        "Nom proche d'une marque",
+        "`brand_in_host` ou `is_typosquat`",
+        "Compléter `brands.json` avec les domaines secondaires et filiales des marques ; "
+        "liste d'autorisation des domaines les plus visités.",
+        lambda f, p, ctx: bool(f.get("brand_in_host") or f.get("is_typosquat")),
     ),
     ErrorCategory(
         "legit_long_query",
@@ -229,6 +234,16 @@ CATEGORIES: tuple[ErrorCategory, ...] = (
         lambda f, p, ctx: bool(f["host_is_ip"]),
     ),
     ErrorCategory(
+        "phish_signal_ignored",
+        FALSE_NEGATIVE,
+        "Signal lexical présent mais ignoré",
+        "`brand_in_host`, `is_typosquat`, `homograph_brand` ou mot-clé dans l'hôte",
+        "La feature voit le signal, le modèle ne lui donne presque aucun poids (trop rare à "
+        "l'entraînement, étape 1.5) : contrainte de monotonie sur ces features (LightGBM "
+        "`monotone_constraints`) ou règle explicite dans la fusion du score (étape 2.10).",
+        lambda f, p, ctx: _brand_signal(f) or f["host_kw_hits"] > 0,
+    ),
+    ErrorCategory(
         "phish_compromised_site",
         FALSE_NEGATIVE,
         "Site honnête compromis",
@@ -238,13 +253,33 @@ CATEGORIES: tuple[ErrorCategory, ...] = (
         lambda f, p, ctx: _clean_host(f, ctx) and f["path_depth"] >= 2,
     ),
     ErrorCategory(
+        "phish_compound_name",
+        FALSE_NEGATIVE,
+        "Nom composé trompeur, hors des listes",
+        "hôte sans signal lexical mais avec un tiret, chemin court, aucun mot-clé",
+        "Le leurre est dans le texte (`renew-<marque déformée>`, `info-<service public>`) "
+        "mais hors des listes : compléter `brands.json` (services publics, opérateurs) et "
+        "les mots-clés (`auth`, `renew`, `support`…), en mesurant le gain comme à l'étape 1.5.",
+        lambda f, p, ctx: (
+            _clean_host(f, ctx)
+            and f["host_n_hyphens"] == 1
+            and f["path_depth"] <= 1
+            and f["path_kw_hits"] == 0
+        ),
+    ),
+    ErrorCategory(
         "phish_clean_domain",
         FALSE_NEGATIVE,
         "Domaine neuf d'apparence honnête",
-        "hôte sans signal lexical, chemin court, aucun mot-clé",
+        "hôte sans signal lexical ni tiret, chemin court, aucun mot-clé",
         "Date de création du domaine (RDAP) et certificat récent (journaux CT, module 2) : "
         "le signal est dans le temps, pas dans le texte.",
-        lambda f, p, ctx: _clean_host(f, ctx) and f["path_depth"] <= 1 and f["path_kw_hits"] == 0,
+        lambda f, p, ctx: (
+            _clean_host(f, ctx)
+            and f["host_n_hyphens"] == 0
+            and f["path_depth"] <= 1
+            and f["path_kw_hits"] == 0
+        ),
     ),
     ErrorCategory(
         "phish_other",
@@ -348,12 +383,19 @@ def summarize(
     *,
     examples_per_category: int = 3,
     publishable_sources: Iterable[str] = PUBLISHABLE_SOURCES,
+    all_errors: pd.DataFrame | None = None,
 ) -> dict[str, Any]:
-    """Agrégats publiables : effectifs, scores et quelques exemples défangés."""
+    """Agrégats publiables : effectifs, scores et quelques exemples défangés.
+
+    ``all_errors`` (toutes les erreurs au seuil, pas seulement les pires) ajoute à chaque
+    catégorie ``count_all`` et ``share_all`` : les pires erreurs sont des cas extrêmes, leur
+    répartition ne vaut pas pour l'ensemble.
+    """
     publishable = set(publishable_sources)
     summary: dict[str, Any] = {}
     for kind in KINDS:
         subset = errors[errors["kind"] == kind]
+        everything = None if all_errors is None else all_errors[all_errors["kind"] == kind]
         categories = {}
         for category in categories_for(kind):
             rows = subset[subset["category"] == category.name]
@@ -368,6 +410,12 @@ def summarize(
                 "by_source": {str(k): int(v) for k, v in rows["source"].value_counts().items()},
                 "examples": [defang(u) for u in shown["url"]],
             }
+            if everything is not None:
+                n_all = int((everything["category"] == category.name).sum())
+                categories[category.name]["count_all"] = n_all
+                categories[category.name]["share_all"] = (
+                    round(n_all / len(everything), 4) if len(everything) else None
+                )
         summary[kind] = {
             "total_errors": int(totals[kind]),
             "analyzed": len(subset),

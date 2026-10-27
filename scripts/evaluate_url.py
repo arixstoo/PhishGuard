@@ -6,8 +6,8 @@ Lit le modèle de l'étape 1.6 (models/url_v1.joblib) et les blocs de validation
 de data/processed/urls_split.parquet. La validation sert à choisir le seuil de décision
 (règle de phishguard.urls.evaluation.choose_decision_threshold) ; le test sert seulement
 à mesurer : point de fonctionnement de chaque seuil, précision aux prévalences de 1 % et
-0,1 %, rappel et FPR par source, FPR par rang Tranco si une liste Tranco brute est
-disponible dans data/raw/ (ou --tranco).
+0,1 %, rappel et FPR par source, FPR par rang Tranco si les listes Tranco qui ont servi à
+construire le jeu (docs/metrics/urls_dataset.json) sont dans data/raw/ (ou --tranco).
 
 Écrit docs/metrics/url_v1_test.json (sans URL ni domaine) et le bloc généré de
 docs/evaluation.md.
@@ -63,8 +63,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--tranco",
         type=Path,
+        nargs="+",
         default=None,
-        help="liste Tranco brute (rang,domaine) ; par défaut la plus récente de data/raw/",
+        help=(
+            "listes Tranco brutes (rang,domaine), de la plus ancienne à la plus récente ; "
+            "par défaut celles qui ont servi à construire le jeu (--dataset-report)"
+        ),
+    )
+    p.add_argument(
+        "--dataset-report",
+        type=Path,
+        default=ROOT / "docs/metrics/urls_dataset.json",
+        help="rapport de scripts/build_dataset.py, qui liste les fichiers bruts utilisés",
     )
     p.add_argument("--raw-dir", type=Path, default=ROOT / "data/raw")
     p.add_argument("--rounds", type=int, default=2000, help="échantillons bootstrap")
@@ -254,7 +264,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines += ["", "### Pages d'accueil légitimes par rang Tranco (seuil de décision)", ""]
     if popularity is None:
         lines.append(
-            "*Non mesuré : aucune liste Tranco brute dans `data/raw/` (option `--tranco`).*"
+            "*Non mesuré : listes Tranco du jeu absentes de `data/raw/` (option `--tranco`).*"
         )
     else:
         lines.append(
@@ -339,21 +349,21 @@ def main(argv: list[str] | None = None) -> int:
         "per_source": E.per_source(y, scores, sources, decision["threshold"]),
     }
 
-    tranco = args.tranco or E.latest_tranco_file(args.raw_dir)
-    if tranco is not None and tranco.is_file():
+    tranco = args.tranco or E.dataset_tranco_files(args.dataset_report, args.raw_dir)
+    if tranco and all(path.is_file() for path in tranco):
         test_block = blocks["test"]
         homepages = (test_block["label"] == 0).to_numpy() & (sources == "tranco")
         test["popularity"] = {
-            "tranco_file": tranco.name,
+            "tranco_files": [path.name for path in tranco],
             "buckets": E.popularity_report(
                 test_block.loc[homepages, "registered_domain"],
                 scores[homepages],
                 decision["threshold"],
-                E.read_tranco_ranks(tranco),
+                E.merge_tranco_ranks(tranco),
             ),
         }
     else:
-        logger.info("aucune liste Tranco brute : FPR par rang non mesuré")
+        logger.info("listes Tranco du jeu introuvables : FPR par rang non mesuré")
 
     report = clean(
         {
