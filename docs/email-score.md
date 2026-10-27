@@ -12,7 +12,7 @@ python -m pytest tests/test_email_score.py
 from phishguard.email import parse_eml
 from phishguard.email.score import score_email
 
-result = score_email(parse_eml(raw))          # url_model=UrlModel.load(...) en option
+result = score_email(parse_eml(raw))  # url_model=UrlModel.load(...) en option
 result.score, result.verdict, result.reasons  # 85, "phishing", ["Un lien affiche une adresse…", …]
 ```
 
