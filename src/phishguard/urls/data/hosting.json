@@ -1,12 +1,13 @@
 {
   "description": "Plateformes réputées où n'importe qui peut publier une page : stockage de fichiers, constructeurs de sites, formulaires, hébergement de code et de déploiement. Une URL y est comparée par suffixe d'hôte (« x.web.app » correspond à « web.app »). Héberger une page sur ces domaines ne prouve rien : c'est la raison pour laquelle les features lexicales ne voient pas ce phishing. Utilisée par l'analyse d'erreurs (étape 1.8), pas comme feature.",
-  "version": "2026-10-25",
+  "version": "2026-10-27",
   "domains": [
     "000webhostapp.com",
     "azurewebsites.net",
     "blob.core.windows.net",
     "blogspot.com",
     "canva.site",
+    "chatgpt.site",
     "codesandbox.io",
     "docs.google.com",
     "drive.google.com",
@@ -17,12 +18,13 @@
     "firebasestorage.googleapis.com",
     "forms.gle",
     "framer.app",
-    "github.io",
     "gitbook.io",
+    "github.io",
     "glitch.me",
     "godaddysites.com",
     "googleusercontent.com",
     "herokuapp.com",
+    "ibb.co",
     "ipfs.io",
     "jotform.com",
     "mailchimpsites.com",
@@ -48,7 +50,7 @@
     "webflow.io",
     "weebly.com",
     "wixsite.com",
-    "workers.dev",
-    "wordpress.com"
+    "wordpress.com",
+    "workers.dev"
   ]
 }

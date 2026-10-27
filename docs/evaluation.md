@@ -69,7 +69,7 @@ Ce que la règle implique pour la suite :
 ## Résultats
 
 <!-- generated:evaluate-url:start -->
-*Généré par `scripts/evaluate_url.py` le 2026-10-25 (modèle `70b7838415a3`, jeu `0310e419432c`, test : 21 004 URLs dont 4 200 de phishing, soit 20,0 %). Chiffres complets : [`metrics/url_v1_test.json`](metrics/url_v1_test.json).*
+*Généré par `scripts/evaluate_url.py` le 2026-10-27 (modèle `70b7838415a3`, jeu `0310e419432c`, test : 21 004 URLs dont 4 200 de phishing, soit 20,0 %). Chiffres complets : [`metrics/url_v1_test.json`](metrics/url_v1_test.json).*
 
 ### Sur le test, sans seuil
 
@@ -121,24 +121,34 @@ Précision attendue quand 1 % ou 0,1 % des URLs sont du phishing (formule ; entr
 | :--- | ---: | ---: |
 | 1 à 1 000 | 110 | 0,91 % [0,16–4,97 %] |
 | 1 001 à 10 000 | 1 249 | 0,00 % [0,00–0,31 %] |
-| 10 001 à 100 000 | 13 557 | 0,22 % [0,16–0,32 %] |
+| 10 001 à 100 000 | 13 748 | 0,23 % [0,16–0,32 %] |
 | au-delà de 100 000 | 0 | n/d |
-| hors liste | 191 | 0,52 % [0,09–2,91 %] |
+| hors liste | 0 | n/d |
 <!-- generated:evaluate-url:end -->
 
 ## Lecture
 
-*À rédiger après la première exécution sur le jeu réel*, en répondant à ces questions :
+Lecture du modèle `url_v1` (`70b7838415a3`), relue le 27/10/2026. Les chiffres de validation viennent de [`metrics/url_v1.json`](metrics/url_v1.json) et du champ `validation_operating_points` de [`metrics/url_v1_test.json`](metrics/url_v1_test.json).
 
-- Le seuil de décision atteint-il la cible (une alerte vraie sur deux à 1 %) ? Sinon, de combien en est-on loin ?
-- Combien de fausses alertes par vraie alerte à 0,1 % de prévalence, avec l'hypothèse « pages internes » ?
-- Les scores de test sont-ils proches de ceux de validation (`docs/metrics/url_v1.json`) ? Un écart de plus de quelques points signale un sur-ajustement à la validation ou une dérive dans le temps (le test est le bloc le plus récent).
-- Le rappel est-il homogène entre PhishTank et OpenPhish ? Un écart fort confirme le biais de source de l'étape 1.3.
-- Le FPR monte-t-il quand le rang Tranco baisse ? Si oui, le biais de popularité de `host_len` (étape 1.5) est confirmé.
+**Le seuil de décision atteint-il la cible ?** Sur la validation, oui : `fpr_0_5pct` donne 61,8 % de précision attendue à 1 % de prévalence, et le seuil suivant, `fpr_1pct`, n'y arrive pas (46 %). Sur le test, **non, de peu** : 47,3 % (intervalle bootstrap 42,8–52,4 %), parce que le FPR passe de 0,50 % à 0,83 % et le rappel de 80 % à 74 %. On ne change pas le seuil après avoir lu le test : ce serait régler le modèle sur le test. On note l'écart, et c'est la règle appliquée à la prochaine version du modèle qui le corrigera. Avec l'hypothèse « pages internes », on est loin de la cible quel que soit le seuil : 10,5 % de précision à 1 % pour le seuil de décision, et 47,5 % au mieux avec le seuil le plus strict.
+
+**Combien de fausses alertes par vraie à 0,1 % ?** 11 au seuil de décision avec le légitime du test, **86** avec l'hypothèse « pages internes ». Même au seuil le plus strict (`fpr_0_1pct`), il en reste 11 avec cette hypothèse. Sur la navigation générale, le score URL seul ne peut donc qu'alimenter un niveau « suspect », comme le prévoit la règle.
+
+**Les scores de test sont-ils proches de ceux de validation ?** Non, l'écart dépasse quelques points. Sans seuil, la PR-AUC passe de 0,956 à 0,939, le rappel à 1 % FPR de 0,841 à 0,755, à 0,1 % FPR de 0,671 à 0,582. L'écart vient de deux endroits :
+
+- **le phishing** : le rappel au seuil de décision baisse de 80 % à 74 % pour PhishTank, la source principale. C'est cohérent avec une dérive dans le temps, le test étant le bloc le plus récent ;
+- **les pages internes** : leur FPR double (3,4 % → 6,4 % au seuil de décision ; 6,8 % → 10,2 % au seuil `fpr_1pct`), alors que celui des pages d'accueil ne bouge pas (0,18 % → 0,21 %). Ces pages viennent de seulement 449 domaines en validation et 500 en test, et les fausses alertes se concentrent sur 33 et 58 d'entre eux : une bonne partie de l'écart peut venir du tirage des domaines, pas du modèle.
+
+Les seuils réglés sur la validation sont donc un peu optimistes, surtout pour les pages internes. Ce sont les chiffres du test qu'il faut citer.
+
+**Le rappel est-il homogène entre PhishTank et OpenPhish ?** Oui à la précision près : 73,7 % [72,3–75,1 %] pour PhishTank, 78,1 % [71,6–83,5 %] pour OpenPhish, dont les 183 URLs ne permettent pas de trancher. Aucun écart fort, donc pas de signe ici du biais de source de l'étape 1.3. URLhaus (une seule URL) ne se lit pas.
+
+**Le FPR monte-t-il quand le rang Tranco baisse ?** Non, rien de mesurable au seuil de décision : 0,9 % sur le top 1 000 (une seule URL sur 110), 0 % de 1 001 à 10 000, 0,23 % de 10 001 à 100 000. Les intervalles se recouvrent tous. Le biais de popularité de `host_len` ne se voit pas à ce seuil sur les pages d'accueil. Il ne pourra se tester vraiment qu'avec des domaines au-delà du top 100 000, que le jeu ne contient pas.
 
 ## Limites
 
 - L'intervalle bootstrap mesure la variabilité d'un petit échantillon à la prévalence voulue, à rappel et FPR fixés (voir [Prévalence et précision](#prévalence-et-précision)) ; il ne couvre ni l'erreur sur le rappel et le FPR mesurés, ni le choix des sources : un test tiré des mêmes flux que l'entraînement reste optimiste face à des campagnes nouvelles.
+- Les intervalles de Wilson supposent des URLs indépendantes. Or le jeu garde jusqu'à 5 URLs par domaine, qui se ressemblent et sont souvent signalées ensemble. L'effet est fort pour les pages internes (environ 1 700 URLs de 500 domaines seulement) : leurs intervalles sont trop étroits, et un intervalle calculé par domaine (bootstrap groupé) serait plus honnête.
 - La prévalence réelle n'est pas mesurée, elle est supposée (1 % et 0,1 %). Elle varie selon le canal (navigation, email, SMS) et selon l'utilisateur.
 - Les pages internes viennent des 5 000 domaines les plus visités (Common Crawl, étape 1.3 bis) : les sites peu connus, sur lesquels le modèle se trompe probablement plus, n'y sont pas.
-- Le FPR par rang Tranco demande la liste Tranco brute (`data/raw/tranco_*.csv`), non versionnée.
+- Le FPR par rang Tranco demande les listes Tranco brutes qui ont servi à construire le jeu (`data/raw/tranco_*.csv`, non versionnées) : le script les retrouve dans `docs/metrics/urls_dataset.json` et vérifie leur empreinte. Un domaine prend son rang dans la plus récente de ces listes qui le contient. Le jeu ne retient que le top 100 000 : la tranche « au-delà de 100 000 » reste vide tant qu'on ne collecte pas une liste plus longue.

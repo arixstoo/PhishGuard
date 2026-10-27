@@ -86,8 +86,11 @@ def test_false_positive_categories(url, expected):
         ("https://bit.ly/3xYz", "phish_shortener"),
         ("http://192.168.10.5/bank/login", "phish_ip_host"),
         ("https://bakery.com/wp-content/plugins/x/index.html", "phish_compromised_site"),
+        ("https://santandder.net/", "phish_signal_ignored"),  # typosquat vu, pas écouté
+        ("https://logindirect.net/", "phish_signal_ignored"),  # mot-clé dans l'hôte
+        ("https://renew-myflix.net/", "phish_compound_name"),
         ("https://bakery.com/", "phish_clean_domain"),
-        ("https://secure-login-update.xyz/verify", "phish_other"),
+        ("https://bakery22.com/", "phish_other"),
     ],
 )
 def test_false_negative_categories(url, expected):
@@ -98,9 +101,23 @@ def test_rules_are_applied_in_order_and_all_tags_are_kept():
     primary, tags = X.categorize(
         "https://paypal-help.blogspot.com/a/b/c/d/e", X.FALSE_POSITIVE, EXTRACTOR, CTX
     )
-    assert primary == "legit_brand_lookalike"
-    assert tags[:2] == ("legit_brand_lookalike", "legit_hosted_platform")
+    # La plateforme passe avant la marque : c'est elle qui explique la page.
+    assert primary == "legit_hosted_platform"
+    assert tags[:2] == ("legit_hosted_platform", "legit_brand_lookalike")
     assert "legit_deep_path" in tags and "legit_other" not in tags
+
+
+def test_clean_host_rules_exclude_every_brand_signal():
+    _, tags = X.categorize("https://santandder.net/", X.FALSE_NEGATIVE, EXTRACTOR, CTX)
+    assert "phish_clean_domain" not in tags and "phish_compound_name" not in tags
+    _, tags = X.categorize("https://renew-myflix.net/", X.FALSE_NEGATIVE, EXTRACTOR, CTX)
+    assert "phish_clean_domain" not in tags  # « sans tiret »
+
+
+def test_user_content_hosts_are_platforms():
+    platforms = X.load_hosting_platforms()
+    assert X.on_platform("ibb.co", platforms)
+    assert X.on_platform("site.user1.chatgpt.site", platforms)
 
 
 def test_other_has_no_tag():
@@ -186,6 +203,32 @@ def test_summarize_publishes_only_allowed_sources():
     assert fp["total_errors"] == 10 and fp["analyzed"] == 1
     assert fp["categories"]["legit_long_query"]["tagged"] == 1
     assert fp["categories"]["legit_other"]["count"] == 0
+    assert "count_all" not in fp["categories"]["legit_other"]
+
+
+def test_summarize_compares_the_worst_errors_with_all_errors():
+    def frame(kind, categories):
+        n = len(categories)
+        return pd.DataFrame(
+            {
+                "kind": [kind] * n,
+                "rank": range(1, n + 1),
+                "score": [0.5] * n,
+                "category": categories,
+                "tags": categories,
+                "source": ["phishtank"] * n,
+                "url": [f"https://x{i}.com/" for i in range(n)],
+            }
+        )
+
+    worst = frame(X.FALSE_NEGATIVE, ["phish_clean_domain"] * 2)
+    every = frame(X.FALSE_NEGATIVE, ["phish_clean_domain"] * 2 + ["phish_compromised_site"] * 6)
+    totals = {X.FALSE_POSITIVE: 0, X.FALSE_NEGATIVE: 8}
+    categories = X.summarize(worst, totals, all_errors=every)[X.FALSE_NEGATIVE]["categories"]
+    assert categories["phish_clean_domain"]["count_all"] == 2
+    assert categories["phish_compromised_site"]["count"] == 0
+    assert categories["phish_compromised_site"]["count_all"] == 6
+    assert categories["phish_compromised_site"]["share_all"] == 0.75
 
 
 def test_analyze_returns_one_row_per_error():

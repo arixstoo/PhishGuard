@@ -1,0 +1,382 @@
+{
+  "metadata": {
+    "generated_at": "2026-10-27T00:19:18+00:00",
+    "report_version": "1.0.0",
+    "dataset_sha256": "0310e419432c749350f01ce8e8841313f89d66ee82ef52082ff8e195c1a2a66f",
+    "model_sha256": "70b7838415a33820ab451b23c72515f9e6bdafe453518643711512bc228bf642",
+    "split": "validation",
+    "worst_per_kind": 50,
+    "rows": 21007,
+    "publishable_sources": [
+      "commoncrawl",
+      "phishtank",
+      "tranco",
+      "urlhaus"
+    ]
+  },
+  "decision": {
+    "name": "fpr_0_5pct",
+    "rule": {
+      "prevalence": 0.01,
+      "min_precision": 0.5
+    },
+    "meets_target": true,
+    "validation_recall": 0.8006193425440686,
+    "validation_precision_at_prevalence": 0.6180697735457548,
+    "threshold": 0.826343039217525
+  },
+  "categories": [
+    {
+      "name": "legit_hosted_platform",
+      "kind": "false_positive",
+      "label": "Page légitime sur une plateforme d'hébergement",
+      "rule": "hôte dans `hosting.json`",
+      "improvement": "Ne pas juger le domaine de la plateforme mais le sous-domaine ou le chemin ; réputation du compte (module 2)."
+    },
+    {
+      "name": "legit_brand_lookalike",
+      "kind": "false_positive",
+      "label": "Nom proche d'une marque",
+      "rule": "`brand_in_host` ou `is_typosquat`",
+      "improvement": "Compléter `brands.json` avec les domaines secondaires et filiales des marques ; liste d'autorisation des domaines les plus visités."
+    },
+    {
+      "name": "legit_long_query",
+      "kind": "false_positive",
+      "label": "Service légitime avec long paramètre",
+      "rule": "requête d'au moins 50 caractères ou 3 paramètres",
+      "improvement": "Plus de pages légitimes avec requête à l'entraînement (Common Crawl) ; features sur la nature des paramètres (suivi, pagination) plutôt que leur longueur."
+    },
+    {
+      "name": "legit_deep_path",
+      "kind": "false_positive",
+      "label": "Page interne profonde",
+      "rule": "au moins 4 segments ou 60 caractères de chemin",
+      "improvement": "Biais de chemin (étape 1.3) : plus de pages internes légitimes, ou un modèle sans chemin ni longueur pour la navigation courante."
+    },
+    {
+      "name": "legit_unusual_host",
+      "kind": "false_positive",
+      "label": "Domaine peu connu, long ou chargé",
+      "rule": "hôte d'au moins 20 caractères, 2 tirets, 3 chiffres ou 2 sous-domaines",
+      "improvement": "Biais de popularité (étape 1.5) : légitime moins visité à l'entraînement (bas du classement Tranco, Common Crawl au-delà des 5 000 premiers domaines)."
+    },
+    {
+      "name": "legit_risky_tld",
+      "kind": "false_positive",
+      "label": "Extension souvent vue dans le phishing",
+      "rule": "`tld_phish_rate` au moins 2 fois l'a priori",
+      "improvement": "Lisser davantage la table des TLD ou plafonner le poids de la feature ; le taux mesure aussi nos sources (étape 1.5)."
+    },
+    {
+      "name": "legit_other",
+      "kind": "false_positive",
+      "label": "Autre",
+      "rule": "aucune règle précédente",
+      "improvement": "Relecture manuelle de l'export détaillé."
+    },
+    {
+      "name": "phish_hosted_platform",
+      "kind": "false_negative",
+      "label": "Phishing sur une plateforme réputée",
+      "rule": "hôte dans `hosting.json` (stockage, site gratuit, formulaire)",
+      "improvement": "Invisible pour des features lexicales : réputation de l'URL complète (Safe Browsing, urlscan.io, module 2) et analyse du contenu de la page."
+    },
+    {
+      "name": "phish_shortener",
+      "kind": "false_negative",
+      "label": "Lien raccourci",
+      "rule": "`is_shortener`",
+      "improvement": "Résoudre la redirection côté serveur, avec le garde-fou anti-SSRF (étape 2.3), puis analyser la destination."
+    },
+    {
+      "name": "phish_ip_host",
+      "kind": "false_negative",
+      "label": "Adresse IP",
+      "rule": "`host_is_ip`",
+      "improvement": "Peu d'exemples à l'entraînement : règle explicite dans la fusion du score (étape 2.10) plutôt qu'un poids appris."
+    },
+    {
+      "name": "phish_signal_ignored",
+      "kind": "false_negative",
+      "label": "Signal lexical présent mais ignoré",
+      "rule": "`brand_in_host`, `is_typosquat`, `homograph_brand` ou mot-clé dans l'hôte",
+      "improvement": "La feature voit le signal, le modèle ne lui donne presque aucun poids (trop rare à l'entraînement, étape 1.5) : contrainte de monotonie sur ces features (LightGBM `monotone_constraints`) ou règle explicite dans la fusion du score (étape 2.10)."
+    },
+    {
+      "name": "phish_compromised_site",
+      "kind": "false_negative",
+      "label": "Site honnête compromis",
+      "rule": "hôte sans signal lexical et chemin d'au moins 2 segments",
+      "improvement": "Âge et historique du domaine (RDAP, étape 2.7) ne suffisent pas : c'est le chemin qui est nouveau. Réputation de l'URL et du contenu (module 2)."
+    },
+    {
+      "name": "phish_compound_name",
+      "kind": "false_negative",
+      "label": "Nom composé trompeur, hors des listes",
+      "rule": "hôte sans signal lexical mais avec un tiret, chemin court, aucun mot-clé",
+      "improvement": "Le leurre est dans le texte (`renew-<marque déformée>`, `info-<service public>`) mais hors des listes : compléter `brands.json` (services publics, opérateurs) et les mots-clés (`auth`, `renew`, `support`…), en mesurant le gain comme à l'étape 1.5."
+    },
+    {
+      "name": "phish_clean_domain",
+      "kind": "false_negative",
+      "label": "Domaine neuf d'apparence honnête",
+      "rule": "hôte sans signal lexical ni tiret, chemin court, aucun mot-clé",
+      "improvement": "Date de création du domaine (RDAP) et certificat récent (journaux CT, module 2) : le signal est dans le temps, pas dans le texte."
+    },
+    {
+      "name": "phish_other",
+      "kind": "false_negative",
+      "label": "Autre",
+      "rule": "aucune règle précédente",
+      "improvement": "Relecture manuelle de l'export détaillé."
+    }
+  ],
+  "errors": {
+    "false_positive": {
+      "total_errors": 84,
+      "analyzed": 50,
+      "categories": {
+        "legit_hosted_platform": {
+          "label": "Page légitime sur une plateforme d'hébergement",
+          "count": 9,
+          "share": 0.18,
+          "tagged": 9,
+          "median_score": 0.9875,
+          "by_source": {
+            "commoncrawl": 9
+          },
+          "examples": [
+            "hxxps://ibb[.]co/fFczL9R",
+            "hxxps://ibb[.]co/G4TMyrWh",
+            "hxxps://ibb[.]co/F4tQ3sCg"
+          ],
+          "count_all": 9,
+          "share_all": 0.1071
+        },
+        "legit_brand_lookalike": {
+          "label": "Nom proche d'une marque",
+          "count": 1,
+          "share": 0.02,
+          "tagged": 6,
+          "median_score": 0.9394,
+          "by_source": {
+            "tranco": 1
+          },
+          "examples": [
+            "hxxps://rakutenadvertising[.]io/"
+          ],
+          "count_all": 3,
+          "share_all": 0.0357
+        },
+        "legit_long_query": {
+          "label": "Service légitime avec long paramètre",
+          "count": 6,
+          "share": 0.12,
+          "tagged": 6,
+          "median_score": 0.9213,
+          "by_source": {
+            "commoncrawl": 6
+          },
+          "examples": [
+            "hxxps://cs-server-s2s[.]yellowblue[.]io/sync-iframe?…",
+            "hxxps://cs-server-s2s[.]yellowblue[.]io/sync-iframe?…",
+            "hxxps://west[.]exch025[.]serverdata[.]net/owa/auth/logon.aspx?…"
+          ],
+          "count_all": 14,
+          "share_all": 0.1667
+        },
+        "legit_deep_path": {
+          "label": "Page interne profonde",
+          "count": 1,
+          "share": 0.02,
+          "tagged": 1,
+          "median_score": 0.9342,
+          "by_source": {
+            "commoncrawl": 1
+          },
+          "examples": [
+            "hxxps://doubleverify[.]com/pt/blog/tag/programmatic"
+          ],
+          "count_all": 5,
+          "share_all": 0.0595
+        },
+        "legit_unusual_host": {
+          "label": "Domaine peu connu, long ou chargé",
+          "count": 20,
+          "share": 0.4,
+          "tagged": 30,
+          "median_score": 0.9604,
+          "by_source": {
+            "tranco": 13,
+            "commoncrawl": 7
+          },
+          "examples": [
+            "hxxps://f8824e712f4b4a9114f13c173ccf90987716b7612c5d93eeaa883fed[.]com/",
+            "hxxps://disney-solitaire[.]app/",
+            "hxxps://chatcomepyoer3z5b75emxofz3vq74hb[.]com/"
+          ],
+          "count_all": 28,
+          "share_all": 0.3333
+        },
+        "legit_risky_tld": {
+          "label": "Extension souvent vue dans le phishing",
+          "count": 6,
+          "share": 0.12,
+          "tagged": 17,
+          "median_score": 0.9339,
+          "by_source": {
+            "tranco": 6
+          },
+          "examples": [
+            "hxxps://helloservicemsk[.]app/",
+            "hxxps://chat-whaptsap[.]app/",
+            "hxxps://servermanager[.]app/"
+          ],
+          "count_all": 7,
+          "share_all": 0.0833
+        },
+        "legit_other": {
+          "label": "Autre",
+          "count": 7,
+          "share": 0.14,
+          "tagged": 0,
+          "median_score": 0.9468,
+          "by_source": {
+            "commoncrawl": 7
+          },
+          "examples": [
+            "hxxps://onetag-sys[.]com/usync/?…",
+            "hxxps://onetag-sys[.]com/usync/?…",
+            "hxxps://ipapi[.]co/privacy/"
+          ],
+          "count_all": 18,
+          "share_all": 0.2143
+        }
+      }
+    },
+    "false_negative": {
+      "total_errors": 837,
+      "analyzed": 50,
+      "categories": {
+        "phish_hosted_platform": {
+          "label": "Phishing sur une plateforme réputée",
+          "count": 3,
+          "share": 0.06,
+          "tagged": 3,
+          "median_score": 0.0093,
+          "by_source": {
+            "phishtank": 3
+          },
+          "examples": [
+            "hxxp://5l4fem[.]duckdns[.]org/",
+            "hxxp://vugkpb[.]duckdns[.]org/",
+            "hxxp://cdkctb[.]duckdns[.]org/"
+          ],
+          "count_all": 72,
+          "share_all": 0.086
+        },
+        "phish_shortener": {
+          "label": "Lien raccourci",
+          "count": 0,
+          "share": 0.0,
+          "tagged": 0,
+          "median_score": null,
+          "by_source": {},
+          "examples": [],
+          "count_all": 0,
+          "share_all": 0.0
+        },
+        "phish_ip_host": {
+          "label": "Adresse IP",
+          "count": 0,
+          "share": 0.0,
+          "tagged": 0,
+          "median_score": null,
+          "by_source": {},
+          "examples": [],
+          "count_all": 0,
+          "share_all": 0.0
+        },
+        "phish_signal_ignored": {
+          "label": "Signal lexical présent mais ignoré",
+          "count": 4,
+          "share": 0.08,
+          "tagged": 4,
+          "median_score": 0.0082,
+          "by_source": {
+            "phishtank": 4
+          },
+          "examples": [
+            "hxxps://updatenetfx[.]fr/",
+            "hxxps://santandder[.]net/",
+            "hxxp://logindirect[.]net/"
+          ],
+          "count_all": 75,
+          "share_all": 0.0896
+        },
+        "phish_compromised_site": {
+          "label": "Site honnête compromis",
+          "count": 0,
+          "share": 0.0,
+          "tagged": 0,
+          "median_score": null,
+          "by_source": {},
+          "examples": [],
+          "count_all": 175,
+          "share_all": 0.2091
+        },
+        "phish_compound_name": {
+          "label": "Nom composé trompeur, hors des listes",
+          "count": 5,
+          "share": 0.1,
+          "tagged": 5,
+          "median_score": 0.0085,
+          "by_source": {
+            "phishtank": 5
+          },
+          "examples": [
+            "hxxps://drive-workg[.]net/",
+            "hxxps://auth2-telekom[.]de/",
+            "hxxps://info-vitale[.]fr/"
+          ],
+          "count_all": 139,
+          "share_all": 0.1661
+        },
+        "phish_clean_domain": {
+          "label": "Domaine neuf d'apparence honnête",
+          "count": 37,
+          "share": 0.74,
+          "tagged": 39,
+          "median_score": 0.0064,
+          "by_source": {
+            "phishtank": 35,
+            "openphish": 2
+          },
+          "examples": [
+            "hxxps://irsci[.]net/",
+            "hxxp://cocrr[.]com/",
+            "hxxp://arovs[.]com/"
+          ],
+          "count_all": 235,
+          "share_all": 0.2808
+        },
+        "phish_other": {
+          "label": "Autre",
+          "count": 1,
+          "share": 0.02,
+          "tagged": 0,
+          "median_score": 0.0028,
+          "by_source": {
+            "phishtank": 1
+          },
+          "examples": [
+            "hxxps://gift86[.]com/"
+          ],
+          "count_all": 141,
+          "share_all": 0.1685
+        }
+      }
+    }
+  }
+}
