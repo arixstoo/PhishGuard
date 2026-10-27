@@ -26,6 +26,7 @@ from functools import lru_cache
 from typing import Any
 
 from phishguard.data.urls import normalize_url
+from phishguard.email.html import link_target
 from phishguard.email.parser import ParsedEmail
 from phishguard.text.smishing import SmishingFeatureExtractor
 from phishguard.urls.brands import load_shorteners
@@ -109,8 +110,9 @@ def _link_host(href: str) -> str | None:
 def email_features(email: ParsedEmail, *, max_text_chars: int = 20_000) -> dict[str, float]:
     """Features numériques d'un email analysé, dans l'ordre de :data:`FEATURE_NAMES`."""
     auth = email.auth
+    # Lien réécrit par une passerelle de sécurité : on regarde la vraie cible.
     hosts = [
-        _link_host(link.href)
+        _link_host(link_target(link))
         for link in email.links
         if link.scheme in ("http", "https") and link.href_domain is not None
     ]
@@ -125,7 +127,9 @@ def email_features(email: ParsedEmail, *, max_text_chars: int = 20_000) -> dict[
         "dkim_fail": auth.dkim == "fail",
         "dkim_pass": auth.dkim == "pass",
         "auth_missing": auth.source is None,
-        "reply_to_differs": email.reply_to_differs,
+        # Une liste de diffusion renvoie les réponses à la liste : Reply-To différent est
+        # alors normal (615 des 766 emails légitimes concernés de SpamAssassin).
+        "reply_to_differs": email.reply_to_differs and not email.mailing_list,
         "return_path_differs": email.return_path_differs,
         "display_name_spoof": email.display_name_spoof,
         "log_links": math.log1p(len(email.links)),
@@ -157,7 +161,11 @@ def email_features(email: ParsedEmail, *, max_text_chars: int = 20_000) -> dict[
 
 # Features facultatives : le modèle URL de l'étape 1.6 appliqué aux liens de l'email.
 URL_MODEL_FEATURES = ("max_link_url_score", "link_flagged_by_url_model")
-DEFAULT_URL_THRESHOLD = "fpr_1pct"
+# Seuil à 0,1 % de faux positifs par lien, pas 1 % : la règle juge le lien le plus
+# suspect d'un email qui en a souvent des dizaines, et le taux de faux positifs par email
+# croît avec le nombre de liens (au seuil de 1 %, 17 % des emails légitimes SpamAssassin
+# étaient signalés).
+DEFAULT_URL_THRESHOLD = "fpr_0_1pct"
 
 
 def url_model_features(
@@ -169,15 +177,13 @@ def url_model_features(
 ) -> dict[str, float]:
     """Score du lien le plus suspect selon un :class:`phishguard.urls.model.UrlModel`.
 
-    Seuls les liens web absolus sont scorés (50 au plus, dans l'ordre du message) ; une
+    Seuls les liens web absolus sont scorés (50 au plus, dans l'ordre du message), par
+    leur vraie cible quand une passerelle de sécurité les a réécrits ; une
     URL que le modèle refuse (``InvalidUrlError``) est ignorée. Sans lien scorable, les
     deux features valent 0.
     """
-    urls = [
-        link.href
-        for link in email.links
-        if link.scheme in ("http", "https") and normalize_url(link.href) is not None
-    ][:max_links]
+    targets = (link_target(link) for link in email.links if link.scheme in ("http", "https"))
+    urls = [url for url in targets if normalize_url(url) is not None][:max_links]
     scores = []
     for url in urls:
         try:

@@ -67,6 +67,8 @@ SET_LABELS = {
     "without_auth": "sans authentification",
     "all_with_url_model": "toutes + modèle URL",
     "without_auth_with_url_model": "sans authentification + modèle URL",
+    "robust": "sans authentification ni HTML",
+    "robust_with_url_model": "sans authentification ni HTML + modèle URL",
 }
 
 logger = logging.getLogger("train_email")
@@ -94,10 +96,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument("--url-model", type=Path, default=ROOT / "models/url_v1.joblib")
     p.add_argument("--no-url-model", action="store_true")
-    p.add_argument("--deploy-feature-set", default=None, help="défaut : sans authentification")
+    p.add_argument(
+        "--deploy-feature-set", default=None, help="défaut : sans authentification ni HTML"
+    )
     p.add_argument("--model-out", type=Path, default=ROOT / f"models/{MODEL_VERSION}.joblib")
     p.add_argument("--report", type=Path, default=ROOT / f"docs/metrics/{MODEL_VERSION}.json")
     p.add_argument("--doc", type=Path, default=ROOT / "docs/email-score.md")
+    p.add_argument(
+        "--max-per-sender",
+        type=int,
+        default=50,
+        help="emails gardés au plus par domaine d'expéditeur (0 : pas de limite)",
+    )
     p.add_argument("--quick", action="store_true", help="un seul réglage par modèle")
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args(argv)
@@ -135,6 +145,7 @@ def load(args: argparse.Namespace, url_model: Any) -> tuple[pd.DataFrame, dict[s
             label=labels[item.source],
             source=item.source,
             group=M.sender_group(parsed, item.sha256),
+            sha256=item.sha256,
             parse_failed=any("_failed:" in d for d in parsed.defects),
         )
         rows.append(features)
@@ -263,6 +274,9 @@ def main(argv: list[str] | None = None) -> int:
     if frame.empty or frame["label"].nunique() != 2:
         logger.error("il faut des emails légitimes et de phishing (voir fetch_email_corpora.py)")
         return 1
+    frame, capped = M.cap_per_group(frame, args.max_per_sender)
+    if capped:
+        logger.info("%d emails retirés : plus de %d par expéditeur", capped, args.max_per_sender)
 
     try:
         blocks_idx = stratified_group_blocks(frame["label"], frame["group"], seed=args.seed)
@@ -291,7 +305,9 @@ def main(argv: list[str] | None = None) -> int:
 
     sets = M.feature_sets(with_url_model=url_model is not None)
     deploy_set = args.deploy_feature_set or (
-        "without_auth_with_url_model" if url_model is not None else "without_auth"
+        f"{M.DEPLOYED_FEATURE_SET}_with_url_model"
+        if url_model is not None
+        else M.DEPLOYED_FEATURE_SET
     )
     if deploy_set not in sets:
         logger.error("jeu de features inconnu : %s (choix : %s)", deploy_set, ", ".join(sets))
@@ -322,7 +338,7 @@ def main(argv: list[str] | None = None) -> int:
                 "feature_set": key[1],
                 "deployed": key == deployed_key,
                 "params": trial.params,
-                "threshold": round(threshold, 6),
+                "threshold": threshold,  # non arrondi : le même que celui du modèle
                 "validation": trial.validation,
                 "test": M.ranking_metrics(y["test"], scores),
                 "test_at_threshold": M.at_threshold(y["test"], scores, threshold),
@@ -384,6 +400,8 @@ def main(argv: list[str] | None = None) -> int:
         "dataset": {
             "corpus": corpus_info,
             "parse_failed": int(frame["parse_failed"].sum()),
+            "max_per_sender": args.max_per_sender,
+            "removed_by_sender_cap": capped,
             "split": {"group": "sender registered domain", "fractions": [0.7, 0.15, 0.15]},
             "blocks": {
                 name: {

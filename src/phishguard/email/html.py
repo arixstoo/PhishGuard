@@ -21,7 +21,7 @@ import re
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 import tldextract
 from bs4 import BeautifulSoup, Tag
@@ -60,6 +60,9 @@ class Link:
     href_domain: str | None  # domaine enregistré de la cible
     text_domain: str | None  # domaine enregistré du texte affiché, s'il ressemble à une URL
     mismatch: bool
+    # Passerelle de sécurité qui a réécrit le lien (« safelinks », « symantec »,
+    # « proofpoint ») ; ``href_domain`` est alors celui de la cible d'origine.
+    rewritten_by: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -106,13 +109,53 @@ def _scheme(href: str) -> str:
         return ""
 
 
+def unwrap_rewritten(href: str) -> tuple[str, str] | None:
+    """``(URL d'origine, passerelle)`` d'un lien réécrit par une passerelle de sécurité.
+
+    Les passerelles des entreprises (Microsoft Safe Links, Symantec Click-time,
+    Proofpoint URL Defense) remplacent chaque lien par le leur, qui redirige vers
+    l'original après analyse. Sans ce déballage, tout lien dont le texte est une adresse
+    paraîtrait trompeur. Un seul niveau est déballé.
+    """
+    try:
+        parts = urlsplit(href)
+        host = (parts.hostname or "").lower()
+    except ValueError:
+        return None
+    query = parse_qs(parts.query)
+    inner, name = None, None
+    if host.endswith(".safelinks.protection.outlook.com"):
+        inner, name = (query.get("url") or [None])[0], "safelinks"
+    elif host == "clicktime.symantec.com":
+        inner, name = (query.get("u") or [None])[0], "symantec"
+    elif host == "urldefense.proofpoint.com" and parts.path.startswith("/v2/url"):
+        # v2 : « - » remplace « % » et « _ » remplace « / » dans le paramètre u.
+        encoded = (query.get("u") or [None])[0]
+        inner = unquote(encoded.replace("-", "%").replace("_", "/")) if encoded else None
+        name = "proofpoint"
+    elif host == "urldefense.com" and parts.path.startswith("/v3/__"):
+        body = href.split("/v3/__", 1)[1]
+        inner, name = body.split("__;", 1)[0] if "__;" in body else None, "proofpoint"
+    if not inner or _scheme(inner) not in ("http", "https"):
+        return None
+    return inner, name
+
+
+def link_target(link: Link) -> str:
+    """URL où mène vraiment le lien : l'originale si une passerelle l'a réécrite."""
+    unwrapped = unwrap_rewritten(link.href) if link.rewritten_by else None
+    return unwrapped[0] if unwrapped else link.href
+
+
 def make_link(kind: str, href: str, text: str) -> Link:
     href, text = href.strip(), " ".join(text.split())
     scheme = _scheme(href)
     # Un href relatif (« page.html », « /aide ») n'a pas de domaine : seuls les liens web
     # absolus, y compris « //hote » et « www.hote », sont comparés.
     absolute = scheme in ("http", "https") or href.startswith(("//", "www."))
-    href_domain = registered_domain(href.removeprefix("//")) if absolute else None
+    unwrapped = unwrap_rewritten(href) if scheme in ("http", "https") else None
+    target, rewritten_by = unwrapped if unwrapped else (href, None)
+    href_domain = registered_domain(target.removeprefix("//")) if absolute else None
     shown = text.strip("<>()[]\"'.,;")
     text_domain = registered_domain(shown) if _ADDRESS_LIKE_RE.match(shown) else None
     mismatch = text_domain is not None and href_domain is not None and text_domain != href_domain
@@ -120,7 +163,7 @@ def make_link(kind: str, href: str, text: str) -> Link:
     # (javascript:, data:…) est aussi un leurre.
     if text_domain is not None and scheme not in ("http", "https", "", "mailto"):
         mismatch = True
-    return Link(kind, href, text, scheme, href_domain, text_domain, mismatch)
+    return Link(kind, href, text, scheme, href_domain, text_domain, mismatch, rewritten_by)
 
 
 def text_links(text: str, limit: int) -> list[Link]:
@@ -179,24 +222,33 @@ def _tiny(value: str | None) -> bool:
     return number <= limit
 
 
+def _own_background(tag: Tag) -> str | None:
+    """Couleur de fond déclarée par l'élément lui-même (style en ligne ou ``bgcolor``)."""
+    raw = tag.get("style")
+    style = parse_style(raw if isinstance(raw, str) else "")
+    color = style.get("background-color") or style.get("background", "").split(" ")[0]
+    bgcolor = tag.get("bgcolor")
+    return normalize_color(color) or normalize_color(bgcolor if isinstance(bgcolor, str) else None)
+
+
 def _background(tag: Tag) -> str | None:
     """Couleur de fond la plus proche : l'élément, puis ses ancêtres."""
     node: Tag | None = tag
     while isinstance(node, Tag):
-        style = parse_style(node.get("style", "") if isinstance(node.get("style"), str) else "")
-        color = style.get("background-color") or style.get("background", "").split(" ")[0]
-        bgcolor = node.get("bgcolor")
-        found = normalize_color(color) or normalize_color(
-            bgcolor if isinstance(bgcolor, str) else None
-        )
+        found = _own_background(node)
         if found:
             return found
         node = node.parent
     return None
 
 
-def hiding_reason(tag: Tag) -> str | None:
-    """Raison pour laquelle un élément est invisible, ou ``None``."""
+def hiding_reason(tag: Tag, background: str | None = None) -> str | None:
+    """Raison pour laquelle un élément est invisible, ou ``None``.
+
+    ``background`` : couleur de fond effective de l'élément, si l'appelant la connaît
+    déjà (:func:`analyze_html` la transmet en descendant l'arbre) ; sinon elle est
+    cherchée dans les ancêtres.
+    """
     if tag.has_attr("hidden"):
         return "hidden_attribute"
     raw = tag.get("style")
@@ -216,7 +268,7 @@ def hiding_reason(tag: Tag) -> str | None:
     if overflow_hidden and (_tiny(style.get("max-height")) or _tiny(style.get("height"))):
         return "zero_height"
     color = normalize_color(style.get("color"))
-    if color is not None and color == _background(tag):
+    if color is not None and color == (background or _background(tag)):
         return "same_color_as_background"
     return None
 
@@ -253,19 +305,26 @@ def analyze_html(html: str, *, max_links: int) -> HtmlAnalysis:
         if isinstance(value, str) and value.strip():
             result.links.append(make_link(tag.name, value, tag.get_text(" ", strip=True)))
 
+    # Un seul parcours, de la racine vers les feuilles : la couleur de fond est héritée
+    # au passage et l'on ne descend pas dans un élément masqué. Remonter les ancêtres de
+    # chaque balise coûterait profondeur × balises : quelques Ko de « <div> » imbriqués
+    # suffiraient à bloquer l'analyse pendant des minutes.
     hidden_tops: list[Tag] = []
-    hidden_ids: set[int] = set()
-    for tag in soup.find_all(True):
-        if any(id(parent) in hidden_ids for parent in tag.parents):
-            continue  # déjà compté avec l'élément masqué qui le contient
-        reason = hiding_reason(tag)
-        if reason is None:
-            continue
-        hidden_ids.add(id(tag))
-        hidden_tops.append(tag)
-        result.hidden.elements += 1
-        result.hidden.chars += len(tag.get_text(" ", strip=True))
-        result.hidden.reasons[reason] += 1
+    stack: list[tuple[Tag, str | None]] = [(soup, None)]
+    while stack:
+        node, inherited = stack.pop()
+        for child in reversed(node.contents):
+            if not isinstance(child, Tag):
+                continue
+            background = _own_background(child) or inherited
+            reason = hiding_reason(child, background)
+            if reason is None:
+                stack.append((child, background))
+                continue
+            hidden_tops.append(child)
+            result.hidden.elements += 1
+            result.hidden.chars += len(child.get_text(" ", strip=True))
+            result.hidden.reasons[reason] += 1
     for tag in hidden_tops:
         tag.decompose()  # le texte masqué ne fait pas partie du texte visible
 

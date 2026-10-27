@@ -290,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
             "approach": name,
             "selected": name == selected.approach,
             "params": trial.params,
-            "threshold": round(threshold, 6),
+            "threshold": threshold,  # non arrondi : le même que celui du modèle
             "validation": trial.validation,
             "test": M.evaluate_at_threshold(test["label"].to_numpy(), test_scores, threshold),
             "fr_ar": per_lang,

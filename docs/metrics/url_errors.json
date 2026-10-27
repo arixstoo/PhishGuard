@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "generated_at": "2026-10-27T00:19:18+00:00",
+    "generated_at": "2026-10-27T22:59:54+00:00",
     "report_version": "1.0.0",
     "dataset_sha256": "0310e419432c749350f01ce8e8841313f89d66ee82ef52082ff8e195c1a2a66f",
-    "model_sha256": "70b7838415a33820ab451b23c72515f9e6bdafe453518643711512bc228bf642",
+    "model_sha256": "9aa07df2ec23eb0ff02c224cf01b013bcf97ad9554bd53f41ac2ff08f201bc94",
     "split": "validation",
     "worst_per_kind": 50,
     "rows": 21007,

@@ -21,11 +21,12 @@ Premiers détecteurs, évalués avec une méthode qui cherche les biais avant le
 ### SMS
 
 - Six approches comparées (mots, caractères, SVM, features smishing FR/EN/AR), split groupé par gabarit, jeu de test français / arabe rédigé à la main (1.9).
+- Modèle `text_v1` : n-grammes de caractères et SVM linéaire. Test UCI (anglais) : PR-AUC 0,975, rappel 94,8 % pour 1,5 % de faux positifs ; sur le jeu FR/AR rédigé, 40 à 43 % des messages légitimes signalés ([model card](docs/model-card-text.md)).
 
 ### Email
 
-- Parseur défensif `.eml` : SPF, DKIM, DMARC, expéditeurs, liens trompeurs, pièces jointes à risque, texte masqué (1.10).
-- Score par règles transparentes et modèle appris, avec le modèle URL appliqué aux liens (1.11).
+- Parseur défensif `.eml` : SPF, DKIM, DMARC (y compris les en-têtes Exchange Online), expéditeurs, liens trompeurs (liens réécrits par les passerelles de sécurité déballés), pièces jointes à risque, texte masqué. Taille **et temps** d'analyse bornés : en-têtes, parties MIME et balises HTML limités avant l'analyse (1.10).
+- Score par règles transparentes et modèle appris, avec le modèle URL appliqué aux liens (1.11). Règles sur le test : 47 % du phishing signalé pour 0,8 % de faux positifs ; le modèle appris reste expérimental ([model card](docs/model-card-email.md)).
 
 ### Documentation
 
@@ -35,8 +36,7 @@ Premiers détecteurs, évalués avec une méthode qui cherche les biais avant le
 
 - Biais de chemin et de popularité du modèle URL : 6,4 % de faux positifs sur les pages internes légitimes au seuil de décision.
 - Modèle SMS entraîné sur de l'anglais : pas prêt pour le français et l'arabe.
-- Corpus d'emails publics anciens : les scores du score email surestiment son efficacité actuelle.
-- Les chiffres des modèles SMS et email sont à générer localement (`make train-text`, `make train-email`).
+- Corpus d'emails publics d'époques différentes (légitime de 2002, phishing de 2020 à 2026) : le modèle email appris sépare surtout les époques, et le verdict vient des règles. Sur du phishing récent (Phishing Pot), les règles jugent encore 64 % des emails « sûrs ».
 
 ## [0.0.1] : module 0, fondations
 

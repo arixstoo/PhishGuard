@@ -13,6 +13,9 @@ DATASET := data/processed/urls.parquet
 SPLIT := data/processed/urls_split.parquet
 URL_MODEL := models/url_v1.joblib
 EMAIL_CORPORA := data/raw/emails/manifest_corpora.json
+# 200 emails Phishing Pot, comme dans docs/metrics/email_v1.json (le script en prend 50 par défaut).
+EMAIL_SAMPLES := data/raw/emails/phishing_pot/manifest.json
+EMAIL_SAMPLE_COUNT := 200
 
 .DEFAULT_GOAL := help
 .PHONY: help install lint format test \
@@ -91,7 +94,10 @@ train-text: ## Compare les modèles SMS (UCI + jeu FR/AR) et enregistre le meill
 	$(PYTHON) scripts/train_text.py
 
 email-samples: ## Télécharge des emails de phishing réels (Phishing Pot, non versionnés) (étape 1.10)
-	$(PYTHON) scripts/fetch_email_samples.py
+	$(PYTHON) scripts/fetch_email_samples.py --count $(EMAIL_SAMPLE_COUNT)
+
+$(EMAIL_SAMPLES):
+	$(PYTHON) scripts/fetch_email_samples.py --count $(EMAIL_SAMPLE_COUNT)
 
 email-corpora: ## Télécharge SpamAssassin (légitime) et Nazario (phishing), non versionnés (étape 1.11)
 	$(PYTHON) scripts/fetch_email_corpora.py
@@ -99,7 +105,7 @@ email-corpora: ## Télécharge SpamAssassin (légitime) et Nazario (phishing), n
 $(EMAIL_CORPORA):
 	$(PYTHON) scripts/fetch_email_corpora.py
 
-train-email: $(EMAIL_CORPORA) ## Compare règles et modèles du score email, enregistre le modèle (étape 1.11)
+train-email: $(EMAIL_CORPORA) $(EMAIL_SAMPLES) ## Compare règles et modèles du score email, enregistre le modèle (étape 1.11)
 	$(PYTHON) scripts/train_email.py
 
 # --------------------------------------------------------------------------- #

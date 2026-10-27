@@ -72,15 +72,15 @@ Mesuré sur un seul fil, comme en production (une requête = une URL) :
 ## Résultats
 
 <!-- generated:train-url:start -->
-*Généré par `scripts/train_url.py` le 2026-10-25 (jeu `0310e419432c`, validation : 21 007 URLs dont 4 198 de phishing). Chiffres complets : [`metrics/url_v1.json`](metrics/url_v1.json).*
+*Généré par `scripts/train_url.py` le 2026-10-27 (jeu `0310e419432c`, validation : 21 007 URLs dont 4 198 de phishing). Chiffres complets : [`metrics/url_v1.json`](metrics/url_v1.json).*
 
 ### Les trois modèles (jeu de features « sans schéma »)
 
 | Modèle | Hyperparamètres retenus | PR-AUC | R@1%FPR | R@0,1%FPR | FPR pages internes | Latence p50 (1 URL) | Modèle seul (lot) | Taille |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Régression logistique | `C=0.1` | 0,893 | 0,681 | 0,353 | 6,4 % | 2,09 ms | 0,2 µs | 2 Kio |
-| Random Forest | `n_estimators=300, max_depth=None, min_samples_leaf=5` | 0,954 | 0,831 | 0,661 | 6,2 % | 13,18 ms | 21,7 µs | 14 072 Kio |
-| LightGBM **(retenu)** | `n_estimators=300, learning_rate=0.05, num_leaves=63, min_child_samples=20` | 0,956 | 0,841 | 0,671 | 6,8 % | 1,80 ms | 18,4 µs | 852 Kio |
+| Régression logistique | `C=0.1` | 0,893 | 0,681 | 0,353 | 6,4 % | 2,06 ms | 0,2 µs | 2 Kio |
+| Random Forest | `n_estimators=300, max_depth=None, min_samples_leaf=5` | 0,954 | 0,831 | 0,661 | 6,2 % | 13,47 ms | 23,1 µs | 14 072 Kio |
+| LightGBM **(retenu)** | `n_estimators=300, learning_rate=0.05, num_leaves=63, min_child_samples=20` | 0,956 | 0,841 | 0,671 | 6,8 % | 1,89 ms | 18,7 µs | 852 Kio |
 
 ### Rappel à 1 % FPR selon le jeu de features
 

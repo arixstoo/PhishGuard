@@ -65,13 +65,49 @@ def sender_group(email: ParsedEmail, raw_sha256: str) -> str:
     return f"sha256:{raw_sha256}"
 
 
+# Features dont la valeur dépend surtout de l'époque des corpus : SpamAssassin (2002)
+# n'a presque pas de HTML (5 %), le phishing récent presque toujours (98 %). Seule,
+# has_html sépare les deux corpus (AUC 0,97) : un modèle qui la garde apprend
+# « HTML = phishing » et signale une newsletter légitime d'aujourd'hui.
+ERA_BIASED_FEATURES = ("has_html",)
+DEPLOYED_FEATURE_SET = "robust"
+
+
+def cap_per_group(
+    frame: pd.DataFrame, max_per_group: int, *, group: str = "group", order: str = "sha256"
+) -> tuple[pd.DataFrame, int]:
+    """Garde au plus ``max_per_group`` lignes par groupe (``0`` : pas de limite).
+
+    Un expéditeur en masse pèse sinon plus que tous les autres : dans SpamAssassin, une
+    seule passerelle RSS (``rssfeeds@spamassassin.taint.org``) envoie 623 résumés presque
+    identiques. Groupée, elle tombe en entier dans un bloc et en fait les deux tiers. Les
+    lignes gardées sont les premières par ``order`` (l'empreinte : choix déterministe et
+    sans lien avec le contenu). Retourne le jeu réduit et le nombre de lignes retirées.
+    """
+    if max_per_group <= 0:
+        return frame, 0
+    ordered = frame.sort_values(order, kind="stable")
+    kept = ordered[ordered.groupby(group).cumcount() < max_per_group]
+    kept = kept.sort_index()
+    return kept.reset_index(drop=True), len(frame) - len(kept)
+
+
 def feature_sets(with_url_model: bool) -> dict[str, tuple[str, ...]]:
-    sets = {"all": feature_names(), "without_auth": feature_names(exclude_groups=("auth",))}
+    """Jeux de features comparés.
+
+    ``all`` : tout ; ``without_auth`` : sans le groupe auth ; ``robust`` : sans le groupe
+    auth ni :data:`ERA_BIASED_FEATURES`, le jeu déployé. Avec un modèle URL, chaque jeu a
+    aussi sa variante ``…_with_url_model``.
+    """
+    without_auth = feature_names(exclude_groups=("auth",))
+    sets = {
+        "all": feature_names(),
+        "without_auth": without_auth,
+        "robust": tuple(n for n in without_auth if n not in ERA_BIASED_FEATURES),
+    }
     if with_url_model:
-        sets["all_with_url_model"] = feature_names() + URL_MODEL_FEATURES
-        sets["without_auth_with_url_model"] = (
-            feature_names(exclude_groups=("auth",)) + URL_MODEL_FEATURES
-        )
+        for name in list(sets):
+            sets[f"{name}_with_url_model"] = sets[name] + URL_MODEL_FEATURES
     return sets
 
 

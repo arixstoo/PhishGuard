@@ -127,11 +127,16 @@ _ALIF_FORMS = str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا"})
 _DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
 
 # Lien : schéma, « www. », ou nom de domaine nu suivi d'un chemin ou d'un TLD courant.
+# Un domaine nu ne suit ni « @ » (adresse email) ni une lettre ou un point. Sans chemin,
+# seuls les TLD de la liste comptent ; « it », « be » et « me » en sont exclus, car les SMS
+# collent souvent deux phrases (« pain.it will », « reply.Be »). « example » et « test »
+# sont réservés (RFC 2606) et servent dans les jeux rédigés pour le projet.
+_BARE_DOMAIN_START = r"(?<![@\w.-])[a-z0-9][a-z0-9-]*"
 _URL_RE = re.compile(
     r"(?:https?://|www\.)\S+"
-    r"|\b[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.(?:[a-z]{2,24})/\S*"
-    r"|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|info|biz|xyz|top|online|site|live|ly|me|co|io"
-    r"|fr|dz|ma|tn|uk|de|es|it|be|ch|ca)\b",
+    rf"|{_BARE_DOMAIN_START}(?:\.[a-z0-9-]+)*\.(?:[a-z]{{2,24}})/\S*"
+    rf"|{_BARE_DOMAIN_START}(?:\.[a-z0-9-]+)*\.(?:com|net|org|info|biz|xyz|top|online|site"
+    r"|live|shop|app|click|link|icu|vip|ly|co|io|fr|dz|ma|tn|uk|de|es|ch|ca|example|test)\b",
     re.IGNORECASE,
 )
 _HOST_RE = re.compile(r"^(?:https?://)?([^/\s:?#]+)", re.IGNORECASE)
@@ -141,9 +146,19 @@ _HOST_RE = re.compile(r"^(?:https?://)?([^/\s:?#]+)", re.IGNORECASE)
 _SHORT_CODE_RE = re.compile(r"(?<![\d+£$€.,:/-])\d{4,6}(?!\d|[.,:/-]\d)")
 # Téléphone : 9 à 15 chiffres, espaces, points ou tirets permis, préfixe + facultatif.
 _PHONE_RE = re.compile(r"(?<!\w)\+?\d(?:[ .-]?\d){8,14}(?!\w)")
-_CURRENCY = r"(?:£|\$|€|eur|euros?|usd|gbp|dzd|da|dinars?|dh|mad|دج|دينار|يورو)"
+# Montant : un nombre collé à une devise, avant ou après. Une devise en lettres doit être un
+# mot entier (ni « Jada 3 » ni « data »). « da », « dh » et « mad » sont aussi de l'argot
+# anglais (« 2 da report » = « to the report ») : il leur faut au moins deux chiffres.
+_NOT_AFTER_LETTER = r"(?<![^\W\d_])"
+_NOT_BEFORE_LETTER = r"(?![^\W\d_])"
+_CURRENCY_WORD = r"(?:euros?|eur|usd|gbp|dzd|dinars?|دج|دينار|يورو)"
+_AMBIGUOUS_CURRENCY = r"(?:da|dh|mad)"
 _AMOUNT_RE = re.compile(
-    rf"{_CURRENCY}\s?\d[\d ,.]*|\d[\d ,.]*\s?{_CURRENCY}(?![a-z])", re.IGNORECASE
+    r"[£$€]\s?\d|\d\s?[£$€]"
+    rf"|{_NOT_AFTER_LETTER}{_CURRENCY_WORD}\s?\d|\d\s?{_CURRENCY_WORD}{_NOT_BEFORE_LETTER}"
+    rf"|{_NOT_AFTER_LETTER}{_AMBIGUOUS_CURRENCY}\s?\d\d"
+    rf"|\d\d\s?{_AMBIGUOUS_CURRENCY}{_NOT_BEFORE_LETTER}",
+    re.IGNORECASE,
 )
 
 

@@ -40,7 +40,7 @@ Fiche d'identité du modèle de détection de phishing par URL, au format des *m
 <!-- generated:card-url:start -->
 *Généré par `scripts/model_cards.py` depuis [`metrics/url_v1.json`](metrics/url_v1.json) et [`metrics/url_v1_test.json`](metrics/url_v1_test.json).*
 
-**Modèle** : LightGBM (`n_estimators=300, learning_rate=0.05, num_leaves=63, min_child_samples=20`), 25 features (jeu `without_scheme`), fichier `models/url_v1.joblib` (SHA-256 `70b7838415a3`), jeu `0310e419432c`, scikit-learn 1.9.1, LightGBM 4.7.0.
+**Modèle** : LightGBM (`n_estimators=300, learning_rate=0.05, num_leaves=63, min_child_samples=20`), 25 features (jeu `without_scheme`), fichier `models/url_v1.joblib` (SHA-256 `9aa07df2ec23`), jeu `0310e419432c`, scikit-learn 1.9.1, LightGBM 4.7.0.
 
 **Données**
 

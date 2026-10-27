@@ -36,6 +36,14 @@ def test_classic_english_spam():
         ("visit example.fr today, or bit.ly/abc", 2),
         ("meet at 10.30 near the station", 0),
         ("ok. see you", 0),
+        # domaine nu réservé, sans chemin (jeu FR/AR)
+        ("payez sur carte-vitale-renouvellement.example", 1),
+        ("go to news.bbc.co.uk", 1),
+        # phrases collées et adresses email (corpus UCI) : pas des liens
+        ("Howz pain.it will come down today", 0),
+        ("Sorry da thangam.it's my mistake", 0),
+        ("try to change in reply.Be nice", 0),
+        ("It's yijue@hotmail.com", 0),
     ],
 )
 def test_urls(text, n_urls):
@@ -76,9 +84,20 @@ def test_amounts(text):
     assert f(f"payez {text} maintenant")["has_amount"] == 1
 
 
-def test_no_amount_without_currency():
-    assert f("j'ai 25 ans et 3 enfants")["has_amount"] == 0
-    assert f("data plan")["has_amount"] == 0  # « da » doit être un mot
+@pytest.mark.parametrize(
+    "text",
+    [
+        "j'ai 25 ans et 3 enfants",
+        "data plan",  # « da » doit être un mot
+        "1. Over 2. Jada 3. Kusruthi",  # ni à la fin d'un mot
+        "Is ur changes 2 da report big?",  # argot : « to the »
+        "DEAD 2 DA WRLD",
+        "I'm mad 2day",
+        "back to europe 2 days",
+    ],
+)
+def test_no_amount_without_currency(text):
+    assert f(text)["has_amount"] == 0
 
 
 def test_french_keywords_without_accents_or_case():

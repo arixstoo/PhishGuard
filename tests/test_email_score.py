@@ -175,6 +175,30 @@ def test_url_model_features():
     assert no_links == {"max_link_url_score": 0.0, "link_flagged_by_url_model": 0.0}
 
 
+def test_url_model_rule_uses_the_strict_per_link_threshold():
+    # Un email a souvent des dizaines de liens : 1 % de faux positifs par lien en ferait
+    # bien plus par email.
+    assert S.DEFAULT_URL_THRESHOLD == "fpr_0_1pct"
+
+
+def test_rewritten_links_are_scored_by_their_real_target():
+    href = "https://eur01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevil.example.net%2F"
+    raw = (
+        b"From: a@example.com\r\nContent-Type: text/html\r\n\r\n"
+        + f'<a href="{href}">Ouvrir</a>'.encode()
+    )
+    assert S.url_model_features(parse_eml(raw), StubUrlModel())["max_link_url_score"] == 0.9
+
+
+def test_reply_to_of_a_mailing_list_is_not_a_signal():
+    headers = b"From: Alice <alice@a.example.com>\r\nReply-To: liste@lists.example.org\r\n"
+    body = b"\r\nBonjour"
+    assert S.email_features(parse_eml(headers + body))["reply_to_differs"] == 1
+    listed = parse_eml(headers + b"List-Id: Discussion <liste.lists.example.org>\r\n" + body)
+    assert listed.mailing_list and listed.reply_to_differs  # le fait reste noté
+    assert S.email_features(listed)["reply_to_differs"] == 0
+
+
 # --------------------------------------------------------------------------- #
 # Corpus
 # --------------------------------------------------------------------------- #
@@ -275,9 +299,23 @@ def test_sender_group():
 
 
 def test_feature_sets():
-    assert set(M.feature_sets(False)) == {"all", "without_auth"}
+    assert set(M.feature_sets(False)) == {"all", "without_auth", "robust"}
     sets = M.feature_sets(True)
     assert set(sets["all_with_url_model"]) - set(sets["all"]) == set(S.URL_MODEL_FEATURES)
+    # Le jeu déployé n'a ni le groupe auth ni les features d'époque (has_html).
+    robust = set(sets[M.DEPLOYED_FEATURE_SET])
+    assert not robust & (set(S.FEATURE_GROUPS["auth"]) | set(M.ERA_BIASED_FEATURES))
+    assert robust | set(S.FEATURE_GROUPS["auth"]) | {"has_html"} == set(sets["all"])
+
+
+def test_cap_per_group_keeps_a_deterministic_sample():
+    frame = pd.DataFrame(
+        {"group": ["a"] * 5 + ["b"] * 2, "sha256": ["5", "1", "4", "2", "3", "x", "y"]}
+    )
+    kept, removed = M.cap_per_group(frame, 2)
+    assert removed == 3 and kept["group"].value_counts().to_dict() == {"a": 2, "b": 2}
+    assert sorted(kept.loc[kept["group"] == "a", "sha256"]) == ["1", "2"]
+    assert M.cap_per_group(frame, 0) == (frame, 0)
 
 
 def test_at_threshold_is_strict():
@@ -334,7 +372,7 @@ def tiny_url_model(path):
     urls += [f"http://evil{i}-login-secure.example.net/verify/{i}" for i in range(30)]
     x = UrlFeatureExtractor(families=("base",)).transform(urls)[list(names)]
     estimator = LogisticRegression().fit(x, [0] * 30 + [1] * 30)
-    return UrlModel(estimator, names, thresholds={"fpr_1pct": 0.5}).save(path)
+    return UrlModel(estimator, names, thresholds={"fpr_1pct": 0.5, "fpr_0_1pct": 0.5}).save(path)
 
 
 @pytest.mark.parametrize("with_url_model", [False, True])
@@ -365,7 +403,7 @@ def test_train_email_end_to_end(tmp_path, with_url_model):
     assert load_script("train_email").main(args) == 0
 
     report = json.loads((tmp_path / "email_v1.json").read_text(encoding="utf-8"))
-    expected_set = "without_auth_with_url_model" if with_url_model else "without_auth"
+    expected_set = "robust_with_url_model" if with_url_model else "robust"
     assert report["deployed"]["feature_set"] == expected_set
     assert sum(m["deployed"] for m in report["models"]) == 1
     assert report["dataset"]["corpus"]["by_source"] == {"spamassassin": 160, "nazario": 160}

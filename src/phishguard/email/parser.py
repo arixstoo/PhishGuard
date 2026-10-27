@@ -76,7 +76,17 @@ class EmailLimits:
     max_links: int = 500
     max_attachments: int = 100
     max_html_chars: int = 2_000_000
+    # Pour tout le message. Le coût de html.parser croît plus vite que le nombre de
+    # balises (200 000 : une vingtaine de secondes) ; une lettre d'information en compte
+    # quelques milliers.
+    max_html_tags: int = 50_000
     max_text_chars: int = 100_000
+    # En-têtes du message principal. Sur 200 emails Phishing Pot : 37 Ko, 96 champs et
+    # 21 Ko pour le plus long champ, au plus. Sans borne, la bibliothèque standard met
+    # plusieurs minutes sur 10 Mio d'en-têtes « From » ou un « Subject » géant.
+    max_header_bytes: int = 128 * 1024
+    max_headers: int = 500
+    max_header_field_bytes: int = 32 * 1024
 
 
 @dataclass(frozen=True)
@@ -116,6 +126,7 @@ class ParsedEmail:
     reply_to_differs: bool = False
     return_path_differs: bool = False
     display_name_spoof: bool = False
+    mailing_list: bool = False  # en-tête List-Id ou List-Post (RFC 2919, RFC 2369)
     text: str = ""
     has_html: bool = False
     links: list[Link] = field(default_factory=list)
@@ -147,6 +158,7 @@ class ParsedEmail:
             "reply_to_differs": self.reply_to_differs,
             "return_path_differs": self.return_path_differs,
             "display_name_spoof": self.display_name_spoof,
+            "mailing_list": self.mailing_list,
             "text": self.text,
             "has_html": self.has_html,
             "links": [link.to_dict() for link in self.links],
@@ -290,6 +302,53 @@ def make_attachment(part: Message, filename: str | None) -> Attachment:
     )
 
 
+def _nth_offset(data: str | bytes, needle: Any, allowed: int) -> int | None:
+    """Position de l'occurrence n° ``allowed + 1`` de ``needle``, ou ``None``."""
+    position = -1
+    for _ in range(max(allowed, 0) + 1):
+        position = data.find(needle, position + 1)
+        if position < 0:
+            return None
+    return position
+
+
+_HEADER_END_RE = re.compile(rb"\r?\n\r?\n")
+_FIELD_START_RE = re.compile(rb"\n(?![ \t])")  # une ligne qui ne continue pas la précédente
+
+
+def _bound_headers(raw: bytes, limits: EmailLimits) -> tuple[bytes, bool]:
+    """Borne les en-têtes du message principal avant l'analyse.
+
+    Garde les ``max_headers`` premiers champs (les plus récents, dont celui du serveur de
+    réception), coupe chaque champ à ``max_header_field_bytes`` et le bloc entier à
+    ``max_header_bytes``. Le corps n'est pas touché.
+    """
+    end = _HEADER_END_RE.search(raw)
+    split = end.start() if end else len(raw)
+    header, body = raw[:split], raw[split:]
+    if len(header) <= limits.max_header_field_bytes and header.count(b"\n") < limits.max_headers:
+        return raw, False  # cas courant : rien à borner
+    starts = [0]
+    for match in _FIELD_START_RE.finditer(header):
+        starts.append(match.end())
+        if len(starts) > limits.max_headers:
+            break
+    ends = [s - 1 for s in starts[1:]] + [len(header)]
+    fields = [
+        header[start:stop][: limits.max_header_field_bytes]
+        for start, stop in list(zip(starts, ends, strict=True))[: limits.max_headers]
+    ]
+    bounded = b"\n".join(fields)[: limits.max_header_bytes]
+    if bounded == header:
+        return raw, False
+    return bounded.rstrip(b"\r") + body, True
+
+
+def _tag_limit_offset(html: str, max_tags: int) -> int | None:
+    """Position du « < » qui ouvre la balise n° ``max_tags + 1``, ou ``None``."""
+    return _nth_offset(html, "<", max_tags)
+
+
 def _is_attachment(part: Message, filename: str | None) -> bool:
     disposition = part.get_content_disposition()
     if disposition == "attachment":
@@ -336,17 +395,32 @@ def parse_eml(
         raise EmailTooLargeError(f"message de {len(raw)} octets (limite {limits.max_bytes})")
 
     result = ParsedEmail()
-    msg = _step(result, "structure", BytesParser(policy=policy.default).parsebytes, bytes(raw))
+    raw = bytes(raw)
+    # La bibliothèque standard analyse toutes les parties avant que max_parts ne joue :
+    # 10 Mio découpés en 100 000 parties minuscules, c'est une vingtaine de secondes. On
+    # coupe donc avant l'analyse quand les lignes de délimiteur (« --… ») sont bien plus
+    # nombreuses que ce que max_parts laissera lire.
+    cut = _nth_offset(raw, b"\n--", 4 * limits.max_parts)
+    if cut is not None:
+        result.defects.append(f"mime_truncated:{limits.max_parts}")
+        raw = raw[:cut]
+    raw, headers_cut = _bound_headers(raw, limits)
+    if headers_cut:
+        result.defects.append("headers_truncated")
+    msg = _step(result, "structure", BytesParser(policy=policy.default).parsebytes, raw)
     if msg is None:
         return result
     result.defects.extend(type(d).__name__ for d in getattr(msg, "defects", []))
 
-    _step(result, "headers", _read_headers, msg, result, trusted_authserv_ids)
+    # Étapes séparées : un « From » piégé qui fait échouer la lecture des expéditeurs ne
+    # doit pas faire perdre l'authentification.
+    _step(result, "headers", _read_headers, msg, result)
+    _step(result, "auth", _read_auth, msg, result, trusted_authserv_ids)
     _step(result, "body", _read_body, msg, result, limits)
     return result
 
 
-def _read_headers(msg: Message, result: ParsedEmail, trusted: list[str] | None) -> None:
+def _read_headers(msg: Message, result: ParsedEmail) -> None:
     result.subject = _header(msg, "Subject") or ""
     result.date = _header(msg, "Date")
     result.message_id = _header(msg, "Message-ID")
@@ -363,11 +437,14 @@ def _read_headers(msg: Message, result: ParsedEmail, trusted: list[str] | None) 
         result.return_path = make_address(*parseaddr(return_path))
 
     result.reply_to_differs = any(_differs(result.from_, r) for r in result.reply_to)
+    result.mailing_list = msg.get("List-Id") is not None or msg.get("List-Post") is not None
     result.return_path_differs = _differs(result.from_, result.return_path)
     if result.from_ is not None and result.from_.registered_domain is not None:
         shown = display_name_domain(result.from_.display_name)
         result.display_name_spoof = shown is not None and shown != result.from_.registered_domain
 
+
+def _read_auth(msg: Message, result: ParsedEmail, trusted: list[str] | None) -> None:
     result.auth = read_auth_results(
         [str(v) for v in msg.get_all("Authentication-Results") or []],
         [str(v) for v in msg.get_all("Received-SPF") or []],
@@ -378,6 +455,7 @@ def _read_headers(msg: Message, result: ParsedEmail, trusted: list[str] | None) 
 def _read_body(msg: Message, result: ParsedEmail, limits: EmailLimits) -> None:
     plain_parts: list[str] = []
     html_texts: list[str] = []
+    tags_left = limits.max_html_tags
     for part in _walk(msg, limits, result.defects):
         result.parts += 1
         result.defects.extend(
@@ -388,7 +466,9 @@ def _read_body(msg: Message, result: ParsedEmail, limits: EmailLimits) -> None:
         filename = _filename(part, result.defects)
         if _is_attachment(part, filename):
             if len(result.attachments) >= limits.max_attachments:
-                result.defects.append(f"attachments_truncated:{limits.max_attachments}")
+                defect = f"attachments_truncated:{limits.max_attachments}"
+                if defect not in result.defects:
+                    result.defects.append(defect)
                 continue
             result.attachments.append(make_attachment(part, filename))
             continue
@@ -400,6 +480,14 @@ def _read_body(msg: Message, result: ParsedEmail, limits: EmailLimits) -> None:
             if len(html) > limits.max_html_chars:
                 result.defects.append(f"html_truncated:{limits.max_html_chars}")
                 html = html[: limits.max_html_chars]
+            # Budget de balises commun à toutes les parties HTML du message.
+            cut = _tag_limit_offset(html, tags_left)
+            if cut is not None:
+                defect = f"html_tags_truncated:{limits.max_html_tags}"
+                if defect not in result.defects:
+                    result.defects.append(defect)
+                html = html[:cut]
+            tags_left -= html.count("<")
             result.has_html = True
             remaining = max(0, limits.max_links - len(result.links))
             analysis = analyze_html(html, max_links=remaining)

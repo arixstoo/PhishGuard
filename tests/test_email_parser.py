@@ -8,6 +8,7 @@ présents (licence CC BY-NC : jamais versionnés).
 
 import importlib.util
 import json
+import time
 from pathlib import Path
 
 import httpx
@@ -188,6 +189,67 @@ def test_part_link_and_text_limits():
     assert len(parse_eml(long_text, EmailLimits(max_text_chars=100)).text) == 100
 
 
+def test_deeply_nested_html_stays_fast():
+    # Remonter les ancêtres de chaque balise coûtait profondeur × balises : ce message de
+    # 0,5 Mo bloquait l'analyse plus de dix minutes.
+    html = '<div style="background:#fff">' + '<span style="color:#000">' * 20_000 + "x"
+    raw = b"Content-Type: text/html\r\n\r\n" + html.encode()
+    start = time.perf_counter()
+    parse_eml(raw)
+    assert time.perf_counter() - start < 10
+
+
+def test_same_color_is_inherited_through_the_tree():
+    analysis = H.analyze_html(
+        '<table bgcolor="#ffffff"><tr><td><div><span style="color:white">caché</span></div>'
+        "</td></tr></table><p>vu</p>",
+        max_links=10,
+    )
+    assert analysis.hidden.reasons == {"same_color_as_background": 1}
+    assert analysis.text == "vu"
+
+
+def test_html_tag_budget_is_shared_by_all_parts():
+    part = "--b\r\nContent-Type: text/html\r\n\r\n" + "<b>x</b>" * 30 + "\r\n"
+    raw = f'Content-Type: multipart/alternative; boundary="b"\r\n\r\n{part * 5}--b--\r\n'
+    r = parse_eml(raw.encode(), EmailLimits(max_html_tags=100))
+    assert r.defects.count("html_tags_truncated:100") == 1
+    assert r.text.count("x") == 50  # 100 balises : 50 « <b>x</b> » sur les 150
+
+
+def test_thousands_of_tiny_parts_are_cut_before_parsing():
+    # La bibliothèque standard lisait les 100 000 parties (une vingtaine de secondes)
+    # avant que max_parts ne joue.
+    part = b"--B\r\nContent-Type: application/octet-stream\r\n\r\nx\r\n"
+    raw = b"From: a@b.example\r\nContent-Type: multipart/mixed; boundary=B\r\n\r\n"
+    r = parse_eml(raw + part * 5_000 + b"--B--\r\n", EmailLimits(max_parts=20))
+    assert "mime_truncated:20" in r.defects and r.parts == 20
+    assert r.from_.address == "a@b.example"
+
+
+@pytest.mark.parametrize(
+    ("headers", "kept_from"),
+    [
+        (b"From: a@b.example\r\n" + b"X-A: b\r\n" * 2_000, "a@b.example"),  # trop de champs
+        (b"From: a@b.example\r\nSubject: " + b"=?utf-8?q?a?= " * 10_000 + b"\r\n", "a@b.example"),
+        (b"X-A: b\r\n" * 2_000 + b"From: a@b.example\r\n", None),  # From au-delà de la limite
+    ],
+    ids=["many_fields", "huge_subject", "from_beyond_limit"],
+)
+def test_headers_are_bounded_before_parsing(headers, kept_from):
+    r = parse_eml(headers + b"\r\nbody", EmailLimits(max_headers=100))
+    assert "headers_truncated" in r.defects
+    assert (r.from_.address if r.from_ else None) == kept_from
+    assert r.text.strip() == "body"
+    assert not [d for d in r.defects if "_failed:" in d]
+
+
+def test_auth_survives_a_trapped_from_header():
+    raw = b"Authentication-Results: mx.example; spf=fail; dmarc=fail\r\nFrom: " + b"(" * 20_000
+    r = parse_eml(raw + b"a@b.example\r\n\r\nx")
+    assert (r.auth.spf, r.auth.dmarc) == ("fail", "fail")
+
+
 def test_empty_and_garbage_inputs():
     for raw in (b"", b"\x00\xff" * 50, b"\r\n\r\n", b":::\r\n\r\n", b"From: <<<@@@>>>\r\n\r\nx"):
         result = parse_eml(raw)
@@ -244,6 +306,21 @@ def test_authentication_results_edge_cases():
     _, results = A.parse_authentication_results("mx; spf=bizarre; arc=pass")
     assert results == {"spf": "unknown"}
     assert A.strip_comments("a (b (c) d) e \\( f") == "a  e \\( f"
+
+
+def test_exchange_online_header_without_authserv_id():
+    # Forme vue dans 46 des 50 emails Phishing Pot : pas d'identifiant de serveur, et
+    # « bestguesspass » quand le domaine n'a pas d'enregistrement DMARC.
+    header = (
+        "spf=pass (sender IP is 192.0.2.1) smtp.mailfrom=mg.a.example; dkim=pass "
+        "(signature was verified) header.d=a.example;dmarc=bestguesspass action=none "
+        "header.from=a.example;compauth=pass reason=109"
+    )
+    assert A.parse_authentication_results(header) == (
+        None,
+        {"spf": "pass", "dkim": "pass", "dmarc": "none"},
+    )
+    assert A.read_auth_results([header]).spf == "pass"
 
 
 def test_received_spf_and_fallbacks():
@@ -328,6 +405,34 @@ def test_make_link():
     assert not H.make_link("a", "https://www.paypal.com/x", "paypal.com").mismatch
     assert not H.make_link("a", "https://evil.example.net/", "Cliquez ici").mismatch
     assert H.make_link("a", "data:text/html,x", "www.bank.example.com").mismatch
+
+
+@pytest.mark.parametrize(
+    ("href", "rewriter"),
+    [
+        ("https://clicktime.symantec.com/39e8?u=http%3A%2F%2Fwww.paypal.com%2F", "symantec"),
+        (
+            "https://eur01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.paypal.com",
+            "safelinks",
+        ),
+        ("https://urldefense.proofpoint.com/v2/url?u=https-3A__www.paypal.com_x&d=1", "proofpoint"),
+        ("https://urldefense.com/v3/__https://www.paypal.com/x__;!!ab$", "proofpoint"),
+    ],
+)
+def test_links_rewritten_by_security_gateways_are_unwrapped(href, rewriter):
+    # Vu sur Phishing Pot : un lien réécrit par la passerelle passait pour trompeur.
+    link = H.make_link("a", href, "www.paypal.com")
+    assert (link.href_domain, link.rewritten_by, link.mismatch) == ("paypal.com", rewriter, False)
+
+
+def test_unwrapping_keeps_a_lure_behind_a_gateway():
+    href = "https://eur01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevil.example.net%2F"
+    assert H.make_link("a", href, "www.paypal.com").mismatch
+    # Cible non web ou absente : le lien n'est pas déballé.
+    assert (
+        H.unwrap_rewritten("https://x.safelinks.protection.outlook.com/?url=javascript:x") is None
+    )
+    assert H.unwrap_rewritten("https://clicktime.symantec.com/x") is None
 
 
 def test_text_links_strip_trailing_punctuation():

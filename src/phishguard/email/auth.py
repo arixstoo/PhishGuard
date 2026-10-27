@@ -28,6 +28,9 @@ RESULTS = frozenset(
 UNKNOWN = "unknown"  # aucun résultat lisible pour la méthode
 _RESULT_RE = re.compile(r"^\s*([a-z][a-z0-9-]*)\s*=\s*([a-z]+)", re.IGNORECASE)
 _PREFERENCE = ("pass", "fail", "softfail", "neutral", "policy", "temperror", "permerror", "none")
+# Résultats propres à Microsoft (Exchange Online) : « bestguesspass » veut dire que le
+# domaine n'a pas d'enregistrement DMARC (le message serait passé s'il en avait un).
+_ALIASES = {"bestguesspass": "none"}
 
 
 @dataclass(frozen=True)
@@ -74,13 +77,21 @@ def parse_authentication_results(value: str) -> tuple[str | None, dict[str, str]
     parts = [p.strip() for p in strip_comments(value).split(";")]
     if not parts or not parts[0]:
         return None, {}
-    authserv_id = parts[0].split()[0].lower() if parts[0].split() else None
+    # Exchange Online omet l'identifiant de serveur, pourtant obligatoire (RFC 8601) :
+    # « Authentication-Results: spf=pass … ; dkim=pass … ». Le premier élément est alors
+    # déjà un résultat.
+    if _RESULT_RE.match(parts[0]):
+        authserv_id, results_parts = None, parts
+    else:
+        authserv_id = parts[0].split()[0].lower() if parts[0].split() else None
+        results_parts = parts[1:]
     found: dict[str, list[str]] = {}
-    for part in parts[1:]:
+    for part in results_parts:
         match = _RESULT_RE.match(part)
         if not match:
             continue
         method, result = match.group(1).lower(), match.group(2).lower()
+        result = _ALIASES.get(result, result)
         if method in METHODS:
             found.setdefault(method, []).append(result if result in RESULTS else UNKNOWN)
     results = {}
