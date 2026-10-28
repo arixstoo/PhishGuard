@@ -366,8 +366,8 @@ def main(argv: list[str] | None = None) -> int:
         args.readme: ("current-results-url", readme_block),
     }
     for path, (block, content) in updates.items():
-        update_generated_block(path, block, content)
-        print(f"{path.name} : bloc {block} mis à jour")
+        changed = update_generated_block(path, block, content)
+        print(f"{path.name} : bloc {block} {'mis à jour' if changed else 'déjà à jour'}")
     return 0
 
 
