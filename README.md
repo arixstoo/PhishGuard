@@ -88,6 +88,7 @@ make errors-url                         # classify the 50 worst false positives 
 make train-text                         # compare SMS text models, English corpus + French/Arabic set (docs/text-models.md)
 python scripts/parse_email.py msg.eml   # SPF/DKIM/DMARC, sender mismatches, deceptive links, risky attachments (docs/email-parser.md)
 make email-corpora && make train-email  # email score: transparent rules vs learned models (docs/email-score.md)
+python -m phishguard.config             # which Threat Intel sources are enabled (optional keys in .env, docs/secrets.md)
 ```
 
 Run `make help` to list the available commands.
@@ -100,7 +101,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | --- | --- | --- |
 | M0 Foundations | Repo structure, CI, community files, SMS baseline, phishing 101 | ✅ done |
 | M1 Detection | URL / text / email detectors, temporal split, model cards | ✅ done (`v0.1.0`) |
-| M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping | ⏳ planned |
+| M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping | 🚧 in progress |
 | M3 XAI & adversarial | SHAP explanations, evasion catalogue, robustness report | ⏳ planned |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image | ⏳ planned |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, user tests | ⏳ planned |
@@ -131,6 +132,7 @@ data/, models/    generated locally, never committed
 - [SMS text models](docs/text-models.md): word vs character n-grams vs hand-written smishing features, and how they transfer to French and Arabic (French)
 - [Email parser](docs/email-parser.md): defensive `.eml` parsing, authentication results, deceptive links, hidden text and risky attachments (French)
 - [Email score](docs/email-score.md): explainable rules vs learned models, and why public email corpora are biased by era (French)
+- [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 

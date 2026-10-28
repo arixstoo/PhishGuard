@@ -10,3 +10,13 @@ repos:
     rev: v8.30.1
     hooks:
       - id: gitleaks
+
+  # Filet de sécurité en plus de .gitignore : refuse un .env ajouté de force (git add -f).
+  - repo: local
+    hooks:
+      - id: forbid-env-files
+        name: Refuse les fichiers .env
+        entry: les fichiers .env contiennent des secrets et ne se commitent jamais (seul .env.example est autorisé)
+        language: fail
+        files: (^|/)\.env(\..+)?$
+        exclude: (^|/)\.env\.example$
