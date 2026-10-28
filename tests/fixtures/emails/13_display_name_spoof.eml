@@ -1,0 +1,7 @@
+Received-SPF: fail (mx.example.org: domain of notify.example.net does not designate 192.0.2.1)
+From: "service@paypal.com" <alerts@notify.example.net>
+To: client@example.org
+Subject: Activite inhabituelle
+Content-Type: text/plain; charset="utf-8"
+
+Connectez-vous pour verifier : http://notify.example.net/verif.

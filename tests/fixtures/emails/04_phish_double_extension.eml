@@ -1,0 +1,24 @@
+From: Service Facturation <factures@billing.example.net>
+To: client@example.org
+Subject: Facture impayée
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="m4"
+
+--m4
+Content-Type: text/plain; charset="utf-8"
+
+Veuillez trouver votre facture en pièce jointe.
+--m4
+Content-Type: application/octet-stream; name="Facture_2026.pdf.exe"
+Content-Disposition: attachment; filename="Facture_2026.pdf.exe"
+Content-Transfer-Encoding: base64
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAA==
+--m4
+Content-Type: application/zip; name="scan.zip"
+Content-Disposition: attachment; filename="scan.zip"
+Content-Transfer-Encoding: base64
+
+UEsDBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+--m4--

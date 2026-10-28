@@ -1,0 +1,13 @@
+From: Banque <alerte@banque-securite.example.net>
+To: client@example.org
+Subject: Alerte de sécurité
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<table bgcolor="#FFFFFF"><tr><td>
+<p>Votre carte est bloqu​ée. Vérifiez ici :
+<a href="https://banque-securite.example.net/v">Vérifier</a></p>
+<span style="font-size:0px">Bonjour, voici le compte rendu de la réunion de lundi.</span>
+<p style="color:#fff">texte blanc sur fond blanc pour tromper le filtre</p>
+<div style="visibility: hidden !important">encore du texte caché</div>
+</td></tr></table>

@@ -1,0 +1,9 @@
+Authentication-Results: mx.example.org; spf=fail smtp.mailfrom=attacker.example.net;
+ dkim=none; dmarc=fail header.from=bank.example.com
+Authentication-Results: mx.google.com; spf=pass; dkim=pass; dmarc=pass
+From: Banque <securite@bank.example.com>
+To: client@example.org
+Subject: Mise a jour
+Content-Type: text/plain; charset="utf-8"
+
+L'en-tete du bas a ete ecrit par l'expediteur lui-meme.

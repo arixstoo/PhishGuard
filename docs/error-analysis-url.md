@@ -56,7 +56,7 @@ Les catégories viennent du plan (service légitime avec long paramètre, héber
 ## Résultats
 
 <!-- generated:errors-url:start -->
-*Généré par `scripts/analyze_url_errors.py` le 2026-10-27 (modèle `70b7838415a3`, bloc **validation**, seuil `fpr_0_5pct` : score > 0,8263). Exemples défangés, sans requête, hors OpenPhish. Chiffres complets : [`metrics/url_errors.json`](metrics/url_errors.json).*
+*Généré par `scripts/analyze_url_errors.py` le 2026-10-27 (modèle `9aa07df2ec23`, bloc **validation**, seuil `fpr_0_5pct` : score > 0,8263). Exemples défangés, sans requête, hors OpenPhish. Chiffres complets : [`metrics/url_errors.json`](metrics/url_errors.json).*
 
 ### Faux positifs (légitime signalé)
 

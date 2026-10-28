@@ -14,6 +14,7 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
 | **Tranco List** | Légitime (Top sites) | CSV / ZIP | Données de recherche ouvertes (Le Pochat et al.) | Quotidienne (22h UTC) | Aucune (identifiant permanent) |
 | **Common Crawl** | Légitime (pages internes des domaines Tranco) | Index CDX (blocs gzip) | [Conditions d'utilisation](https://commoncrawl.org/terms-of-use), usage libre | Un crawl par mois environ | Aucune |
 | **UCI PhiUSIIL** | Comparaison externe (phishing + légitime) | CSV dans un ZIP | CC BY 4.0 | Figé (version du 04/03/2024) | Aucune |
+| **Phishing Pot** | Emails de phishing réels (`.eml`) | Un fichier `.eml` par email | CC BY-NC 4.0 (non commercial, attribution) | Contributions continues | Aucune |
 
 ---
 
@@ -136,6 +137,22 @@ Ce document décrit les sources de flux (feeds) de phishing et de domaines légi
   - les pages d'un domaine viennent d'un ou deux blocs de l'index, donc d'une même zone alphabétique de chemins : la diversité est bonne entre domaines, moindre au sein d'un domaine ;
   - un domaine technique (CDN, API) n'a souvent aucune page HTML : environ 40 % des domaines du top ne donnent rien (3 042 domaines sur 5 000 ont donné des URLs le 25/10/2026).
 - **Fréquence** : un crawl par mois environ. Relancer le script après chaque nouveau crawl (`https://index.commoncrawl.org/collinfo.json`).
+
+---
+
+## 7. Phishing Pot (emails de phishing réels)
+
+- **URL** : https://github.com/rf-peixoto/phishing_pot (dossier `email/`, plus de 12 000 emails `sample-<n>.eml`).
+- **Contenu** : emails de phishing reçus par des pots de miel, anonymisés par leurs contributeurs (adresse du destinataire remplacée par `phishing@pot`).
+- **Script** : `python scripts/fetch_email_samples.py` télécharge un échantillon déterministe (`sample-1`, `sample-62`…, 50 par défaut) dans `data/raw/emails/phishing_pot/`, avec un manifeste (URL, taille, SHA-256 de chaque fichier).
+- **Conditions d'utilisation & Licence** :
+  - **CC BY-NC 4.0** : usage non commercial, attribution à « Phishing Pot, rf-peixoto et contributeurs » ;
+  - incompatible avec la licence MIT du dépôt : les emails ne sont **jamais versionnés**, seul le script l'est.
+- **Usage** : vérification du parseur d'emails sur des messages réels (étape 1.10), puis évaluation du score email (étape 1.11).
+- **Limites** :
+  - uniquement du phishing : il faut une autre source pour les emails légitimes ;
+  - l'anonymisation est faite à la main par chaque contributeur : un email peut encore contenir une adresse réelle. Traiter ces fichiers comme des données personnelles potentielles, ne jamais en publier le contenu ;
+  - ce sont des emails hostiles : ne jamais les ouvrir dans un client de messagerie, seulement les lire comme des octets.
 
 ---
 

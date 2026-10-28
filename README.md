@@ -42,6 +42,14 @@ has already been reported. PhishGuard aims to fill the gap for non-technical use
 
 ## Current results
 
+<!-- generated:current-results-url:start -->
+**URL model** (`url_v1`, LightGBM, 25 offline lexical features), measured once on the most recent 21,004 URLs (temporal, domain-grouped test set). Full numbers and caveats: [`docs/model-card-url.md`](docs/model-card-url.md).
+
+| PR-AUC | Recall @ 1 % FPR | Recall at decision threshold | FPR (homepages / internal pages) | Precision if 1 % of URLs are phishing |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.939 | 0.755 | 73.9 % | 0.2 % / 6.4 % | 47.3 % |
+<!-- generated:current-results-url:end -->
+
 **SMS baseline** (TF-IDF + logistic regression on the
 [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection)),
 spam = positive class, threshold 0.5. Full output: [`docs/metrics/sms_baseline.json`](docs/metrics/sms_baseline.json).
@@ -78,6 +86,8 @@ make train-url                          # train and compare logistic regression,
 make evaluate-url                       # test-set evaluation at realistic phishing prevalence (docs/evaluation.md)
 make errors-url                         # classify the 50 worst false positives and false negatives (docs/error-analysis-url.md)
 make train-text                         # compare SMS text models, English corpus + French/Arabic set (docs/text-models.md)
+python scripts/parse_email.py msg.eml   # SPF/DKIM/DMARC, sender mismatches, deceptive links, risky attachments (docs/email-parser.md)
+make email-corpora && make train-email  # email score: transparent rules vs learned models (docs/email-score.md)
 ```
 
 Run `make help` to list the available commands.
@@ -88,8 +98,8 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 
 | Module | Content | Status |
 | --- | --- | --- |
-| M0 Foundations | Repo structure, CI, community files, SMS baseline, phishing 101 | 🟡 in progress |
-| M1 Detection | URL / text / email detectors, temporal split, model cards | ⏳ planned |
+| M0 Foundations | Repo structure, CI, community files, SMS baseline, phishing 101 | ✅ done |
+| M1 Detection | URL / text / email detectors, temporal split, model cards | ✅ done (`v0.1.0`) |
 | M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping | ⏳ planned |
 | M3 XAI & adversarial | SHAP explanations, evasion catalogue, robustness report | ⏳ planned |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image | ⏳ planned |
@@ -119,6 +129,9 @@ data/, models/    generated locally, never committed
 - [Realistic evaluation](docs/evaluation.md): precision at 1 % and 0.1 % phishing prevalence, and how the decision threshold is chosen (French)
 - [URL error analysis](docs/error-analysis-url.md): the worst errors by category, and why static features alone cannot catch phishing on trusted platforms (French)
 - [SMS text models](docs/text-models.md): word vs character n-grams vs hand-written smishing features, and how they transfer to French and Arabic (French)
+- [Email parser](docs/email-parser.md): defensive `.eml` parsing, authentication results, deceptive links, hidden text and risky attachments (French)
+- [Email score](docs/email-score.md): explainable rules vs learned models, and why public email corpora are biased by era (French)
+- Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History

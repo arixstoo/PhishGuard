@@ -14,7 +14,7 @@ gabarit (:func:`phishguard.data.sms.split_sms`) :
 
 Sélection : pour chaque approche, le réglage de ``C`` qui maximise la PR-AUC de
 **validation** (rappel à 1 % FPR pour départager). La validation ne compte qu'environ
-700 messages légitimes : 1 % FPR, c'est 7 messages, trop peu pour choisir sur ce seul
+680 messages légitimes : 1 % FPR, c'est 7 messages, trop peu pour choisir sur ce seul
 critère. Le seuil de décision rapporté est celui qui donne 1 % de faux positifs sur la
 validation ; le test n'est lu qu'une fois, pour le tableau final.
 """

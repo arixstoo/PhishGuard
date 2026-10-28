@@ -36,6 +36,14 @@ def test_classic_english_spam():
         ("visit example.fr today, or bit.ly/abc", 2),
         ("meet at 10.30 near the station", 0),
         ("ok. see you", 0),
+        # domaine nu réservé, sans chemin (jeu FR/AR)
+        ("payez sur carte-vitale-renouvellement.example", 1),
+        ("go to news.bbc.co.uk", 1),
+        # phrases collées et adresses email (corpus UCI) : pas des liens
+        ("Howz pain.it will come down today", 0),
+        ("Sorry da thangam.it's my mistake", 0),
+        ("try to change in reply.Be nice", 0),
+        ("It's yijue@hotmail.com", 0),
     ],
 )
 def test_urls(text, n_urls):
@@ -76,9 +84,20 @@ def test_amounts(text):
     assert f(f"payez {text} maintenant")["has_amount"] == 1
 
 
-def test_no_amount_without_currency():
-    assert f("j'ai 25 ans et 3 enfants")["has_amount"] == 0
-    assert f("data plan")["has_amount"] == 0  # « da » doit être un mot
+@pytest.mark.parametrize(
+    "text",
+    [
+        "j'ai 25 ans et 3 enfants",
+        "data plan",  # « da » doit être un mot
+        "1. Over 2. Jada 3. Kusruthi",  # ni à la fin d'un mot
+        "Is ur changes 2 da report big?",  # argot : « to the »
+        "DEAD 2 DA WRLD",
+        "I'm mad 2day",
+        "back to europe 2 days",
+    ],
+)
+def test_no_amount_without_currency(text):
+    assert f(text)["has_amount"] == 0
 
 
 def test_french_keywords_without_accents_or_case():
@@ -148,3 +167,10 @@ def test_features_never_use_the_network(monkeypatch):
 
     monkeypatch.setattr(socket.socket, "connect", refuse)
     S.SmishingFeatureExtractor().extract("http://example.com bit.ly/x 87121 £5")
+
+
+def test_invisible_format_characters_do_not_split_keywords():
+    # U+200B (espace sans chasse) et U+2060 glissés pour couper « urgent » et « compte ».
+    v = f("URG\u200bENT : votre com\u2060pte est bloqu\u200bé")
+    assert v["urgency_hits"] >= 2 and v["account_hits"] >= 1
+    assert S.normalize("a\u200bb\u202ec") == "abc"

