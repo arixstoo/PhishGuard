@@ -10,7 +10,7 @@ SPLIT := data/processed/urls_split.parquet
 URL_MODEL := models/url_v1.joblib
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format test split train-url evaluate-url errors-url
+.PHONY: help install lint format test split train-url evaluate-url errors-url train-text
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -51,3 +51,6 @@ errors-url: $(URL_MODEL) ## Classe les pires erreurs du modèle URL sur la valid
 
 $(URL_MODEL): $(SPLIT)
 	$(PYTHON) scripts/train_url.py
+
+train-text: ## Compare les modèles SMS (UCI + jeu FR/AR) et enregistre le meilleur (étape 1.9)
+	$(PYTHON) scripts/train_text.py

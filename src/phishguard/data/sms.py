@@ -7,10 +7,14 @@ Format : une ligne par message, ``<ham|spam>\\t<texte>``.
 from __future__ import annotations
 
 import csv
+import re
+import unicodedata
 from pathlib import Path
 
 import httpx
+import numpy as np
 import pandas as pd
+from sklearn.model_selection import StratifiedGroupKFold
 
 from phishguard.data.integrity import DatasetIntegrityError, download_zip_member, sha256_bytes
 
@@ -29,6 +33,9 @@ __all__ = [
     "download_sms_collection",
     "load_sms_collection",
     "sha256_bytes",
+    "split_sms",
+    "template_key",
+    "template_overlap",
 ]
 
 
@@ -96,3 +103,90 @@ def deduplicate(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
         "conflicting_texts": len(conflicting),
     }
     return clean, stats
+
+
+# --------------------------------------------------------------------------- #
+# Split groupé par gabarit (étape 1.9)
+# --------------------------------------------------------------------------- #
+
+SMS_SPLITS = ("train", "validation", "test")
+_DIGIT_RUN_RE = re.compile(r"\d+")
+_SPACE_RE = re.compile(r"\s+")
+
+
+def template_key(text: str) -> str:
+    """Gabarit d'un message : minuscules, nombres remplacés par ``0``, espaces réduits.
+
+    Une campagne de spam envoie le même texte avec un numéro, un montant ou un code
+    différent. Le dédoublonnage exact ne les voit pas ; deux messages au même gabarit
+    vont donc toujours dans le même bloc.
+    """
+    text = unicodedata.normalize("NFKC", text).casefold()
+    return _SPACE_RE.sub(" ", _DIGIT_RUN_RE.sub("0", text)).strip()
+
+
+def split_sms(
+    df: pd.DataFrame,
+    fractions: tuple[float, float, float] = (0.70, 0.15, 0.15),
+    seed: int = 42,
+) -> pd.Series:
+    """Bloc (``train``, ``validation``, ``test``) de chaque message de ``df``.
+
+    Stratifié par étiquette et groupé par :func:`template_key` : aucun gabarit n'est
+    dans deux blocs. Le corpus UCI n'a pas de date, le split ne peut pas être temporel.
+    Les messages sont répartis en 20 plis équilibrés (``StratifiedGroupKFold``), puis les
+    plis sont attribués aux blocs selon ``fractions`` (multiples de 5 %).
+    """
+    n_folds = 20
+    counts = [round(f * n_folds) for f in fractions]
+    exact = all(np.isclose(f * n_folds, c) for f, c in zip(fractions, counts, strict=False))
+    if len(fractions) != len(SMS_SPLITS) or not exact or sum(counts) != n_folds or min(counts) < 1:
+        raise ValueError("fractions : trois parts positives, multiples de 0,05, de somme 1")
+    if df.empty:
+        raise ValueError("jeu vide")
+
+    groups = df["text"].map(template_key)
+    folds = np.empty(len(df), dtype=np.int64)
+    splitter = StratifiedGroupKFold(n_splits=n_folds, shuffle=True, random_state=seed)
+    for fold, (_, members) in enumerate(splitter.split(df["text"], df["label"], groups)):
+        folds[members] = fold
+    bounds = np.cumsum(counts)
+    codes = np.searchsorted(bounds, folds, side="right")
+    return pd.Series(
+        pd.Categorical.from_codes(codes, categories=list(SMS_SPLITS)), index=df.index, name="split"
+    )
+
+
+def template_overlap(train_texts: pd.Series, other_texts: pd.Series) -> int:
+    """Messages de ``other_texts`` dont le gabarit est déjà vu à l'entraînement."""
+    seen = set(train_texts.map(template_key))
+    return int(other_texts.map(template_key).isin(seen).sum())
+
+
+# --------------------------------------------------------------------------- #
+# Jeu complémentaire français / arabe (étape 1.9)
+# --------------------------------------------------------------------------- #
+
+FR_AR_COLUMNS = ["id", "lang", "label", "category", "text"]
+FR_AR_LANGS = frozenset({"fr", "ar"})
+
+
+def load_sms_fr_ar(path: Path) -> pd.DataFrame:
+    """Charge ``datasets/sms_fr_ar.csv`` (voir ``datasets/README.md``) et le valide.
+
+    Lève ``ValueError`` si une colonne manque, si une langue ou une étiquette est inconnue,
+    si un identifiant est répété ou si un message est vide.
+    """
+    df = pd.read_csv(path, dtype=str, keep_default_na=False, encoding="utf-8")
+    missing = [c for c in FR_AR_COLUMNS if c not in df.columns]
+    if missing:
+        raise ValueError(f"colonnes absentes : {missing}")
+    if not set(df["lang"]) <= FR_AR_LANGS:
+        raise ValueError(f"langues inconnues : {sorted(set(df['lang']) - FR_AR_LANGS)}")
+    if not set(df["label"]) <= {"0", "1"}:
+        raise ValueError("étiquettes attendues : 0 (légitime) ou 1 (smishing)")
+    if df["id"].duplicated().any():
+        raise ValueError("identifiants en double")
+    if (df["text"].str.strip() == "").any():
+        raise ValueError("message vide détecté")
+    return df[FR_AR_COLUMNS].astype({"label": int})

@@ -31,6 +31,8 @@ dev = [
     "pre-commit",
     "hypothesis",
 ]
+# Approche optionnelle de l'étape 1.9 : télécharge un encodeur de plusieurs centaines de Mo.
+embeddings = ["sentence-transformers"]
 
 [project.urls]
 Repository = "https://github.com/arixstoo/PhishGuard"
