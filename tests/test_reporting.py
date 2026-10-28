@@ -64,3 +64,10 @@ def test_update_generated_block_preserves_line_endings(tmp_path):
     assert "nouveau" in data and "vieux" not in data
     assert "\n" not in data.replace("\r\n", "")
     assert data.startswith("Avant\r\n") and data.endswith("Après\r\n")
+
+
+def test_update_generated_block_reports_changes(tmp_path):
+    path = tmp_path / "doc.md"
+    path.write_bytes(DOC.encode())
+    assert R.update_generated_block(path, "demo", "nouveau") is True
+    assert R.update_generated_block(path, "demo", "nouveau") is False

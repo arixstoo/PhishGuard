@@ -80,10 +80,18 @@ def replace_generated_block(text: str, name: str, content: str) -> str:
     return f"{before}{start}\n{content.strip()}\n{end}{after}"
 
 
-def update_generated_block(path: Path, name: str, content: str) -> None:
-    """Réécrit le bloc ``name`` du fichier ``path`` (UTF-8, fins de ligne conservées)."""
+def update_generated_block(path: Path, name: str, content: str) -> bool:
+    """Réécrit le bloc ``name`` du fichier ``path`` (UTF-8, fins de ligne conservées).
+
+    Renvoie ``True`` si le fichier a changé ; un bloc déjà à jour n'est pas réécrit.
+    """
     path = Path(path)
-    text = path.read_bytes().decode("utf-8")
+    raw = path.read_bytes()
+    text = raw.decode("utf-8")
     newline = "\r\n" if "\r\n" in text else "\n"
     updated = replace_generated_block(text.replace("\r\n", "\n"), name, content)
-    path.write_bytes(updated.replace("\n", newline).encode("utf-8"))
+    data = updated.replace("\n", newline).encode("utf-8")
+    if data == raw:
+        return False
+    path.write_bytes(data)
+    return True
