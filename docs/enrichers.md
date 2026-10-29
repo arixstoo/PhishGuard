@@ -65,4 +65,50 @@ Deux exceptions sont volontairement **propagées** :
 
 ## Pas de message d'erreur dans le signal
 
-Le signal d'erreur ne contient que le **type** de l'exception (`{"error": "ConnectError"}`), jamais son message. Les erreurs `httpx` contiennent l'URL de la requête, et l'API Safe Browsing reçoit la clé en paramètre (`?key=…`) : recopier le message ferait fuiter la clé dans la réponse de l'API et dans les journaux. Le détail complet part dans le journal Python, au niveau `DEBUG` seulement. Un test vérifie qu'une clé présente dans le message d'une exception n'apparaît pas dans le signal.
+Le signal d'erreur ne contient que le **type** de l'exception (`{"error": "ConnectError"}`), jamais son message. Les erreurs `httpx` contiennent l'URL de la requête, et les API Google acceptent la clé en paramètre (`?key=…`) : recopier le message ferait fuiter la clé dans la réponse de l'API et dans les journaux. Le détail complet part dans le journal Python, au niveau `DEBUG` seulement. Un test vérifie qu'une clé présente dans le message d'une exception n'apparaît pas dans le signal.
+
+## Vérifier une source avec ses propres clés
+
+Les tests automatiques n'utilisent que des réponses simulées (`respx`) : ils ne demandent ni clé ni réseau. Pour vérifier une source contre la vraie API, avec les clés de son `.env` :
+
+```bash
+python scripts/check_enrichers.py https://testsafebrowsing.appspot.com/s/phishing.html
+python scripts/check_enrichers.py https://example.com --source google_safe_browsing
+```
+
+Le script affiche le signal de chaque source. Il se termine avec le code 1 si l'une d'elles est en erreur. **L'URL est envoyée aux services tiers** : n'utilise pas une URL qui contient des données personnelles.
+
+## Sources
+
+### Google Safe Browsing (`google_safe_browsing`, étape 2.4)
+
+*Code : `src/phishguard/enrichers/safe_browsing.py`. Clé : `GSB_API_KEY`.*
+
+**Version de l'API.** Google propose aujourd'hui la **v5**. La v4 (Lookup et Update API) fonctionne toujours. On utilise le mode temps réel de la v5, `urls:search`, l'équivalent de la recherche directe `threatMatches:find` de la v4 :
+
+```
+GET https://safebrowsing.googleapis.com/v5/urls:search?urls=<url>&alt=json
+X-Goog-Api-Key: <clé>
+```
+
+| Réponse | Signal |
+| --- | --- |
+| `threats` contient au moins un type (`SOCIAL_ENGINEERING`, `MALWARE`, `UNWANTED_SOFTWARE`, `POTENTIALLY_HARMFUL_APPLICATION`) | `ok`, `risk = 1.0`, `listed = true` : **règle dure** pour la fusion (étape 2.10) |
+| `threats` vide ou absent | `ok`, `risk = 0.0`, `listed = false` |
+| HTTP 400 avec `API_KEY_INVALID` | `error`, `invalid_api_key` |
+| HTTP 429 | `error`, `rate_limited` |
+| HTTP 5xx | `error`, `server_error` |
+| Délai dépassé | `timeout` |
+
+Le type `THREAT_TYPE_UNSPECIFIED` est ignoré, comme le demande la documentation. Un type inconnu, que Google ajouterait plus tard, compte comme une correspondance.
+
+Choix de mise en œuvre :
+
+- `alt=json` est obligatoire : sans lui, la v5 répond en protobuf binaire (vérifié contre l'API réelle) ;
+- la clé part dans l'en-tête `X-Goog-Api-Key`, pas dans l'URL : elle n'apparaît ni dans les journaux, ni dans le message d'une exception `httpx` ;
+- une clé invalide reçoit un **400**, pas un 401 : la réponse est lue pour le dire clairement (vérifié contre l'API réelle) ;
+- le résultat est gardé en cache pendant la durée `cacheDuration` donnée par Google, et 24 h au plus pour un résultat négatif, comme le demandent les conditions. Les erreurs ne sont pas mises en cache.
+
+**Vie privée.** Cette version envoie l'URL complète à Google : elle n'est appelée que si l'utilisateur a activé l'enrichissement (étape 2.9). Avant l'envoi, on retire le fragment (`#…`) et les identifiants (`user:pass@`). La canonicalisation de Safe Browsing les ignore de toute façon : la détection est la même, la fuite en moins. La version 2, plus tard, utilisera la base locale de préfixes de hachage de la v5 (`hashLists`), qui évite d'envoyer l'URL.
+
+**Conditions.** L'API Safe Browsing est réservée à un usage **non commercial**. Un usage commercial passe par Google Web Risk.

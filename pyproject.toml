@@ -32,6 +32,7 @@ dev = [
     "ruff==0.17.1",  # même version que .pre-commit-config.yaml
     "pre-commit",
     "hypothesis",
+    "respx",  # réponses HTTP simulées pour les enrichisseurs (module 2)
 ]
 # Approche optionnelle de l'étape 1.9 : télécharge un encodeur de plusieurs centaines de Mo.
 embeddings = ["sentence-transformers"]
