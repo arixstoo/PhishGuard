@@ -13,7 +13,7 @@ FAKE_KEY = "test-key-not-a-real-secret"
 @pytest.fixture(autouse=True)
 def isolated_env(monkeypatch, tmp_path):
     """Ni l'environnement du développeur ni son .env ne doivent fuiter dans les tests."""
-    for field in KEYED_SOURCES.values():
+    for field in (*KEYED_SOURCES.values(), "urlscan_submit", "urlscan_visibility"):
         monkeypatch.delenv(field.upper(), raising=False)
     monkeypatch.chdir(tmp_path)
     get_settings.cache_clear()
@@ -105,3 +105,16 @@ def test_cli_lists_sources_without_printing_keys(monkeypatch, capsys):
     assert FAKE_KEY not in out
     assert "virustotal" in out and "activée" in out
     assert "désactivée" in out
+
+
+def test_urlscan_submission_is_off_by_default_and_never_public(monkeypatch, tmp_path):
+    (tmp_path / ".env").write_text("URLSCAN_SUBMIT=\nURLSCAN_VISIBILITY=\n")
+    settings = Settings()
+    assert (settings.urlscan_submit, settings.urlscan_visibility) == (False, "unlisted")
+    monkeypatch.setenv("URLSCAN_SUBMIT", "true")
+    monkeypatch.setenv("URLSCAN_VISIBILITY", "private")
+    settings = Settings()
+    assert (settings.urlscan_submit, settings.urlscan_visibility) == (True, "private")
+    monkeypatch.setenv("URLSCAN_VISIBILITY", "public")
+    with pytest.raises(ValueError):
+        Settings()
