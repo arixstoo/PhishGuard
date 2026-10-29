@@ -17,6 +17,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 - Contrat commun `Signal` / `Enricher` : un enrichisseur ne lève jamais d'exception vers l'appelant, une panne devient un signal `error` ou `timeout` de risque nul. La règle est appliquée par la classe de base, pas par chaque source ; l'annulation (`CancelledError`) passe, et le message des exceptions n'est jamais recopié pour ne pas faire fuiter de clé (étape 2.2, [docs/enrichers.md](docs/enrichers.md)).
 - Google Safe Browsing (API v5 `urls:search`) : une correspondance est une règle dure (`risk = 1.0`). Clé dans un en-tête, cache selon la durée donnée par Google, fragment et identifiants retirés de l'URL avant l'envoi. `scripts/check_enrichers.py` interroge les vraies sources avec ses propres clés (étape 2.4).
+- VirusTotal (API v3) : rapport de l'URL, puis du domaine si l'URL est inconnue, sans jamais soumettre d'analyse ; risque `min(1, (malicious + 0,5 × suspicious) / 5)`. Limiteur local (4 par minute, 500 par jour) qui renvoie `skipped` au lieu de dépasser le quota, cache de 6 h (étape 2.5).
 
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 

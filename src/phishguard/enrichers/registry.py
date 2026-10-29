@@ -11,6 +11,7 @@ import httpx
 from phishguard.config import Settings, get_settings
 from phishguard.enrichers.base import Enricher
 from phishguard.enrichers.safe_browsing import SafeBrowsingEnricher
+from phishguard.enrichers.virustotal import VirusTotalEnricher
 
 
 def build_enrichers(
@@ -19,4 +20,5 @@ def build_enrichers(
     settings = settings or get_settings()
     return [
         SafeBrowsingEnricher.from_settings(settings, client=client),
+        VirusTotalEnricher.from_settings(settings, client=client),
     ]

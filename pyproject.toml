@@ -23,6 +23,7 @@ dependencies = [
     "httpx",
     "pydantic>=2",
     "pydantic-settings>=2.1",  # clés d'API chargées depuis .env (étape 2.1)
+    "aiolimiter>=1.1",  # limite de débit locale des API à quota (étape 2.5)
 ]
 
 [project.optional-dependencies]

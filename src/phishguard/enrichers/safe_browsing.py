@@ -38,7 +38,6 @@ import re
 import time
 from collections.abc import Callable
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
@@ -48,6 +47,7 @@ from phishguard.enrichers.http import (
     ExpiringCache,
     HttpEnricher,
     MalformedResponse,
+    sanitize_url,
     status_reason,
 )
 
@@ -57,7 +57,6 @@ ENDPOINT = "https://safebrowsing.googleapis.com/v5/urls:search"
 UNSPECIFIED = "THREAT_TYPE_UNSPECIFIED"  # à ignorer, d'après la documentation
 DEFAULT_CACHE_SECONDS = 300.0
 MAX_CLEAN_CACHE_SECONDS = 24 * 3600.0  # plafond fixé par Google pour un résultat négatif
-MAX_URL_LENGTH = 8_000
 _DURATION = re.compile(r"^\s*(\d+(?:\.\d+)?)s\s*$")
 
 
@@ -66,25 +65,6 @@ def parse_duration(value: object, default: float = DEFAULT_CACHE_SECONDS) -> flo
     if isinstance(value, str) and (match := _DURATION.match(value)):
         return float(match.group(1))
     return default
-
-
-def sanitize_url(url: str) -> str | None:
-    """URL à envoyer : sans fragment ni identifiants. ``None`` si elle n'est pas web."""
-    try:
-        parts = urlsplit(url.strip())
-    except ValueError:
-        return None
-    if parts.scheme.lower() not in ("http", "https") or not parts.hostname:
-        return None
-    netloc = parts.hostname if ":" not in parts.hostname else f"[{parts.hostname}]"
-    try:
-        port = parts.port
-    except ValueError:
-        return None
-    if port is not None:
-        netloc = f"{netloc}:{port}"
-    cleaned = urlunsplit((parts.scheme.lower(), netloc, parts.path, parts.query, ""))
-    return cleaned if len(cleaned) <= MAX_URL_LENGTH else None
 
 
 class SafeBrowsingEnricher(HttpEnricher):
