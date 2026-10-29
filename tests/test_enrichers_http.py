@@ -118,3 +118,24 @@ def test_redirects_are_not_followed():
 
     signal = asyncio.run(Status().enrich("https://x.test/", "x.test"))
     assert signal.evidence["status"] == 302 and not route.called
+
+
+@pytest.mark.parametrize(
+    ("domain", "expected"),
+    [
+        ("Example.COM.", "example.com"),
+        ("bücher.de", "xn--bcher-kva.de"),
+        ("xn--bcher-kva.de", "xn--bcher-kva.de"),
+        ("127.0.0.1", None),
+        ("[::1]", None),
+        ("localhost", None),
+        ("a..b", None),
+        ("-x.com", None),
+        ("ex_ample.com", None),
+        ("", None),
+    ],
+)
+def test_normalize_domain(domain, expected):
+    from phishguard.enrichers.http import normalize_domain
+
+    assert normalize_domain(domain) == expected

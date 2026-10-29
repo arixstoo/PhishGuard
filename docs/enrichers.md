@@ -112,3 +112,43 @@ Choix de mise en œuvre :
 **Vie privée.** Cette version envoie l'URL complète à Google : elle n'est appelée que si l'utilisateur a activé l'enrichissement (étape 2.9). Avant l'envoi, on retire le fragment (`#…`) et les identifiants (`user:pass@`). La canonicalisation de Safe Browsing les ignore de toute façon : la détection est la même, la fuite en moins. La version 2, plus tard, utilisera la base locale de préfixes de hachage de la v5 (`hashLists`), qui évite d'envoyer l'URL.
 
 **Conditions.** L'API Safe Browsing est réservée à un usage **non commercial**. Un usage commercial passe par Google Web Risk.
+
+### VirusTotal (`virustotal`, étape 2.5)
+
+*Code : `src/phishguard/enrichers/virustotal.py`. Clé : `VT_API_KEY`.*
+
+On lit le dernier rapport existant, **sans jamais soumettre** l'URL à une nouvelle analyse. On cherche d'abord l'URL, puis le domaine si VirusTotal ne connaît pas l'URL (404) :
+
+```
+GET https://www.virustotal.com/api/v3/urls/{id}       x-apikey: <clé>
+GET https://www.virustotal.com/api/v3/domains/{domaine}
+```
+
+`id` est l'URL encodée en base64 « url-safe », **sans** les `=` de remplissage. Le mode `lookups=("domain",)` n'envoie que le domaine, jamais l'URL.
+
+**Risque** : `min(1, (malicious + 0.5 × suspicious) / 5)` sur `last_analysis_stats`.
+
+| Moteurs `malicious` | Moteurs `suspicious` | `risk` |
+| --- | --- | --- |
+| 0 | 0 | 0,0 |
+| 1 | 0 | 0,2 : un moteur seul se trompe souvent |
+| 2 | 2 | 0,6 |
+| 5 ou plus | — | 1,0 |
+
+Les éléments de preuve contiennent aussi les moteurs qui ont signalé l'URL (10 au plus), la réputation, la date de la dernière analyse et le lien vers le rapport. Un rapport ancien n'est pas pénalisé ici : la fusion (étape 2.10) pourra tenir compte de sa date.
+
+**Quota.** Le palier public est d'environ 4 requêtes par minute et 500 par jour, pour un **usage non commercial** seulement. Deux protections locales :
+
+- un limiteur `aiolimiter` (seau percé : 4 requêtes d'un coup, puis une place toutes les 15 s). Quand il est plein, la source renvoie `skipped` (`local_rate_limit`), ou attend au plus `max_wait` secondes si on le demande. Par défaut elle n'attend pas : le budget de temps de l'orchestrateur (étape 2.9) est de 2,5 s ;
+- un compteur journalier (UTC), remis à zéro chaque jour.
+
+Les rapports sont gardés en cache 6 h, les absences (404) 1 h. Chaque URL déjà vue économise donc une requête du quota.
+
+| Réponse | Signal |
+| --- | --- |
+| Rapport trouvé | `ok`, risque selon la formule |
+| 404 pour l'URL et le domaine | `ok`, `risk = 0`, `found = false` |
+| Quota local atteint | `skipped`, `local_rate_limit` |
+| 401 `WrongCredentialsError` | `error`, `unauthorized` |
+| 429 `QuotaExceededError` | `error`, `rate_limited` |
+| Rapport malformé | `error`, `MalformedResponse` |
