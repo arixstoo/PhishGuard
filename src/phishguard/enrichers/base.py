@@ -30,7 +30,7 @@ Deux exceptions ne sont **pas** converties en signal :
 
 Le message d'une exception n'est jamais recopié dans le signal, seul son type l'est :
 les erreurs HTTP contiennent souvent l'URL de la requête, et certaines API (Google
-Browsing) y mettent la clé (``?key=…``). Le détail part dans le journal, au niveau
+notamment) acceptent la clé en paramètre (``?key=…``). Le détail part dans le journal, au niveau
 ``DEBUG``.
 """
 
