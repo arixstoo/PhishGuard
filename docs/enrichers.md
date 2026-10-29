@@ -179,3 +179,70 @@ Un scan prend plusieurs secondes, plus que le budget de l'orchestrateur. La soum
 Les recherches sont gardées en cache une heure. Un 429 recopie le délai annoncé par `X-Rate-Limit-Reset-After`.
 
 Le format des réponses vient du client Python officiel (`urlscan/urlscan-python`) et de la documentation. Les verdicts peuvent se trouver dans les résultats de recherche (`verdicts.malicious`, `verdicts.score`) ou seulement dans le rapport complet (`verdicts.overall`) : les deux formes sont lues.
+
+### RDAP (`rdap`, étape 2.7)
+
+*Code : `src/phishguard/enrichers/rdap.py`. Pas de clé.*
+
+RDAP (RFC 9082, 9083) est le successeur de WHOIS : la même information, mais en JSON structuré. Le serveur RDAP de chaque TLD est publié par l'IANA dans un fichier d'amorçage (RFC 9224), gardé en cache 24 h :
+
+```
+GET https://data.iana.org/rdap/dns.json            # quel serveur pour .com, .org…
+GET https://rdap.verisign.com/com/v1/domain/example.com
+```
+
+On interroge **directement le registre**, plutôt qu'un relais comme `rdap.org`, qui verrait passer toutes les requêtes. Seuls les serveurs HTTPS de l'amorçage sont retenus, et le suffixe le plus long l'emporte (`co.uk` avant `uk`).
+
+Le signal utile est la date de l'événement `registration`. Un domaine de quelques jours est un signal fort : c'est la préparation d'infrastructure de MITRE ATT&CK T1583.001 (étape 2.11).
+
+| Âge du domaine | `risk` |
+| --- | --- |
+| moins de 7 jours | 1,0 |
+| moins de 30 jours | 0,8 |
+| moins de 90 jours | 0,4 |
+| moins d'un an | 0,1 |
+| un an ou plus | 0,0 |
+
+Les preuves contiennent aussi le registraire (nom et identifiant IANA), la date d'expiration, les statuts et les serveurs de noms.
+
+**Un signal manquant n'est pas un signal de risque.** Certains registres ne publient pas la date d'enregistrement (`note: registration_date_missing`), d'autres TLD n'ont pas de serveur RDAP (`skipped`, `no_rdap_server`), et un domaine inconnu du registre donne `found: false`. Dans tous ces cas, `risk = 0`, jamais 1.
+
+### DNS (`dns`, étape 2.7)
+
+*Code : `src/phishguard/enrichers/dns_records.py` (pas `dns.py`, pour ne jamais masquer la bibliothèque `dns` de dnspython). Pas de clé.*
+
+Requêtes A, AAAA, MX et NS en parallèle, par `dnspython` et le résolveur du système (2 s par requête, sans domaine de recherche local). Ce sont des signaux **faibles**, plafonnés à `risk = 0,5` :
+
+| Constat | `risk` | Pourquoi |
+| --- | --- | --- |
+| NS d'un fournisseur de DNS gratuit ou dynamique (afraid.org, DuckDNS, Freenom…) | +0,3 | Très courant pour des domaines jetables |
+| 5 adresses A ou plus avec un TTL de moins de 300 s | +0,3 | Allure de *fast flux* : l'hébergement tourne pour résister aux blocages |
+| TTL bas seul | 0 | Les CDN légitimes l'utilisent aussi |
+| Pas de MX, ou MX nul `0 .` (RFC 7505) | 0, drapeau `no_mx` | Le domaine ne reçoit pas d'email : incohérent pour un expéditeur, gardé pour le score email |
+| Domaine inexistant (NXDOMAIN) | 0 | Un signal manquant n'est pas un risque |
+
+Un échec partiel (une requête en délai dépassé) est noté dans `errors` sans empêcher le signal. Un MX inconnu à cause d'une erreur n'est pas confondu avec un MX absent.
+
+### Certificate Transparency (`certificate_transparency`, étape 2.7, optionnel)
+
+*Code : `src/phishguard/enrichers/ct.py`. Pas de clé. Désactivé par défaut : `CRTSH_ENABLED=true`.*
+
+Les autorités de certification publient chaque certificat dans des journaux publics (RFC 6962). Le **premier certificat** d'un domaine indique sa mise en service : un site de phishing obtient souvent le sien quelques heures avant la campagne.
+
+```
+GET https://crt.sh/?q=example.com&output=json
+```
+
+crt.sh est gratuit, mais **lent et souvent instable**. D'où les règles suivantes :
+
+- un délai de lecture de 5 s ;
+- un cache de 24 h ;
+- jamais bloquant : un échec donne `error` ou `timeout`, sans risque ;
+- une réponse limitée à 2 Mo. Au-delà, le domaine a des milliers de certificats : il est ancien et très utilisé (`many_certificates`, `risk = 0`).
+
+| Premier certificat | `risk` |
+| --- | --- |
+| moins de 7 jours | 0,6 |
+| moins de 30 jours | 0,3 |
+
+C'est un signal plus faible que l'âge RDAP : un domaine ancien peut obtenir son premier certificat tardivement.

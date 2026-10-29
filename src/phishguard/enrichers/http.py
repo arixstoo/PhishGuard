@@ -18,6 +18,7 @@ import time
 from collections import OrderedDict
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from typing import Generic, TypeVar
 from urllib.parse import urlsplit, urlunsplit
 
@@ -97,6 +98,20 @@ def normalize_domain(domain: str) -> str | None:
     if len(name) > 253 or len(labels) < 2 or not all(_LABEL.match(label) for label in labels):
         return None
     return name
+
+
+def parse_iso_datetime(value: object) -> datetime | None:
+    """Date ISO 8601 (``2026-10-29T12:00:00Z``) en ``datetime`` UTC, ou ``None``.
+
+    Une date sans fuseau horaire est lue comme UTC.
+    """
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
 def status_reason(status_code: int) -> str:
