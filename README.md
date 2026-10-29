@@ -89,6 +89,7 @@ make train-text                         # compare SMS text models, English corpu
 python scripts/parse_email.py msg.eml   # SPF/DKIM/DMARC, sender mismatches, deceptive links, risky attachments (docs/email-parser.md)
 make email-corpora && make train-email  # email score: transparent rules vs learned models (docs/email-score.md)
 python -m phishguard.config             # which Threat Intel sources are enabled (optional keys in .env, docs/secrets.md)
+python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
 ```
 
 Run `make help` to list the available commands.

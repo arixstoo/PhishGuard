@@ -29,8 +29,8 @@ Deux exceptions ne sont **pas** converties en signal :
   ``Exception``).
 
 Le message d'une exception n'est jamais recopié dans le signal, seul son type l'est :
-les erreurs HTTP contiennent souvent l'URL de la requête, et certaines API (Safe
-Browsing) y mettent la clé (``?key=…``). Le détail part dans le journal, au niveau
+les erreurs HTTP contiennent souvent l'URL de la requête, et certaines API (Google
+notamment) acceptent la clé en paramètre (``?key=…``). Le détail part dans le journal, au niveau
 ``DEBUG``.
 """
 
@@ -133,9 +133,13 @@ class Enricher(ABC):
     def skipped(self, reason: str) -> Signal:
         return Signal(source=self.name, status=SignalStatus.SKIPPED, evidence={"reason": reason})
 
-    def error(self, reason: str) -> Signal:
+    def error(self, reason: str, evidence: dict[str, Any] | None = None) -> Signal:
         """Échec attendu et déjà compris (quota épuisé, réponse illisible…)."""
-        return Signal(source=self.name, status=SignalStatus.ERROR, evidence={"reason": reason})
+        return Signal(
+            source=self.name,
+            status=SignalStatus.ERROR,
+            evidence={"reason": reason, **(evidence or {})},
+        )
 
     # ------------------------------------------------------------------ #
 
