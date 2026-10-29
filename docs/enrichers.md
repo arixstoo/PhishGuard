@@ -152,3 +152,30 @@ Les rapports sont gardés en cache 6 h, les absences (404) 1 h. Chaque URL déj�
 | 401 `WrongCredentialsError` | `error`, `unauthorized` |
 | 429 `QuotaExceededError` | `error`, `rate_limited` |
 | Rapport malformé | `error`, `MalformedResponse` |
+
+### urlscan.io (`urlscan`, étape 2.6)
+
+*Code : `src/phishguard/enrichers/urlscan.py`. Clé : `URLSCAN_API_KEY`. Options : `URLSCAN_SUBMIT` (défaut `false`), `URLSCAN_VISIBILITY` (`unlisted` par défaut, ou `private`).*
+
+urlscan.io visite des pages dans un navigateur isolé et publie ce qu'il a vu. On s'en sert de deux façons.
+
+**1. Recherche des scans existants (par défaut).** Seul le **domaine** est envoyé :
+
+```
+GET https://urlscan.io/api/v1/search/?q=domain:exemple.com&size=10
+API-Key: <clé>
+```
+
+`domain:` couvre aussi les domaines simplement *contactés* par une page (une police, un script de CDN). On ne garde donc que les scans dont la page elle-même est sur le domaine ou sur l'un de ses sous-domaines (`page.domain`). Si le scan le plus récent ne porte pas de verdict, on lit son rapport complet (`/api/v1/result/{uuid}/`). Un rapport indisponible n'empêche pas le signal.
+
+Les preuves gardent, pour les 5 scans les plus récents : date, adresse IP, pays et opérateur du serveur, verdict (malveillant, score, marques imitées, catégories) et l'URL de la capture d'écran. **La capture s'affiche comme une image, jamais comme du HTML.**
+
+**Risque** : `1.0` si urlscan juge la page malveillante, sinon `max(0, score) / 100`. Le score va de -100 (légitime) à 100 (malveillant). Une absence de scan donne `risk = 0`.
+
+**2. Soumission d'un scan (option « analyse approfondie »).** Elle est désactivée par défaut et n'est faite que si aucun scan n'existe. Elle envoie l'URL **complète**, sans fragment ni identifiants, et fait visiter la page par urlscan. Elle n'est **jamais publique** : un scan public expose l'URL, qui peut contenir l'adresse de la victime ou un jeton de connexion. `public` est refusé par la configuration comme par le constructeur. urlscan peut imposer une autre visibilité : celle qu'il annonce est recopiée dans les preuves.
+
+Un scan prend plusieurs secondes, plus que le budget de l'orchestrateur. La soumission renvoie donc `skipped` (`scan_submitted`) avec l'identifiant du scan. La même URL n'est pas soumise à nouveau pendant une heure (`scan_pending`), et la recherche retrouvera le scan aux appels suivants.
+
+Les recherches sont gardées en cache une heure. Un 429 recopie le délai annoncé par `X-Rate-Limit-Reset-After`.
+
+Le format des réponses vient du client Python officiel (`urlscan/urlscan-python`) et de la documentation. Les verdicts peuvent se trouver dans les résultats de recherche (`verdicts.malicious`, `verdicts.score`) ou seulement dans le rapport complet (`verdicts.overall`) : les deux formes sont lues.
