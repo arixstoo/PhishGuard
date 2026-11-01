@@ -1,0 +1,22 @@
+"""Liste des enrichisseurs construits depuis la configuration.
+
+Point d'entrée unique pour le script de vérification et, plus tard, l'orchestrateur
+(étape 2.9). Une source sans clé est construite quand même : elle renverra ``skipped``.
+"""
+
+from __future__ import annotations
+
+import httpx
+
+from phishguard.config import Settings, get_settings
+from phishguard.enrichers.base import Enricher
+from phishguard.enrichers.safe_browsing import SafeBrowsingEnricher
+
+
+def build_enrichers(
+    settings: Settings | None = None, *, client: httpx.AsyncClient | None = None
+) -> list[Enricher]:
+    settings = settings or get_settings()
+    return [
+        SafeBrowsingEnricher.from_settings(settings, client=client),
+    ]
