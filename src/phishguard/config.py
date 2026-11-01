@@ -20,7 +20,7 @@ Vérifier la configuration sans afficher les clés ::
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Final
+from typing import Final, Literal
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -36,19 +36,29 @@ KEYED_SOURCES: Final[dict[str, str]] = {
 
 
 class Settings(BaseSettings):
-    """Clés d'API, chacune facultative. Nom de variable = nom du champ en majuscules."""
+    """Clés d'API (facultatives) et options des sources.
+
+    Nom de variable = nom du champ en majuscules. Une variable vide garde la valeur par
+    défaut.
+    """
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",  # .env contient aussi les clés des scripts de collecte
         frozen=True,
+        env_ignore_empty=True,  # SOURCE_OPTION= dans .env garde la valeur par défaut
     )
 
     gsb_api_key: SecretStr | None = None
     vt_api_key: SecretStr | None = None
     urlscan_api_key: SecretStr | None = None
     abuseipdb_api_key: SecretStr | None = None
+
+    # urlscan.io (étape 2.6) : la soumission de nouveaux scans envoie l'URL complète et
+    # fait visiter la page par urlscan. Désactivée par défaut, jamais en visibilité publique.
+    urlscan_submit: bool = False
+    urlscan_visibility: Literal["unlisted", "private"] = "unlisted"
 
     @field_validator(*KEYED_SOURCES.values(), mode="before")
     @classmethod
