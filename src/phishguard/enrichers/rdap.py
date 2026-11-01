@@ -39,6 +39,7 @@ from phishguard.enrichers.http import (
     parse_iso_datetime,
     status_reason,
 )
+from phishguard.enrichers.resilience import ResilientClient
 
 BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json"
 BOOTSTRAP_TTL = 24 * 3600.0
@@ -177,7 +178,7 @@ class RdapEnricher(HttpEnricher):
         self._cache.set(name, result, RESULT_TTL)
         return self._signal(result, cached=False)
 
-    async def _servers(self, client: httpx.AsyncClient) -> dict[str, str]:
+    async def _servers(self, client: ResilientClient) -> dict[str, str]:
         if (servers := self._bootstrap.get("dns")) is not None:
             return servers
         response = await client.get(BOOTSTRAP_URL)

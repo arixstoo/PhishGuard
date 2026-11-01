@@ -56,6 +56,19 @@ class SignalStatus(StrEnum):
     TIMEOUT = "timeout"  # la source n'a pas répondu à temps
 
 
+class SourceUnavailable(Exception):
+    """La source ne doit pas être interrogée pour l'instant (disjoncteur ouvert, étape 2.8).
+
+    :meth:`Enricher.enrich` la convertit en signal ``skipped`` : ce n'est pas une panne de
+    plus, c'est la protection qui évite d'en provoquer une.
+    """
+
+    def __init__(self, reason: str, retry_in_s: float | None = None) -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.retry_in_s = retry_in_s
+
+
 class Signal(BaseModel):
     """Résultat d'une source, quel qu'il soit.
 
@@ -121,6 +134,11 @@ class Enricher(ABC):
             signal = await self._enrich(url, domain)
             if not isinstance(signal, Signal):
                 raise TypeError(f"_enrich() a renvoyé {type(signal).__name__}, pas un Signal")
+        except SourceUnavailable as exc:
+            evidence: dict[str, Any] = {"reason": exc.reason}
+            if exc.retry_in_s is not None:
+                evidence["retry_in_s"] = round(exc.retry_in_s, 1)
+            signal = Signal(source=self.name, status=SignalStatus.SKIPPED, evidence=evidence)
         except (TimeoutError, httpx.TimeoutException) as exc:
             signal = self._failure(SignalStatus.TIMEOUT, exc)
         except Exception as exc:  # noqa: BLE001 : le contrat interdit de propager

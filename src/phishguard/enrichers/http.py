@@ -1,13 +1,17 @@
-"""Socle HTTP commun des enrichisseurs qui appellent une API (étapes 2.4 à 2.7).
+"""Socle HTTP commun des enrichisseurs qui appellent une API (étapes 2.4 à 2.8).
 
 Les enrichisseurs contactent des **adresses fixes** (``safebrowsing.googleapis.com``,
 ``www.virustotal.com``…) : l'URL de l'utilisateur n'est qu'un paramètre de la requête,
 jamais une destination. Ils n'ont donc pas besoin du garde-fou anti-SSRF de l'étape 2.3
-(voir ``docs/ssrf.md``), mais ils partagent les mêmes règles : délais courts, pas de
-redirection suivie, un ``User-Agent`` identifiable.
+(voir ``docs/ssrf.md``), mais ils partagent les mêmes règles : délais courts (connexion
+2 s, lecture 3 s), pas de redirection suivie, un ``User-Agent`` identifiable.
 
-Un client ``httpx.AsyncClient`` peut être injecté (tests, client partagé de l'étape 2.8) ;
-sinon, un client à durée de vie courte est créé pour chaque appel.
+Toutes les requêtes passent par :meth:`HttpEnricher.http`, qui fournit un
+:class:`~phishguard.enrichers.resilience.ResilientClient` : nouvelles tentatives sur
+les erreurs temporaires et disjoncteur propre à chaque source (étape 2.8). Le client
+``httpx`` sous-jacent est **partagé** entre les sources quand il est injecté
+(:func:`create_shared_client`, utilisé par l'orchestrateur de l'étape 2.9) ; sinon, un
+client à durée de vie courte est créé pour chaque appel.
 """
 
 from __future__ import annotations
@@ -15,19 +19,26 @@ from __future__ import annotations
 import ipaddress
 import re
 import time
-from collections import OrderedDict
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
+from cachetools import TLRUCache
 
 from phishguard.enrichers.base import Enricher
+from phishguard.enrichers.resilience import (
+    DEFAULT_RETRY,
+    CircuitBreaker,
+    ResilientClient,
+    RetryPolicy,
+)
 
 USER_AGENT = "PhishGuard (+https://github.com/arixstoo/PhishGuard)"
 DEFAULT_TIMEOUT = httpx.Timeout(connect=2.0, read=3.0, write=3.0, pool=2.0)
+DEFAULT_LIMITS = httpx.Limits(max_connections=20, max_keepalive_connections=10)
 MAX_URL_LENGTH = 8_000
 _LABEL = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$")
 
@@ -38,23 +49,47 @@ class MalformedResponse(ValueError):
     """La source a répondu, mais pas dans le format documenté."""
 
 
-class HttpEnricher(Enricher):
-    """Enrichisseur qui interroge une API HTTP. Classe intermédiaire, encore abstraite."""
+def create_shared_client(**overrides: Any) -> httpx.AsyncClient:
+    """Client ``httpx`` à partager entre les enrichisseurs (connexions réutilisées).
 
-    def __init__(self, *, client: httpx.AsyncClient | None = None) -> None:
+    À fermer par l'appelant (``async with``). Les paramètres par défaut sont ceux de
+    toutes les sources : délais courts, pas de redirection, ``User-Agent`` du projet.
+    """
+    options: dict[str, Any] = {
+        "timeout": DEFAULT_TIMEOUT,
+        "limits": DEFAULT_LIMITS,
+        "headers": {"User-Agent": USER_AGENT},
+        "follow_redirects": False,
+    }
+    options.update(overrides)
+    return httpx.AsyncClient(**options)
+
+
+class HttpEnricher(Enricher):
+    """Enrichisseur qui interroge une API HTTP. Classe intermédiaire, encore abstraite.
+
+    ``breaker`` et ``retry`` sont des attributs publics : un test, ou l'orchestrateur,
+    peut les remplacer après la construction.
+    """
+
+    def __init__(
+        self,
+        *,
+        client: httpx.AsyncClient | None = None,
+        retry: RetryPolicy = DEFAULT_RETRY,
+        breaker: CircuitBreaker | None = None,
+    ) -> None:
         self._client = client
+        self.retry = retry
+        self.breaker = breaker or CircuitBreaker(self.name)
 
     @asynccontextmanager
-    async def http(self) -> AsyncIterator[httpx.AsyncClient]:
+    async def http(self) -> AsyncIterator[ResilientClient]:
         if self._client is not None:
-            yield self._client
+            yield ResilientClient(self._client, self.breaker, self.retry)
             return
-        async with httpx.AsyncClient(
-            timeout=DEFAULT_TIMEOUT,
-            headers={"User-Agent": USER_AGENT},
-            follow_redirects=False,
-        ) as client:
-            yield client
+        async with create_shared_client() as client:
+            yield ResilientClient(client, self.breaker, self.retry)
 
 
 def sanitize_url(url: str) -> str | None:
@@ -128,36 +163,33 @@ def status_reason(status_code: int) -> str:
 
 
 class ExpiringCache(Generic[V]):
-    """Cache mémoire à durée de vie par entrée et taille bornée (le plus ancien sort).
+    """Cache mémoire à durée de vie **par entrée** et taille bornée.
 
-    Volontairement minimal : l'étape 2.8 le remplacera par un cache partagé.
-    ``clock`` est injectable pour les tests.
+    Repose sur ``cachetools.TLRUCache`` : chaque entrée expire après son propre délai
+    (Safe Browsing impose la durée de chaque réponse), et, une fois le cache plein,
+    l'entrée la moins récemment utilisée sort la première. Cache local au processus :
+    une version partagée (SQLite) viendra avec l'API du module 4. ``clock`` est
+    injectable pour les tests.
     """
 
     def __init__(self, maxsize: int = 10_000, clock: Callable[[], float] = time.monotonic):
         if maxsize < 1:
             raise ValueError("maxsize doit être positif")
         self.maxsize = maxsize
-        self._clock = clock
-        self._data: OrderedDict[str, tuple[float, V]] = OrderedDict()
+        self._data: TLRUCache[str, tuple[float, V]] = TLRUCache(
+            maxsize=maxsize, ttu=lambda _key, entry, now: now + entry[0], timer=clock
+        )
 
     def get(self, key: str) -> V | None:
-        item = self._data.get(key)
-        if item is None:
-            return None
-        expires, value = item
-        if self._clock() >= expires:
-            del self._data[key]
-            return None
-        return value
+        entry = self._data.get(key)
+        return entry[1] if entry is not None else None
 
     def set(self, key: str, value: V, ttl: float) -> None:
         if ttl <= 0:
             return
         self._data.pop(key, None)
-        self._data[key] = (self._clock() + ttl, value)
-        while len(self._data) > self.maxsize:
-            self._data.popitem(last=False)
+        self._data[key] = (ttl, value)
 
     def __len__(self) -> int:
+        self._data.expire()
         return len(self._data)

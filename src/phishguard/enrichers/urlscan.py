@@ -50,6 +50,7 @@ from phishguard.enrichers.http import (
     sanitize_url,
     status_reason,
 )
+from phishguard.enrichers.resilience import ResilientClient
 
 API = "https://urlscan.io/api/v1"
 SEARCH_SIZE = 10
@@ -133,7 +134,7 @@ class UrlscanEnricher(HttpEnricher):
         self._cache.set(name, result, SEARCH_TTL)
         return self._signal(result, cached=False)
 
-    async def _fetch_verdict(self, client: httpx.AsyncClient, uuid: str) -> dict[str, Any] | None:
+    async def _fetch_verdict(self, client: ResilientClient, uuid: str) -> dict[str, Any] | None:
         """Verdict du rapport complet. Un rapport indisponible n'empêche pas le signal.
 
         Le rapport complet est lourd (souvent plus de 1 Mo, parfois plus de 2 s) : un délai
@@ -148,7 +149,7 @@ class UrlscanEnricher(HttpEnricher):
         payload = response.json()
         return _verdict(payload.get("verdicts") if isinstance(payload, dict) else None)
 
-    async def _submit_scan(self, client: httpx.AsyncClient, url: str) -> Signal:
+    async def _submit_scan(self, client: ResilientClient, url: str) -> Signal:
         target = sanitize_url(url)
         if target is None:
             return self.ok(0.0, {"found": False, "scans": []})
