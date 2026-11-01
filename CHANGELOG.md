@@ -2,6 +2,13 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié] : module 2, Threat Intelligence et fusion des signaux
+
+### Configuration
+
+- Clés d'API facultatives (Google Safe Browsing, VirusTotal, urlscan.io, AbuseIPDB) chargées par `pydantic-settings` depuis l'environnement ou `.env` ; une clé absente désactive sa source sans bloquer le démarrage. `python -m phishguard.config` affiche les sources actives sans afficher les clés (étape 2.1, [docs/secrets.md](docs/secrets.md)).
+- `.gitignore` et un hook pre-commit refusent toutes les variantes de `.env` ; gitleaks vérifié sur des clés aux formats réels (2.1).
+
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 
 Premiers détecteurs, évalués avec une méthode qui cherche les biais avant les scores. Rien n'est encore exposé à l'utilisateur : l'API, l'extension et le bot arrivent aux modules 4 et 5.

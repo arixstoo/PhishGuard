@@ -30,8 +30,9 @@ PhishGuard handles hostile data. These rules are not optional:
   you paste one in an issue or PR, defang it: `hxxps://evil[.]example/login`.
 - **Never commit raw datasets** or anything containing personal data (real email addresses,
   phone numbers, message bodies). Commit the script that downloads the data, not the data.
-- **Never commit API keys.** Use a local `.env` file (ignored by git). If a key leaks, revoke
-  it immediately: deleting the commit is not enough.
+- **Never commit API keys.** Use a local `.env` file (ignored by git, copied from
+  `.env.example`). If a key leaks, revoke it immediately: deleting the commit is not enough.
+  See [docs/secrets.md](docs/secrets.md).
 - Never send test phishing messages to real people.
 
 ## Reporting

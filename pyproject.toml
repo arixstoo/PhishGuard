@@ -21,6 +21,8 @@ dependencies = [
     "beautifulsoup4",
     "joblib",
     "httpx",
+    "pydantic>=2",
+    "pydantic-settings>=2.1",  # clés d'API chargées depuis .env (étape 2.1)
 ]
 
 [project.optional-dependencies]
