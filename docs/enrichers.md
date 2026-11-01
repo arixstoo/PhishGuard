@@ -162,11 +162,13 @@ urlscan.io visite des pages dans un navigateur isolé et publie ce qu'il a vu. O
 **1. Recherche des scans existants (par défaut).** Seul le **domaine** est envoyé :
 
 ```
-GET https://urlscan.io/api/v1/search/?q=domain:exemple.com&size=10
+GET https://urlscan.io/api/v1/search/?q=page.domain:exemple.com OR page.apexDomain:exemple.com&size=10
 API-Key: <clé>
 ```
 
-`domain:` couvre aussi les domaines simplement *contactés* par une page (une police, un script de CDN). On ne garde donc que les scans dont la page elle-même est sur le domaine ou sur l'un de ses sous-domaines (`page.domain`). Si le scan le plus récent ne porte pas de verdict, on lit son rapport complet (`/api/v1/result/{uuid}/`). Un rapport indisponible n'empêche pas le signal.
+La requête porte sur la **page** scannée. `domain:exemple.com` couvre aussi tous les domaines simplement *contactés* par une page (une police, un script de CDN) : pour un domaine très utilisé, les 10 résultats les plus récents sont tous des pages tierces, et les scans du domaine lui-même n'arrivent jamais (constaté sur l'API réelle avec `google.com`). `page.apexDomain` couvre les sous-domaines ; le filtre sur `page.domain` reste appliqué aux résultats, par sécurité. Les scans de l'hôte exact de l'URL analysée passent en tête : un domaine qui héberge des pages de tiers (`sites.google.com`, `*.edgeone.dev`) ne doit pas rendre suspect son propre site. Si le premier scan ne porte pas de verdict, on lit son rapport complet (`/api/v1/result/{uuid}/`) : le palier gratuit ne permet pas de chercher sur les champs `verdicts`, et les résultats de recherche n'en contiennent pas. Ce rapport pèse souvent plus de 1 Mo : indisponible, en erreur ou trop lent, il n'empêche pas le signal.
+
+**Limite connue.** Seul le domaine est envoyé, et seuls les 10 scans les plus récents sont lus. Sur un hébergement partagé très scanné, le sous-domaine précis de l'URL peut ne pas en faire partie : le signal porte alors sur d'autres pages du même domaine.
 
 Les preuves gardent, pour les 5 scans les plus récents : date, adresse IP, pays et opérateur du serveur, verdict (malveillant, score, marques imitées, catégories) et l'URL de la capture d'écran. **La capture s'affiche comme une image, jamais comme du HTML.**
 

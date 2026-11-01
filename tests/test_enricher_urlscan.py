@@ -73,7 +73,7 @@ def test_search_sends_only_the_domain():
     route = respx.get(SEARCH).mock(return_value=httpx.Response(200, json=search()))
     run(enricher().enrich(URL, DOMAIN))
     request = route.calls.last.request
-    assert request.url.params["q"] == f"domain:{DOMAIN}"
+    assert request.url.params["q"] == f"page.domain:{DOMAIN} OR page.apexDomain:{DOMAIN}"
     assert request.headers["api-key"] == KEY
     assert "alice" not in str(request.url) and "verify" not in str(request.url)
 
@@ -122,6 +122,16 @@ def test_legitimate_score_gives_no_risk():
 
 
 @respx.mock
+def test_out_of_range_score_is_clamped():
+    verdicts = {"overall": {"malicious": False, "score": 250}}
+    respx.get(SEARCH).mock(
+        return_value=httpx.Response(200, json=search(hit("u", DOMAIN, verdicts=verdicts)))
+    )
+    signal = run(enricher().enrich(URL, DOMAIN))
+    assert (signal.status, signal.risk) == ("ok", 1.0)
+
+
+@respx.mock
 def test_pages_that_only_load_a_resource_from_the_domain_are_ignored():
     # Une page sur un autre site qui charge un script depuis le domaine cherché.
     respx.get(SEARCH).mock(
@@ -153,6 +163,40 @@ def test_unavailable_report_still_gives_a_signal():
     signal = run(enricher().enrich(URL, DOMAIN))
     assert (signal.status, signal.risk) == ("ok", 0.0)
     assert signal.evidence["scans"][0]["verdict"] is None
+
+
+@respx.mock
+def test_slow_report_still_gives_a_signal():
+    # Le rapport complet pèse souvent plus de 1 Mo : son délai ne doit pas perdre la recherche.
+    respx.get(SEARCH).mock(return_value=httpx.Response(200, json=search(hit("u", DOMAIN))))
+    respx.get(f"{API}/result/u/").mock(side_effect=httpx.ReadTimeout("lent"))
+    signal = run(enricher().enrich(URL, DOMAIN))
+    assert (signal.status, signal.evidence["found"]) == ("ok", True)
+    assert signal.evidence["scans"][0]["verdict"] is None
+
+
+@respx.mock
+def test_scans_of_the_analysed_host_come_first():
+    # Une page de tiers hébergée sur un sous-domaine (comme sites.google.com) est plus
+    # récente, mais c'est l'hôte de l'URL analysée qui décide du risque.
+    items = [
+        hit(
+            "tenant",
+            f"sites.{DOMAIN}",
+            time="2026-10-30T00:00:00Z",
+            verdicts=RESULT_MALICIOUS["verdicts"],
+        ),
+        hit(
+            "own",
+            f"login.{DOMAIN}",
+            time="2026-10-01T00:00:00Z",
+            verdicts={"malicious": False, "score": 0},
+        ),
+    ]
+    respx.get(SEARCH).mock(return_value=httpx.Response(200, json=search(*items)))
+    signal = run(enricher().enrich(URL, DOMAIN))
+    assert [s["uuid"] for s in signal.evidence["scans"]] == ["own", "tenant"]
+    assert signal.risk == 0.0
 
 
 # --------------------------------------------------------------------------- #
