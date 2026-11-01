@@ -45,7 +45,7 @@ signal = await Example().enrich(url, domain)  # ne lève jamais
 
 Une sous-classe implémente `_enrich()` ; l'appelant utilise `enrich()`. Il s'agit d'une méthode modèle (*template method*) qui garantit le contrat pour toutes les sources :
 
-1. si `is_enabled()` est faux, elle renvoie `skipped` sans appeler la source ;
+1. si `is_enabled()` est faux, elle renvoie `skipped` sans appeler la source (et `error` si `is_enabled()` lève, par exemple sur un `.env` illisible) ;
 2. elle mesure `latency_ms` ;
 3. elle convertit toute exception : `TimeoutError` et `httpx.TimeoutException` deviennent `timeout`, les autres `error` ;
 4. elle impose `source = name` et `risk = 0` hors `ok`, même si la source se trompe.

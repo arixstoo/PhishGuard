@@ -110,8 +110,12 @@ class Enricher(ABC):
 
     async def enrich(self, url: str, domain: str) -> Signal:
         """Interroge la source et renvoie toujours un :class:`Signal`, sans jamais lever."""
-        if not self.is_enabled():
-            return self.skipped("disabled")
+        try:
+            # is_enabled() lit souvent la configuration : elle peut lever, elle aussi.
+            if not self.is_enabled():
+                return self.skipped("disabled")
+        except Exception as exc:  # noqa: BLE001 : le contrat interdit de propager
+            return self._failure(SignalStatus.ERROR, exc)
         start = time.perf_counter()
         try:
             signal = await self._enrich(url, domain)
