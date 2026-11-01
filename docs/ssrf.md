@@ -28,7 +28,7 @@ Le garde-fou existe pour le jour où une fonctionnalité **devra** contacter une
 | 8 | Connexion à l'**IP validée** ; nom dans `Host` et dans le SNI TLS | *DNS rebinding* : une seconde réponse DNS, différente, entre la vérification et la connexion |
 | 9 | Redirections suivies à la main (3 au plus), chacune revalidée | Redirection d'un site public vers `http://169.254.169.254/` |
 | 10 | Délais : DNS 2 s, connexion 2 s, lecture 3 s, **total 5 s** | Serveur lent (*slowloris*) qui épuise les connexions |
-| 11 | Réponse limitée à 1 Mo **après décompression** | Réponse énorme, « bombe gzip » (2 Ko compressés, 2 Mo décompressés) |
+| 11 | Réponse limitée à 1 Mo reçu **et** 1 Mo après décompression ; décompression gzip et deflate faite par nous, par morceaux bornés ; autres encodages (`br`, `zstd`, encodages empilés) refusés | Réponse énorme ; « bombe gzip » (200 Ko compressés, 200 Mo décompressés) : le décodeur de `httpx` décompresse chaque bloc reçu de 64 Ko en entier, environ 64 Mo en mémoire avant tout contrôle |
 | 12 | Pas de proxy implicite (`trust_env=False`), pas de réutilisation de connexion | Proxy de l'environnement qui choisirait lui-même la destination ; connexion TLS d'un nom réutilisée pour un autre nom servi par la même IP |
 | 13 | `GET` et `HEAD` seulement, en-têtes minimaux | Envoi de données ; fuite de cookies ou d'en-têtes d'authentification |
 
@@ -75,7 +75,7 @@ Le critère de l'étape est couvert, ainsi que les contournements connus :
 - `http://127.0.0.1`, `http://localhost`, `http://169.254.169.254`, `http://[::1]`, `http://0x7f000001`, `http://2130706433`, `file:///etc/passwd`, et un domaine dont le DNS (simulé) répond `10.0.0.5` ;
 - les formes octale, abrégée et entière, les plages privées, partagées, de documentation et multicast, et les adresses IPv6 locales et de transition ;
 - une réponse DNS mixte, le *DNS rebinding*, les redirections vers une destination interdite (jamais contactée) et les boucles de redirection ;
-- les réponses trop grandes, déclarées ou en flux, la bombe gzip, le serveur trop lent, et un proxy défini dans l'environnement ;
+- les réponses trop grandes, déclarées ou en flux, la bombe gzip (mémoire bornée par morceau), les encodages non annoncés ou corrompus, le serveur trop lent, et un proxy défini dans l'environnement ;
 - une propriété vérifiée avec Hypothesis sur des IPv4 aléatoires : une IPv4 non globale n'est jamais acceptée, ni telle quelle, ni dans `::ffff:…`, et chaque IPv4 est reconnue écrite en entier, en hexadécimal ou en octal.
 
 Aucun test n'utilise le réseau : le DNS est simulé, et les réponses HTTP passent par `httpx.MockTransport`.
