@@ -19,7 +19,8 @@ lien raccourci, en option). Il applique, à chaque saut :
    rien ;
 5. redirections suivies à la main, en nombre limité, chacune revalidée depuis l'étape 1 ;
 6. délais courts (connexion, lecture, et durée totale) et taille de réponse maximale,
-   mesurée après décompression (une « bombe gzip » est arrêtée).
+   mesurée avant **et** après décompression ; la décompression est bornée morceau par
+   morceau, une « bombe gzip » n'occupe donc jamais plus que la limite en mémoire.
 
 Le client HTTP ignore les variables de proxy de l'environnement (``trust_env=False``) et
 ne réutilise aucune connexion : deux noms servis par la même IP n'échangent jamais une
@@ -32,6 +33,7 @@ import asyncio
 import ipaddress
 import re
 import socket
+import zlib
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 
@@ -51,6 +53,9 @@ BLOCKED_NAME_SUFFIXES = ("localhost", "localdomain", "local", "internal", "home.
 _NAT64 = ipaddress.IPv6Network("64:ff9b::/96")
 _LABEL = re.compile(r"^(?!-)[a-z0-9_-]{1,63}(?<!-)$")
 _IPV4_PART = re.compile(r"^(0x[0-9a-f]*|[0-9]+)$")
+# Seuls encodages annoncés et acceptés : ceux que zlib décompresse avec une sortie bornée.
+ACCEPT_ENCODING = "gzip, deflate"
+_GZIP_WBITS = 16 + zlib.MAX_WBITS
 
 
 # --------------------------------------------------------------------------- #
@@ -77,6 +82,10 @@ class TooManyRedirects(NetGuardError):
 
 class ResponseTooLarge(NetGuardError):
     pass
+
+
+class InvalidResponse(NetGuardError):
+    """Réponse refusée : encodage non annoncé ou contenu compressé illisible."""
 
 
 # --------------------------------------------------------------------------- #
@@ -237,7 +246,8 @@ def _parse_url(url: str | httpx.URL, policy: NetPolicy) -> tuple[httpx.URL, str,
     host = parsed.raw_host.decode("ascii").lower()
     if not host:
         raise BlockedDestination("missing_host")
-    port = parsed.port or DEFAULT_PORTS[scheme]
+    # ``is None`` et pas ``or`` : un port 0 explicite doit être refusé, pas remplacé par 80.
+    port = DEFAULT_PORTS[scheme] if parsed.port is None else parsed.port
     if port not in policy.allowed_ports:
         raise BlockedDestination("port_not_allowed", str(port))
     return parsed, host, port
@@ -296,24 +306,92 @@ def _pinned_request(target: Target, method: str, policy: NetPolicy) -> httpx.Req
     host_header = host if target.url.port is None else f"{host}:{target.port}"
     extensions: dict[str, object] = {}
     if target.url.scheme == "https" and not target.is_ip_literal:
-        extensions["sni_hostname"] = target.host  # certificat vérifié pour le nom
+        # Certificat vérifié pour le nom. Sans le point final d'un FQDN (example.com.),
+        # que les certificats ne portent pas.
+        extensions["sni_hostname"] = target.host.removesuffix(".")
     return httpx.Request(
         method,
         target.url.copy_with(host=str(address)),
-        headers={"Host": host_header, "User-Agent": policy.user_agent, "Accept": "*/*"},
+        headers={
+            "Host": host_header,
+            "User-Agent": policy.user_agent,
+            "Accept": "*/*",
+            "Accept-Encoding": ACCEPT_ENCODING,
+        },
         extensions=extensions,
     )
 
 
+class _BoundedDecoder:
+    """Décompression gzip ou deflate dont la sortie ne dépasse jamais ``max_bytes + 1``.
+
+    Le décodeur de ``httpx`` décompresse chaque bloc reçu en entier : un seul bloc de
+    64 Ko d'une bombe gzip occupe déjà environ 64 Mo en mémoire avant tout contrôle.
+    Ici, ``max_length`` borne la sortie de zlib à chaque appel.
+    """
+
+    def __init__(self, encoding: str) -> None:
+        self._deflate = encoding == "deflate"
+        self._first = True
+        self._zlib = zlib.decompressobj(zlib.MAX_WBITS if self._deflate else _GZIP_WBITS)
+
+    def decode(self, data: bytes, limit: int) -> bytes:
+        try:
+            try:
+                out = self._zlib.decompress(data, limit)
+            except zlib.error:
+                # « deflate » est souvent envoyé brut, sans l'en-tête zlib : on retente
+                # une fois sur le premier bloc, comme httpx.
+                if not (self._deflate and self._first):
+                    raise
+                self._zlib = zlib.decompressobj(-zlib.MAX_WBITS)
+                out = self._zlib.decompress(data, limit)
+        except zlib.error:
+            raise InvalidResponse("decoding_error") from None
+        self._first = False
+        return out
+
+    @property
+    def pending(self) -> bytes:
+        """Entrée déjà reçue mais pas encore décompressée, faute de place en sortie."""
+        return self._zlib.unconsumed_tail
+
+
+def _decoder_for(response: httpx.Response) -> _BoundedDecoder | None:
+    header = response.headers.get("content-encoding", "")
+    encodings = [e.strip().lower() for e in header.split(",")]
+    encodings = [e for e in encodings if e and e != "identity"]
+    if not encodings:
+        return None
+    if len(encodings) > 1 or encodings[0] not in {"gzip", "x-gzip", "deflate"}:
+        # br, zstd ou encodages empilés : non annoncés dans Accept-Encoding, donc refusés.
+        raise InvalidResponse("unsupported_encoding", header)
+    return _BoundedDecoder("deflate" if encodings[0] == "deflate" else "gzip")
+
+
 async def _read_limited(response: httpx.Response, max_bytes: int) -> bytes:
+    """Corps décompressé, sans jamais dépasser ``max_bytes`` octets en mémoire.
+
+    Deux plafonds : les octets reçus (compressés), et les octets après décompression.
+    """
     declared = response.headers.get("content-length", "")
     if declared.isdigit() and int(declared) > max_bytes:
         raise ResponseTooLarge("content_length", declared)
-    body = bytearray()
-    async for chunk in response.aiter_bytes():  # octets décompressés
-        body.extend(chunk)
-        if len(body) > max_bytes:
+    decoder = _decoder_for(response)
+    body, received = bytearray(), 0
+    async for chunk in response.aiter_raw():  # octets tels que reçus, non décodés
+        received += len(chunk)
+        if received > max_bytes:
             raise ResponseTooLarge("body", f"> {max_bytes}")
+        if decoder is None:
+            body.extend(chunk)
+            continue
+        data = chunk
+        while data:
+            body.extend(decoder.decode(data, max_bytes - len(body) + 1))
+            if len(body) > max_bytes:
+                raise ResponseTooLarge("body", f"> {max_bytes}")
+            data = decoder.pending
     return bytes(body)
 
 

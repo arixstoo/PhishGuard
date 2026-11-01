@@ -5,12 +5,17 @@ IP et pays du serveur, marques imitées, verdict, capture d'écran. Deux usages 
 
 1. **Recherche des scans existants** (par défaut) : seul le **domaine** est envoyé ::
 
-       GET https://urlscan.io/api/v1/search/?q=domain:exemple.com&size=10
+       GET https://urlscan.io/api/v1/search/?q=page.domain:exemple.com OR
+           page.apexDomain:exemple.com&size=10
        API-Key: <clé>
 
-   ``domain:`` couvre aussi les domaines simplement *contactés* par une page (une
-   police Google, un script de CDN) : on ne garde que les scans dont la page elle-même
-   est sur le domaine (``page.domain`` égal au domaine ou à l'un de ses sous-domaines).
+   La requête porte sur la **page** scannée, pas sur ``domain:`` : ce dernier couvre
+   aussi tous les domaines simplement *contactés* par une page (une police Google, un
+   script de CDN). Pour un domaine très utilisé, les 10 résultats les plus récents
+   sont alors tous des pages tierces, et les scans du domaine lui-même n'arrivent
+   jamais (constaté sur l'API réelle : ``domain:google.com`` ne renvoie aucune page de
+   google.com). ``page.apexDomain`` couvre les sous-domaines (``www.``, ``login.``) ;
+   le filtre sur ``page.domain`` reste appliqué aux résultats, par sécurité.
    Si le résultat le plus récent ne porte pas de verdict, on lit son rapport complet
    (``/api/v1/result/{uuid}/``).
 
@@ -31,6 +36,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -48,6 +54,13 @@ from phishguard.enrichers.http import (
 API = "https://urlscan.io/api/v1"
 SEARCH_SIZE = 10
 SEARCH_TTL = 3600.0
+
+
+def search_query(domain: str) -> str:
+    """Requête de recherche : pages sur ``domain`` ou l'un de ses sous-domaines."""
+    return f"page.domain:{domain} OR page.apexDomain:{domain}"
+
+
 MAX_SCANS_IN_EVIDENCE = 5
 Visibility = Literal["unlisted", "private"]
 
@@ -99,12 +112,12 @@ class UrlscanEnricher(HttpEnricher):
         async with self.http() as client:
             response = await client.get(
                 f"{API}/search/",
-                params={"q": f"domain:{name}", "size": SEARCH_SIZE},
+                params={"q": search_query(name), "size": SEARCH_SIZE},
                 headers=self._headers,
             )
             if response.status_code != 200:
                 return self._http_error(response)
-            scans = _page_scans(response.json(), name)
+            scans = _page_scans(response.json(), name, prefer_host=_hostname(url))
             if not scans:
                 if self._submit:
                     return await self._submit_scan(client, url)
@@ -121,8 +134,15 @@ class UrlscanEnricher(HttpEnricher):
         return self._signal(result, cached=False)
 
     async def _fetch_verdict(self, client: httpx.AsyncClient, uuid: str) -> dict[str, Any] | None:
-        """Verdict du rapport complet. Un rapport indisponible n'empêche pas le signal."""
-        response = await client.get(f"{API}/result/{uuid}/", headers=self._headers)
+        """Verdict du rapport complet. Un rapport indisponible n'empêche pas le signal.
+
+        Le rapport complet est lourd (souvent plus de 1 Mo, parfois plus de 2 s) : un délai
+        dépassé ou une erreur réseau ici ne doit pas faire perdre la recherche, réussie.
+        """
+        try:
+            response = await client.get(f"{API}/result/{uuid}/", headers=self._headers)
+        except httpx.HTTPError:
+            return None
         if response.status_code != 200:
             return None
         payload = response.json()
@@ -171,7 +191,8 @@ class UrlscanEnricher(HttpEnricher):
         verdict = result["scans"][0]["verdict"] if result.get("scans") else None
         risk = 0.0
         if verdict:
-            risk = 1.0 if verdict["malicious"] else max(0, verdict["score"]) / 100
+            # Le score va de -100 à 100 ; borné quand même, au cas où urlscan en sortirait.
+            risk = 1.0 if verdict["malicious"] else min(1.0, max(0, verdict["score"]) / 100)
         return self.ok(risk, {**result, "cached": cached})
 
 
@@ -180,8 +201,23 @@ class UrlscanEnricher(HttpEnricher):
 # --------------------------------------------------------------------------- #
 
 
-def _page_scans(payload: object, domain: str) -> list[dict[str, Any]]:
-    """Scans dont la page est sur ``domain`` ou un sous-domaine, du plus récent au plus ancien."""
+def _hostname(url: str) -> str | None:
+    try:
+        host = urlsplit(url.strip()).hostname
+    except ValueError:
+        return None
+    return host.rstrip(".") if host else None
+
+
+def _page_scans(
+    payload: object, domain: str, *, prefer_host: str | None = None
+) -> list[dict[str, Any]]:
+    """Scans dont la page est sur ``domain`` ou un sous-domaine, du plus récent au plus ancien.
+
+    Les scans de ``prefer_host`` (l'hôte de l'URL analysée) passent en tête : le risque
+    se lit sur le premier scan, et un domaine qui héberge des pages de tiers
+    (``sites.google.com``) ne doit pas rendre suspect ``www.google.com``.
+    """
     if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
         raise MalformedResponse("réponse de recherche urlscan invalide")
     scans = []
@@ -198,6 +234,7 @@ def _page_scans(payload: object, domain: str) -> list[dict[str, Any]]:
                 "uuid": item["_id"],
                 "time": task.get("time"),
                 "page_url": page.get("url"),
+                "page_domain": host,
                 "ip": page.get("ip"),
                 "country": page.get("country"),
                 "asn_name": page.get("asnname"),
@@ -208,6 +245,8 @@ def _page_scans(payload: object, domain: str) -> list[dict[str, Any]]:
             }
         )
     scans.sort(key=lambda s: str(s["time"] or ""), reverse=True)
+    if prefer_host:
+        scans.sort(key=lambda s: s["page_domain"] != prefer_host)  # tri stable
     return scans
 
 
