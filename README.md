@@ -137,6 +137,7 @@ data/, models/    generated locally, never committed
 - [Enrichers](docs/enrichers.md): the common contract of Threat Intelligence sources, and why an enricher never raises (French)
 - [SSRF protection](docs/ssrf.md): why the server never visits the analysed URL, and the network guard for code that must (French)
 - [Score fusion](docs/fusion.md): calibrated model probability, hard rules and weighted Threat Intelligence signals, with a documented truth table (French)
+- [MITRE ATT&CK mapping](docs/mitre-attack.md): the ATT&CK techniques each detection illustrates, verified against MITRE's official data (French)
 - [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
