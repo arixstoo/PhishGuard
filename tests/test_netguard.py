@@ -8,6 +8,7 @@ import asyncio
 import gzip
 import ipaddress
 import socket
+import zlib
 
 import httpx
 import pytest
@@ -17,6 +18,7 @@ from hypothesis import strategies as st
 from phishguard.security import netguard as ng
 from phishguard.security.netguard import (
     BlockedDestination,
+    InvalidResponse,
     NetPolicy,
     ResponseTooLarge,
     TooManyRedirects,
@@ -106,6 +108,7 @@ def test_localhost_through_the_system_resolver_is_refused(monkeypatch):
         ("http://example.com:22/", "port_not_allowed"),
         ("http://example.com:6379/", "port_not_allowed"),
         ("https://example.com:8443/", "port_not_allowed"),
+        ("http://example.com:0/", "port_not_allowed"),  # pas remplacé par le port 80
         ("http://user:pass@example.com/", "credentials_in_url"),
         ("http://example.com@127.0.0.1/", "credentials_in_url"),
         ("http:///path", "missing_host"),
@@ -308,6 +311,21 @@ def test_system_resolver_uses_getaddrinfo(monkeypatch):
 # --------------------------------------------------------------------------- #
 
 
+class RawStream(httpx.AsyncByteStream):
+    def __init__(self, *chunks):
+        self.chunks = chunks
+
+    async def __aiter__(self):
+        for chunk in self.chunks:
+            yield chunk
+
+
+def wire(content, status_code=200, headers=None):
+    """Réponse dont le corps n'est pas encore lu, comme reçue du réseau."""
+    stream = RawStream(*content) if isinstance(content, list) else RawStream(content)
+    return httpx.Response(status_code, headers=headers, stream=stream)
+
+
 class Recorder:
     """Transport simulé : renvoie les réponses de ``routes`` et garde les requêtes."""
 
@@ -318,7 +336,13 @@ class Recorder:
     def __call__(self, request):
         self.requests.append(request)
         key = (request.headers["host"], request.url.path)
-        return self.routes[key]() if callable(self.routes[key]) else self.routes[key]
+        response = self.routes[key]() if callable(self.routes[key]) else self.routes[key]
+        if response.is_stream_consumed:
+            # Response(content=...) lit et décode son corps dès sa création ; le garde-fou
+            # lit les octets bruts, comme sur le réseau. Un corps compressé passe par wire().
+            assert "content-encoding" not in response.headers, "utiliser wire()"
+            response = wire(response.content, response.status_code, response.headers)
+        return response
 
     @property
     def transport(self):
@@ -350,6 +374,13 @@ def test_dns_rebinding_cannot_redirect_the_connection():
     fetch("http://rebind.example.com/", recorder, resolver)
     assert len(resolver.calls) == 1
     assert recorder.requests[0].url.host == PUBLIC
+
+
+def test_fqdn_trailing_dot_is_kept_in_host_but_not_in_sni():
+    resolver = fake_resolver({"example.com.": [PUBLIC]})
+    recorder = Recorder({("example.com.", "/"): httpx.Response(200)})
+    fetch("https://example.com./", recorder, resolver)
+    assert recorder.requests[0].extensions["sni_hostname"] == "example.com"
 
 
 def test_ip_literal_url_has_no_sni_and_keeps_the_port_in_host():
@@ -448,11 +479,74 @@ def test_streamed_oversized_response_is_refused():
 
 def test_gzip_bomb_is_measured_after_decompression():
     bomb = gzip.compress(b"\0" * 2_000_000)  # environ 2 Ko compressés
-    response = httpx.Response(200, headers={"content-encoding": "gzip"}, content=bomb)
-    recorder = Recorder({("example.com", "/"): response})
+    recorder = Recorder({("example.com", "/"): wire(bomb, headers={"content-encoding": "gzip"})})
     assert len(bomb) < 10_000
     with pytest.raises(ResponseTooLarge):
         fetch("http://example.com/", recorder, policy=NetPolicy(max_bytes=100_000))
+
+
+def test_gzip_bomb_never_allocates_more_than_the_limit():
+    # Blocs de 64 Ko, comme ceux de httpcore : le décodeur de httpx aurait décompressé
+    # chaque bloc en entier, soit environ 64 Mo dès le premier.
+    bomb = gzip.compress(b"\0" * 200_000_000)
+    chunks = [bomb[i : i + 65_536] for i in range(0, len(bomb), 65_536)]
+    produced = []
+    real_decode = ng._BoundedDecoder.decode
+
+    def spy(self, data, limit):
+        out = real_decode(self, data, limit)
+        produced.append(len(out))
+        return out
+
+    recorder = Recorder({("example.com", "/"): wire(chunks, headers={"content-encoding": "gzip"})})
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(ng._BoundedDecoder, "decode", spy)
+        with pytest.raises(ResponseTooLarge):
+            fetch("http://example.com/", recorder, policy=NetPolicy(max_bytes=100_000))
+    assert sum(produced) <= 100_001
+
+
+@pytest.mark.parametrize(
+    ("encoding", "compress"),
+    [
+        ("gzip", gzip.compress),
+        ("x-gzip", gzip.compress),
+        ("deflate", zlib.compress),  # deflate avec en-tête zlib (RFC 9110)
+        ("deflate", lambda data: zlib.compress(data, wbits=-zlib.MAX_WBITS)),  # deflate brut
+        ("identity", lambda data: data),
+    ],
+)
+def test_compressed_responses_are_decoded(encoding, compress):
+    payload = b"<html>bonjour</html>" * 500
+    response = wire(compress(payload), headers={"content-encoding": encoding})
+    recorder = Recorder({("example.com", "/"): response})
+    assert fetch("http://example.com/", recorder).content == payload
+    assert recorder.requests[0].headers["accept-encoding"] == "gzip, deflate"
+
+
+@pytest.mark.parametrize(
+    ("encoding", "content", "reason"),
+    [
+        ("br", b"\x0b\x02\x80bonjour\x03", "unsupported_encoding"),  # non annoncé
+        ("gzip, gzip", gzip.compress(gzip.compress(b"x")), "unsupported_encoding"),
+        ("gzip", b"pas du gzip", "decoding_error"),
+    ],
+)
+def test_unexpected_or_corrupt_encoding_is_refused(encoding, content, reason):
+    recorder = Recorder(
+        {("example.com", "/"): wire(content, headers={"content-encoding": encoding})}
+    )
+    with pytest.raises(InvalidResponse) as info:
+        fetch("http://example.com/", recorder)
+    assert info.value.reason == reason
+
+
+def test_received_bytes_are_capped_even_when_they_decode_to_nothing():
+    # Les octets après la fin du flux gzip ne produisent aucune sortie, mais ils comptent.
+    content = gzip.compress(b"") + b"\0" * 20_000
+    recorder = Recorder({("example.com", "/"): wire(content, headers={"content-encoding": "gzip"})})
+    with pytest.raises(ResponseTooLarge):
+        fetch("http://example.com/", recorder, policy=NetPolicy(max_bytes=10_000))
 
 
 def test_slow_response_hits_the_total_timeout():

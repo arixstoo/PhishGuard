@@ -61,7 +61,9 @@ def test_surrounding_whitespace_is_stripped(monkeypatch):
 
 
 def test_copy_of_env_example_enables_nothing(tmp_path):
-    (tmp_path / ".env").write_text((ROOT / ".env.example").read_text(encoding="utf-8"))
+    (tmp_path / ".env").write_text(
+        (ROOT / ".env.example").read_text(encoding="utf-8"), encoding="utf-8"
+    )
     assert Settings().enabled_sources() == frozenset()
 
 

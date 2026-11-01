@@ -30,8 +30,8 @@ Deux exceptions ne sont **pas** converties en signal :
 
 Le message d'une exception n'est jamais recopié dans le signal, seul son type l'est :
 les erreurs HTTP contiennent souvent l'URL de la requête, et certaines API (Google
-notamment) acceptent la clé en paramètre (``?key=…``). Le détail part dans le journal, au niveau
-``DEBUG``.
+notamment) acceptent la clé en paramètre (``?key=…``). Le détail part dans le journal,
+au niveau ``DEBUG``.
 """
 
 from __future__ import annotations
@@ -110,8 +110,12 @@ class Enricher(ABC):
 
     async def enrich(self, url: str, domain: str) -> Signal:
         """Interroge la source et renvoie toujours un :class:`Signal`, sans jamais lever."""
-        if not self.is_enabled():
-            return self.skipped("disabled")
+        try:
+            # is_enabled() lit souvent la configuration : elle peut lever, elle aussi.
+            if not self.is_enabled():
+                return self.skipped("disabled")
+        except Exception as exc:  # noqa: BLE001 : le contrat interdit de propager
+            return self._failure(SignalStatus.ERROR, exc)
         start = time.perf_counter()
         try:
             signal = await self._enrich(url, domain)
@@ -138,7 +142,7 @@ class Enricher(ABC):
         return Signal(
             source=self.name,
             status=SignalStatus.ERROR,
-            evidence={"reason": reason, **(evidence or {})},
+            evidence={**(evidence or {}), "reason": reason},  # le code d'erreur prime
         )
 
     # ------------------------------------------------------------------ #
