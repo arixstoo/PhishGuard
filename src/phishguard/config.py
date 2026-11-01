@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     urlscan_submit: bool = False
     urlscan_visibility: Literal["unlisted", "private"] = "unlisted"
 
+    # Certificate Transparency via crt.sh (étape 2.7) : service lent et instable, donc
+    # désactivé par défaut. RDAP et DNS n'ont besoin d'aucune clé.
+    crtsh_enabled: bool = False
+
     @field_validator(*KEYED_SOURCES.values(), mode="before")
     @classmethod
     def _blank_is_missing(cls, value: object) -> object:

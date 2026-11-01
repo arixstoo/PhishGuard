@@ -13,7 +13,7 @@ FAKE_KEY = "test-key-not-a-real-secret"
 @pytest.fixture(autouse=True)
 def isolated_env(monkeypatch, tmp_path):
     """Ni l'environnement du développeur ni son .env ne doivent fuiter dans les tests."""
-    for field in (*KEYED_SOURCES.values(), "urlscan_submit", "urlscan_visibility"):
+    for field in (*KEYED_SOURCES.values(), "urlscan_submit", "urlscan_visibility", "crtsh_enabled"):
         monkeypatch.delenv(field.upper(), raising=False)
     monkeypatch.chdir(tmp_path)
     get_settings.cache_clear()
