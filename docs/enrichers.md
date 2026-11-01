@@ -45,7 +45,7 @@ signal = await Example().enrich(url, domain)  # ne lève jamais
 
 Une sous-classe implémente `_enrich()` ; l'appelant utilise `enrich()`. Il s'agit d'une méthode modèle (*template method*) qui garantit le contrat pour toutes les sources :
 
-1. si `is_enabled()` est faux, elle renvoie `skipped` sans appeler la source ;
+1. si `is_enabled()` est faux, elle renvoie `skipped` sans appeler la source (et `error` si `is_enabled()` lève, par exemple sur un `.env` illisible) ;
 2. elle mesure `latency_ms` ;
 3. elle convertit toute exception : `TimeoutError` et `httpx.TimeoutException` deviennent `timeout`, les autres `error` ;
 4. elle impose `source = name` et `risk = 0` hors `ok`, même si la source se trompe.
@@ -87,7 +87,7 @@ Le script affiche le signal de chaque source. Il se termine avec le code 1 si l'
 **Version de l'API.** Google propose aujourd'hui la **v5**. La v4 (Lookup et Update API) fonctionne toujours. On utilise le mode temps réel de la v5, `urls:search`, l'équivalent de la recherche directe `threatMatches:find` de la v4 :
 
 ```
-GET https://safebrowsing.googleapis.com/v5/urls:search?urls=<url>&alt=json
+GET https://safebrowsing.googleapis.com/v5/urls:search?urls=<url>
 X-Goog-Api-Key: <clé>
 ```
 
@@ -104,10 +104,10 @@ Le type `THREAT_TYPE_UNSPECIFIED` est ignoré, comme le demande la documentation
 
 Choix de mise en œuvre :
 
-- `alt=json` est obligatoire : sans lui, la v5 répond en protobuf binaire (vérifié contre l'API réelle) ;
+- **la v5 ne répond qu'en protobuf** (`application/x-protobuf`) : `alt=json` est refusé par un 400 « Unsupported Output Format » (vérifié contre l'API réelle le 01/11/2026). Le message `SearchUrlsResponse` est petit : il est décodé dans le module, sans dépendance `protobuf`, et les tests rejouent des réponses réelles capturées sur les URLs de test de Google ;
 - la clé part dans l'en-tête `X-Goog-Api-Key`, pas dans l'URL : elle n'apparaît ni dans les journaux, ni dans le message d'une exception `httpx` ;
-- une clé invalide reçoit un **400**, pas un 401 : la réponse est lue pour le dire clairement (vérifié contre l'API réelle) ;
-- le résultat est gardé en cache pendant la durée `cacheDuration` donnée par Google, et 24 h au plus pour un résultat négatif, comme le demandent les conditions. Les erreurs ne sont pas mises en cache.
+- une clé invalide reçoit un **400**, pas un 401, avec un `google.rpc.Status` en protobuf qui contient `API_KEY_INVALID` : la réponse est lue pour le dire clairement (vérifié contre l'API réelle) ;
+- le résultat est gardé en cache pendant la durée `cache_duration` donnée par Google, et 24 h au plus pour un résultat négatif, comme le demandent les conditions. Les erreurs ne sont pas mises en cache.
 
 **Vie privée.** Cette version envoie l'URL complète à Google : elle n'est appelée que si l'utilisateur a activé l'enrichissement (étape 2.9). Avant l'envoi, on retire le fragment (`#…`) et les identifiants (`user:pass@`). La canonicalisation de Safe Browsing les ignore de toute façon : la détection est la même, la fuite en moins. La version 2, plus tard, utilisera la base locale de préfixes de hachage de la v5 (`hashLists`), qui évite d'envoyer l'URL.
 

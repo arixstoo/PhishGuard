@@ -110,6 +110,19 @@ def test_disabled_enricher_is_skipped_without_being_called():
     assert enricher.calls == []
 
 
+def test_failing_is_enabled_becomes_an_error_signal():
+    class BrokenConfig(FakeEnricher):
+        def is_enabled(self):
+            raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, SECRET)
+
+    enricher = BrokenConfig()
+    signal = run(enricher.enrich(URL, DOMAIN))
+    assert (signal.status, signal.risk) == ("error", 0.0)
+    assert signal.evidence == {"error": "UnicodeDecodeError"}
+    assert SECRET not in signal.model_dump_json()
+    assert enricher.calls == []
+
+
 def test_latency_is_measured():
     class Slow(Enricher):
         name = "slow"
