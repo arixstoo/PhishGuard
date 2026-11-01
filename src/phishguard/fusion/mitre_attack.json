@@ -1,0 +1,26 @@
+{
+  "domain": "enterprise-attack",
+  "attack_version": "20.0",
+  "verified_at": "2026-11-01",
+  "source": "https://github.com/mitre-attack/attack-stix-data",
+  "tactics": {
+    "reconnaissance": "Reconnaissance",
+    "resource-development": "Resource Development",
+    "initial-access": "Initial Access",
+    "execution": "Execution"
+  },
+  "techniques": {
+    "T1566": {"name": "Phishing", "tactic": "initial-access"},
+    "T1566.001": {"name": "Spearphishing Attachment", "tactic": "initial-access"},
+    "T1566.002": {"name": "Spearphishing Link", "tactic": "initial-access"},
+    "T1566.003": {"name": "Spearphishing via Service", "tactic": "initial-access"},
+    "T1204": {"name": "User Execution", "tactic": "execution"},
+    "T1204.001": {"name": "Malicious Link", "tactic": "execution"},
+    "T1204.002": {"name": "Malicious File", "tactic": "execution"},
+    "T1598": {"name": "Phishing for Information", "tactic": "reconnaissance"},
+    "T1598.002": {"name": "Spearphishing Attachment", "tactic": "reconnaissance"},
+    "T1598.003": {"name": "Spearphishing Link", "tactic": "reconnaissance"},
+    "T1583": {"name": "Acquire Infrastructure", "tactic": "resource-development"},
+    "T1583.001": {"name": "Domains", "tactic": "resource-development"}
+  }
+}
