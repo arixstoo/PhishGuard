@@ -9,6 +9,10 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - Clés d'API facultatives (Google Safe Browsing, VirusTotal, urlscan.io, AbuseIPDB) chargées par `pydantic-settings` depuis l'environnement ou `.env` ; une clé absente désactive sa source sans bloquer le démarrage. `python -m phishguard.config` affiche les sources actives sans afficher les clés (étape 2.1, [docs/secrets.md](docs/secrets.md)).
 - `.gitignore` et un hook pre-commit refusent toutes les variantes de `.env` ; gitleaks vérifié sur des clés aux formats réels (2.1).
 
+### Sécurité
+
+- Garde-fou réseau anti-SSRF `phishguard.security.netguard` : schémas et ports autorisés, IPv4 ambiguës décodées (`0x7f000001`, `2130706433`, `127.1`), résolution DNS contrôlée avec refus de toute adresse non publique (IPv4 cachées dans l'IPv6 comprises), connexion à l'IP validée contre le *DNS rebinding*, redirections revalidées, délais et taille de réponse bornés. Décision documentée : le serveur ne visite jamais l'URL analysée (étape 2.3, [docs/ssrf.md](docs/ssrf.md)).
+
 ### Enrichisseurs
 
 - Contrat commun `Signal` / `Enricher` : un enrichisseur ne lève jamais d'exception vers l'appelant, une panne devient un signal `error` ou `timeout` de risque nul. La règle est appliquée par la classe de base, pas par chaque source ; l'annulation (`CancelledError`) passe, et le message des exceptions n'est jamais recopié pour ne pas faire fuiter de clé (étape 2.2, [docs/enrichers.md](docs/enrichers.md)).
