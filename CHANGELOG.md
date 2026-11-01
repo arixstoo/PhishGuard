@@ -23,6 +23,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - Robustesse réseau commune à toutes les sources : client `httpx` partagé (connexion 2 s, lecture 3 s), nouvelles tentatives avec `tenacity` sur les seules erreurs temporaires (5xx, 429 avec un délai court, échecs de connexion), disjoncteur par source (5 échecs consécutifs : pause de 60 s, puis une requête d'essai), cache `cachetools` à durée de vie par entrée (étape 2.8).
 - Orchestrateur : toutes les sources en parallèle sous un budget global de 2,5 s ; les sources trop lentes sont annulées et marquées `timeout`, l'analyse se dégrade sans jamais échouer. Aucune source appelée si l'utilisateur n'a pas activé l'enrichissement. `scripts/check_enrichers.py` passe par l'orchestrateur (étape 2.9).
 
+### Fusion du score
+
+- Calibration des probabilités du modèle URL sur la validation (isotone ou Platt, choisie en validation croisée), enregistrée en JSON sans pickle ; `scripts/calibrate_url.py`, `make calibrate-url`.
+- Fusion pure et versionnée (`fusion/fusion.json`) : règles dures (liste noire, Safe Browsing avant liste blanche), « OU probabiliste » pondéré des signaux utilisables, seuils sûr < 30 ≤ suspect ≤ 70 < phishing, contribution de chaque source. 18 cas de table de vérité et des tests de propriétés (étape 2.10, [docs/fusion.md](docs/fusion.md)).
+
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 
 Premiers détecteurs, évalués avec une méthode qui cherche les biais avant les scores. Rien n'est encore exposé à l'utilisateur : l'API, l'extension et le bot arrivent aux modules 4 et 5.
