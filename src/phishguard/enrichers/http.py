@@ -12,11 +12,14 @@ sinon, un client à durée de vie courte est créé pour chaque appel.
 
 from __future__ import annotations
 
+import ipaddress
+import re
 import time
 from collections import OrderedDict
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import Generic, TypeVar
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
@@ -24,6 +27,8 @@ from phishguard.enrichers.base import Enricher
 
 USER_AGENT = "PhishGuard (+https://github.com/arixstoo/PhishGuard)"
 DEFAULT_TIMEOUT = httpx.Timeout(connect=2.0, read=3.0, write=3.0, pool=2.0)
+MAX_URL_LENGTH = 8_000
+_LABEL = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$")
 
 V = TypeVar("V")
 
@@ -49,6 +54,49 @@ class HttpEnricher(Enricher):
             follow_redirects=False,
         ) as client:
             yield client
+
+
+def sanitize_url(url: str) -> str | None:
+    """URL à envoyer à un tiers : sans fragment ni identifiants (``user:pass@``).
+
+    Renvoie ``None`` si l'URL n'est pas une URL web (``http`` ou ``https``) valide.
+    """
+    try:
+        parts = urlsplit(url.strip())
+    except ValueError:
+        return None
+    if parts.scheme.lower() not in ("http", "https") or not parts.hostname:
+        return None
+    netloc = parts.hostname if ":" not in parts.hostname else f"[{parts.hostname}]"
+    try:
+        port = parts.port
+    except ValueError:
+        return None
+    if port is not None:
+        netloc = f"{netloc}:{port}"
+    cleaned = urlunsplit((parts.scheme.lower(), netloc, parts.path, parts.query, ""))
+    return cleaned if len(cleaned) <= MAX_URL_LENGTH else None
+
+
+def normalize_domain(domain: str) -> str | None:
+    """Nom de domaine en minuscules et en ASCII (punycode), ou ``None`` s'il est invalide.
+
+    Une adresse IP n'est pas un nom de domaine : elle renvoie ``None``.
+    """
+    name = domain.strip().lower().rstrip(".")
+    try:
+        ipaddress.ip_address(name.strip("[]"))
+        return None
+    except ValueError:
+        pass
+    try:
+        name = name.encode("idna").decode("ascii")
+    except UnicodeError:
+        return None
+    labels = name.split(".")
+    if len(name) > 253 or len(labels) < 2 or not all(_LABEL.match(label) for label in labels):
+        return None
+    return name
 
 
 def status_reason(status_code: int) -> str:
