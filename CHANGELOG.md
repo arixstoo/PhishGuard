@@ -34,6 +34,10 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - `UrlAnalyzer` (`phishguard.analysis`) : modèle local, calibration, enrichissement **seulement sur opt-in**, fusion et techniques ATT&CK, en un appel ; point d'entrée de l'API du module 4.
 - Tests de vie privée : sans enrichissement, aucun accès réseau (HTTP, DNS, socket) ; avec, ni identifiants, ni fragment, ni clé dans une URL, et le domaine seul pour urlscan, RDAP, DNS et crt.sh. Tests de dégradation : toutes les sources en panne ou trop lentes, le verdict du modèle est renvoyé dans le délai. Contrat commun des six sources face à neuf formes de panne, et liste des hôtes que chacune peut contacter (étape 2.12, [docs/analysis.md](docs/analysis.md)).
 
+### Documentation
+
+- Évaluation d'outils externes ([docs/external-tools.md](docs/external-tools.md)). EML Analyzer : idée reprise (contenu des pièces jointes), outil non intégré. Format `.msg` : plus tard. DeHashed : écarté (pas de valeur de détection, données personnelles de tiers). PhishTool : référence de comparaison pour les tests utilisateurs de l'étape 5.13, avec son protocole.
+
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 
 Premiers détecteurs, évalués avec une méthode qui cherche les biais avant les scores. Rien n'est encore exposé à l'utilisateur : l'API, l'extension et le bot arrivent aux modules 4 et 5.
