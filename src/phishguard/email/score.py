@@ -35,8 +35,12 @@ from phishguard.urls.features import is_ip_host
 SAFE_BELOW = 30
 PHISHING_ABOVE = 70
 VERDICTS = ("safe", "suspicious", "phishing")
-# Familles de pièces jointes dangereuses à ouvrir (voir parser.RISKY_EXTENSIONS).
+# Familles de pièces jointes dangereuses à ouvrir (voir parser.RISKY_EXTENSIONS). Depuis
+# l'étape 2.13, la famille est celle du nom **ou** du contenu (Attachment.effective_risk).
 DANGEROUS_ATTACHMENTS = frozenset({"executable", "script", "macro_document", "html", "disk_image"})
+# Contenus actifs d'un PDF qui comptent. /OpenAction seul est courant dans les PDF
+# légitimes (zoom ou page à l'ouverture) : il reste dans les preuves, sans points.
+ACTIVE_PDF_NAMES = frozenset({"javascript", "launch", "embedded_file", "submit_form"})
 HIDDEN_TEXT_MIN_CHARS = 50  # une ligne d'aperçu cachée de newsletter fait moins
 ZERO_WIDTH_MIN = 3
 
@@ -70,6 +74,12 @@ FEATURE_GROUPS: dict[str, tuple[str, ...]] = {
         "dangerous_attachment",
         "archive_attachment",
         "disguised_attachment",
+        # Contenu réel des pièces jointes (étape 2.13).
+        "type_mismatch",
+        "remote_content_document",
+        "hidden_archive_payload",
+        "active_pdf",
+        "credential_form_attachment",
     ),
     "content": (
         "log_hidden_chars",
@@ -145,9 +155,23 @@ def email_features(email: ParsedEmail, *, max_text_chars: int = 20_000) -> dict[
         ),
         "forms": email.forms,
         "attachments": len(email.attachments),
-        "dangerous_attachment": any(a.risk in DANGEROUS_ATTACHMENTS for a in email.attachments),
+        "dangerous_attachment": any(
+            a.effective_risk in DANGEROUS_ATTACHMENTS for a in email.attachments
+        ),
         "archive_attachment": any(a.risk == "archive" for a in email.attachments),
         "disguised_attachment": any(a.double_extension or a.rtlo for a in email.attachments),
+        "type_mismatch": any(a.type_mismatch for a in email.attachments),
+        "remote_content_document": any(
+            a.content.remote_template or a.content.rtf_objects for a in email.attachments
+        ),
+        "hidden_archive_payload": any(
+            a.content.archive_encrypted or a.content.archive_dangerous_members
+            for a in email.attachments
+        ),
+        "active_pdf": any(
+            ACTIVE_PDF_NAMES.intersection(a.content.pdf_active) for a in email.attachments
+        ),
+        "credential_form_attachment": any(a.content.credential_form for a in email.attachments),
         "log_hidden_chars": math.log1p(email.hidden_text.chars),
         "zero_width_chars": email.zero_width_chars,
         "urgency_hits": words["urgency_hits"],
@@ -298,6 +322,40 @@ RULES: tuple[Rule, ...] = (
         40,
         "Le nom d'une pièce jointe cache sa vraie extension (facture.pdf.exe).",
         lambda f: bool(f["disguised_attachment"]),
+    ),
+    Rule(
+        "type_mismatch",
+        40,
+        "Une pièce jointe se fait passer pour un document ou une image, mais contient un "
+        "programme.",
+        lambda f: bool(f["type_mismatch"]),
+    ),
+    Rule(
+        "remote_content_document",
+        35,
+        "Un document joint charge du contenu à l'ouverture (modèle distant ou objet caché), "
+        "une technique d'installation de logiciel malveillant.",
+        lambda f: bool(f["remote_content_document"]),
+    ),
+    Rule(
+        "hidden_archive_payload",
+        35,
+        "Une archive jointe est protégée par mot de passe ou contient un programme : son "
+        "contenu échappe aux antivirus.",
+        lambda f: bool(f["hidden_archive_payload"]),
+    ),
+    Rule(
+        "active_pdf",
+        30,
+        "Un PDF joint contient du code ou des fichiers qui s'exécutent à l'ouverture.",
+        lambda f: bool(f["active_pdf"]),
+    ),
+    Rule(
+        "credential_form_attachment",
+        40,
+        "Une page jointe demande un mot de passe : un service légitime ne le fait jamais par "
+        "pièce jointe.",
+        lambda f: bool(f["credential_form_attachment"]),
     ),
     Rule(
         "archive_attachment",

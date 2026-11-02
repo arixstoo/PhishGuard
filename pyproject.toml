@@ -27,6 +27,7 @@ dependencies = [
     "dnspython>=2.4",  # enregistrements DNS des domaines analysés (étape 2.7)
     "tenacity>=8.2",  # nouvelles tentatives sur les erreurs temporaires (étape 2.8)
     "cachetools>=5.3",  # cache à durée de vie des réponses des sources (étape 2.8)
+    "olefile>=0.46",  # macros des documents Office 97-2003 joints aux emails (étape 2.13)
 ]
 
 [project.optional-dependencies]

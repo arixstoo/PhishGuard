@@ -34,6 +34,10 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - `UrlAnalyzer` (`phishguard.analysis`) : modèle local, calibration, enrichissement **seulement sur opt-in**, fusion et techniques ATT&CK, en un appel ; point d'entrée de l'API du module 4.
 - Tests de vie privée : sans enrichissement, aucun accès réseau (HTTP, DNS, socket) ; avec, ni identifiants, ni fragment, ni clé dans une URL, et le domaine seul pour urlscan, RDAP, DNS et crt.sh. Tests de dégradation : toutes les sources en panne ou trop lentes, le verdict du modèle est renvoyé dans le délai. Contrat commun des six sources face à neuf formes de panne, et liste des hôtes que chacune peut contacter (étape 2.12, [docs/analysis.md](docs/analysis.md)).
 
+### Pièces jointes
+
+- Inspection du **contenu** des pièces jointes, en mémoire et sans rien exécuter ni extraire : vrai type par signature et nom qui ment, macros VBA (OLE avec `olefile`, OOXML, ODF), modèle distant, objets OLE dans un RTF, archives ZIP listées sans décompression (chiffrées, ou contenant un programme), PDF actifs (y compris noms obfusqués), page HTML qui demande un mot de passe. Cinq nouvelles règles du score email ; `dangerous_attachment` tient compte du contenu (étape 2.13, [docs/attachments.md](docs/attachments.md)).
+
 ### Documentation
 
 - Évaluation d'outils externes ([docs/external-tools.md](docs/external-tools.md)). EML Analyzer : idée reprise (contenu des pièces jointes), outil non intégré. Format `.msg` : plus tard. DeHashed : écarté (pas de valeur de détection, données personnelles de tiers). PhishTool : référence de comparaison pour les tests utilisateurs de l'étape 5.13, avec son protocole.
