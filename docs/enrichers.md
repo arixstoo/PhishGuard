@@ -130,7 +130,7 @@ result.latency_ms
 
 Toutes les sources actives sont lancées **en même temps** (une tâche asyncio par source), sous un budget global de **2,5 s**. À l'échéance, les sources qui n'ont pas répondu sont **annulées** et marquées `timeout` (`reason: budget_exceeded`), et les autres sont utilisées. Avec six sources, l'analyse dure le temps de la plus lente, borné à 2,5 s, au lieu de la somme de toutes.
 
-Le budget laisse de la marge sous l'objectif de 3 s avec enrichissement (exigences non fonctionnelles du cahier des charges). Sans lui, crt.sh, souvent lent, fixerait la latence de chaque analyse.
+Au pire, l'analyse dure le budget plus 0,2 s, le temps laissé aux sources annulées pour libérer leurs connexions : 2,7 s. Le budget laisse de la marge sous l'objectif de 3 s avec enrichissement (exigences non fonctionnelles du cahier des charges). Sans lui, crt.sh, souvent lent, fixerait la latence de chaque analyse.
 
 **L'analyse ne lève jamais d'exception à cause d'une source** : elle se dégrade. Une source en erreur, en délai dépassé, en pause (disjoncteur) ou même hors contrat (une `enrich()` qui lèverait) devient un signal parmi d'autres. Si toutes les sources tombent, le résultat est simplement vide de signaux utilisables, et le verdict du modèle local suffira (étape 2.10).
 
