@@ -85,6 +85,8 @@ class HttpEnricher(Enricher):
 
     @asynccontextmanager
     async def http(self) -> AsyncIterator[ResilientClient]:
+        """Client résilient de la source. Lève ``CircuitOpen`` si la source est en pause."""
+        self.breaker.check()  # source en pause : inutile de créer un client
         if self._client is not None:
             yield ResilientClient(self._client, self.breaker, self.retry)
             return
