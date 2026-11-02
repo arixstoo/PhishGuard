@@ -133,6 +133,7 @@ data/, models/    generated locally, never committed
 - [URL error analysis](docs/error-analysis-url.md): the worst errors by category, and why static features alone cannot catch phishing on trusted platforms (French)
 - [SMS text models](docs/text-models.md): word vs character n-grams vs hand-written smishing features, and how they transfer to French and Arabic (French)
 - [Email parser](docs/email-parser.md): defensive `.eml` parsing, authentication results, deceptive links, hidden text and risky attachments (French)
+- [Attachment content](docs/attachments.md): real file type, VBA macros, remote templates, hidden archive payloads and active PDFs, inspected in memory without executing anything (French)
 - [Email score](docs/email-score.md): explainable rules vs learned models, and why public email corpora are biased by era (French)
 - [Enrichers](docs/enrichers.md): the common contract of Threat Intelligence sources, and why an enricher never raises (French)
 - [SSRF protection](docs/ssrf.md): why the server never visits the analysed URL, and the network guard for code that must (French)

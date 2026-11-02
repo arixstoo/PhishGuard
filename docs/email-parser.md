@@ -29,7 +29,7 @@ email.reply_to_differs  # Reply-To sur un autre domaine que From
 
 ## Un email est une entrée hostile
 
-1. **Rien n'est rendu, exécuté ni téléchargé.** La structure est lue par la bibliothèque standard `email` (`policy.default`), le HTML par BeautifulSoup avec `html.parser`, en Python pur. Aucune image, aucun lien n'est chargé, aucune pièce jointe n'est ouverte : on n'en lit que le nom, le type et la taille.
+1. **Rien n'est rendu, exécuté ni téléchargé.** La structure est lue par la bibliothèque standard `email` (`policy.default`), le HTML par BeautifulSoup avec `html.parser`, en Python pur. Aucune image, aucun lien n'est chargé, aucune pièce jointe n'est ouverte ni exécutée : on lit son nom, son type déclaré, sa taille et, depuis l'étape 2.13, ses octets en mémoire (voir [`attachments.md`](attachments.md)).
 2. **Tout est borné** (`EmailLimits`) :
 
    | Limite | Valeur | Au-delà |
@@ -90,6 +90,8 @@ Les **formulaires** sont comptés : un email légitime n'en contient presque jam
 
 Aussi : la **double extension** (`facture.pdf.exe`) et le caractère **RTLO** (U+202E), qui inverse l'affichage : `invoice<RTLO>fdp.exe` s'affiche `invoiceexe.pdf`. L'extension retenue est celle des caractères réels.
 
+Depuis l'étape 2.13, le **contenu** de chaque pièce jointe est aussi inspecté, en mémoire et sans rien exécuter ni extraire : vrai type par signature, macros VBA, modèle distant, archives listées sans décompression, PDF actifs, page HTML qui demande un mot de passe. La famille retenue (`effective_risk`) est la plus grave du nom et du contenu, et un nom qui ment sur le contenu (`type_mismatch`) est signalé. Voir [`attachments.md`](attachments.md).
+
 ### Texte masqué
 
 Éléments cachés par leur style **en ligne** : `display:none`, `visibility:hidden`, `opacity:0`, police de taille nulle ou de 1 px, hauteur nulle avec `overflow:hidden`, couleur du texte égale à celle du fond (de l'élément ou d'un ancêtre, y compris l'attribut `bgcolor`), ou attribut `hidden`. On compte les éléments masqués de plus haut niveau et leurs caractères, puis on les retire du texte visible. Les caractères invisibles (espace sans chasse, U+200B…) sont comptés à part : ils servent à couper les mots-clés que cherchent les filtres.
@@ -114,7 +116,7 @@ Phishing Pot est sous licence **CC BY-NC 4.0** (usage non commercial, attributio
 ## Limites
 
 - Les feuilles `<style>` et les classes CSS ne sont pas interprétées : un texte masqué par une classe n'est pas vu.
-- Le contenu des pièces jointes n'est pas analysé (ni les archives, ni les documents, ni le HTML joint).
+- Le contenu des pièces jointes est inspecté depuis l'étape 2.13, avec ses propres limites ([`attachments.md`](attachments.md#limites)) : flux de PDF compressés, RAR et 7z, macros Excel 4.0 et VBA de PowerPoint 97-2003 ne sont pas lus.
 - Seules trois passerelles de réécriture de liens sont déballées ; les autres (Barracuda, Mimecast…) peuvent encore produire de faux liens trompeurs.
 - Le texte masqué est très fréquent dans le phishing réel (120 emails Phishing Pot sur 200, surtout `visibility:hidden` et police minuscule), mais aussi dans les newsletters : c'est un signal faible.
 - Les signaux d'authentification ne valent que ce que vaut le serveur qui les a écrits : un email transféré ou exporté depuis un autre client peut avoir perdu ses en-têtes d'origine.
