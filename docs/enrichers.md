@@ -87,6 +87,8 @@ Chaque requête d'une source passe par `HttpEnricher.http()`, qui fournit un `Re
 | Délai de **lecture** dépassé | non : la source a reçu la requête, réessayer doublerait l'attente |
 | 400, 401, 403, 404 | non : la réponse ne changera pas |
 
+Une requête **non idempotente** (`POST`, comme la soumission d'un scan urlscan) n'est retentée qu'après un échec de connexion (connexion refusée, délai de connexion), quand elle n'a certainement pas quitté la machine. Après un 5xx ou une connexion rompue, la source a peut-être déjà traité la requête : la renvoyer créerait un second scan, public, et consommerait du quota.
+
 Trois tentatives au plus, requête initiale comprise. Le délai croît de façon exponentielle (0,2 s puis 0,4 s, plus un aléa de 0,1 s au plus pour que les clients ne réessaient pas tous en même temps) et ne dépasse jamais 1 s. Une réponse lue en flux (crt.sh) est fermée avant la tentative suivante.
 
 **Disjoncteur**, un par source :
@@ -100,10 +102,10 @@ Trois tentatives au plus, requête initiale comprise. Le délai croît de façon
 ```
 
 - **Fermé** : fonctionnement normal. Un échec (erreur réseau, délai dépassé, 5xx ou 429 après les nouvelles tentatives) incrémente un compteur, et un succès le remet à zéro.
-- **Ouvert** : la source n'est plus interrogée. L'enrichisseur renvoie tout de suite `skipped` avec `reason: circuit_open` et `retry_in_s`, au lieu d'attendre une panne de plus. Une source en panne ne coûte donc plus rien à l'analyse.
+- **Ouvert** : la source n'est plus interrogée, et aucun client HTTP n'est créé. L'enrichisseur renvoie tout de suite `skipped` avec `reason: circuit_open` et `retry_in_s`, au lieu d'attendre une panne de plus. Une source en panne ne coûte donc plus rien à l'analyse.
 - **Semi-ouvert** : après 60 s, **une seule** requête d'essai passe. Les autres attendent son résultat (`circuit_open`). Si l'essai réussit, le disjoncteur se referme ; sinon, il se rouvre pour 60 s.
 
-Une réponse 4xx autre que 429 (clé refusée, page absente) prouve que la source répond : ce n'est pas un échec. Une requête annulée (budget de l'orchestrateur dépassé) n'est ni un succès ni un échec. Chaque source a son propre disjoncteur : la panne de crt.sh ne coupe pas VirusTotal.
+Une réponse 4xx autre que 429 (clé refusée, page absente) prouve que la source répond : ce n'est pas un échec. Une requête annulée (budget de l'orchestrateur dépassé) n'est ni un succès ni un échec. Un échec qui arrive en retard, d'une requête lancée avant l'ouverture, ne prolonge pas la pause. Chaque source a son propre disjoncteur : la panne de crt.sh ne coupe pas VirusTotal.
 
 Le contrat de l'étape 2.2 tient toujours : le disjoncteur lève `SourceUnavailable`, que `Enricher.enrich()` convertit en signal `skipped`.
 
