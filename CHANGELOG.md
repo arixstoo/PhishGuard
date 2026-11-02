@@ -21,6 +21,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - urlscan.io : recherche des scans existants par domaine seulement (IP, pays, marques imitées, verdict, capture), cache d'une heure. Soumission d'un scan derrière `URLSCAN_SUBMIT`, désactivée par défaut, en visibilité `unlisted` ou `private`, jamais `public` (étape 2.6).
 - RDAP (âge du domaine, registraire) par l'amorçage IANA et le serveur du registre, barème de risque selon l'âge ; DNS (`dnspython` : A, AAAA, MX, NS, fournisseur de DNS gratuit, allure de *fast flux*, absence de MX) ; Certificate Transparency par crt.sh, en option. Un signal manquant donne toujours `risk = 0` (étape 2.7).
 - Robustesse réseau commune à toutes les sources : client `httpx` partagé (connexion 2 s, lecture 3 s), nouvelles tentatives avec `tenacity` sur les seules erreurs temporaires (5xx, 429 avec un délai court, échecs de connexion ; un `POST` seulement si la requête n'est pas partie), disjoncteur par source (5 échecs consécutifs : pause de 60 s, puis une requête d'essai), cache `cachetools` à durée de vie par entrée (étape 2.8).
+- Orchestrateur : toutes les sources en parallèle sous un budget global de 2,5 s ; les sources trop lentes sont annulées et marquées `timeout`, l'analyse se dégrade sans jamais échouer. Aucune source appelée si l'utilisateur n'a pas activé l'enrichissement. `scripts/check_enrichers.py` passe par l'orchestrateur (étape 2.9).
 
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 

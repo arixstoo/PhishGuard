@@ -1,7 +1,7 @@
 """Liste des enrichisseurs construits depuis la configuration.
 
-Point d'entrée unique pour le script de vérification et, plus tard, l'orchestrateur
-(étape 2.9). Une source sans clé (ou désactivée) est construite quand même : elle renverra
+Point d'entrée unique pour l'orchestrateur (étape 2.9) et le script de vérification.
+Une source sans clé (ou désactivée) est construite quand même : elle renverra
 ``skipped``.
 """
 
