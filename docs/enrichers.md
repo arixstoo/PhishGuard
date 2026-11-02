@@ -67,6 +67,50 @@ Deux exceptions sont volontairement **propagées** :
 
 Le signal d'erreur ne contient que le **type** de l'exception (`{"error": "ConnectError"}`), jamais son message. Les erreurs `httpx` contiennent l'URL de la requête, et les API Google acceptent la clé en paramètre (`?key=…`) : recopier le message ferait fuiter la clé dans la réponse de l'API et dans les journaux. Le détail complet part dans le journal Python, au niveau `DEBUG` seulement. Un test vérifie qu'une clé présente dans le message d'une exception n'apparaît pas dans le signal.
 
+## Robustesse réseau : nouvelles tentatives, disjoncteur, cache (étape 2.8)
+
+*Code : `src/phishguard/enrichers/resilience.py` et `src/phishguard/enrichers/http.py`.*
+
+Chaque requête d'une source passe par `HttpEnricher.http()`, qui fournit un `ResilientClient` : la même interface que `httpx` (`get`, `post`, `send`…), avec deux protections en plus. Les sources n'ont rien à faire pour en profiter.
+
+**Client partagé.** `create_shared_client()` crée un seul `httpx.AsyncClient` pour toutes les sources : les connexions TLS sont réutilisées. Il a des délais distincts (connexion 2 s, lecture 3 s), ne suit aucune redirection et envoie le `User-Agent` du projet. L'orchestrateur (étape 2.9) le crée et le ferme. Sans client injecté, chaque appel en crée un, à durée de vie courte.
+
+**Nouvelles tentatives** (`tenacity`), seulement sur les erreurs temporaires :
+
+| Situation | Nouvelle tentative ? |
+| --- | --- |
+| 500, 502, 503, 504 | oui |
+| 429 avec un délai court annoncé (`Retry-After` ou `X-Rate-Limit-Reset-After` ≤ 1 s) | oui, après ce délai |
+| 429 sans délai annoncé | **non** : c'est un quota épuisé (VirusTotal), réessayer le consommerait |
+| Délai annoncé de plus de 1 s | non : il dépasserait le budget de 2,5 s de l'orchestrateur |
+| Connexion refusée, délai de connexion, protocole rompu | oui |
+| Délai de **lecture** dépassé | non : la source a reçu la requête, réessayer doublerait l'attente |
+| 400, 401, 403, 404 | non : la réponse ne changera pas |
+
+Une requête **non idempotente** (`POST`, comme la soumission d'un scan urlscan) n'est retentée qu'après un échec de connexion (connexion refusée, délai de connexion), quand elle n'a certainement pas quitté la machine. Après un 5xx ou une connexion rompue, la source a peut-être déjà traité la requête : la renvoyer créerait un second scan, public, et consommerait du quota.
+
+Trois tentatives au plus, requête initiale comprise. Le délai croît de façon exponentielle (0,2 s puis 0,4 s, plus un aléa de 0,1 s au plus pour que les clients ne réessaient pas tous en même temps) et ne dépasse jamais 1 s. Une réponse lue en flux (crt.sh) est fermée avant la tentative suivante.
+
+**Disjoncteur**, un par source :
+
+```
+            5 échecs consécutifs                  60 s écoulées
+  FERMÉ ────────────────────────▶ OUVERT ─────────────────────▶ SEMI-OUVERT
+    ▲                               ▲                                │
+    │                               └───── l'essai échoue ───────────┤
+    └─────────────────────────────────── l'essai réussit ────────────┘
+```
+
+- **Fermé** : fonctionnement normal. Un échec (erreur réseau, délai dépassé, 5xx ou 429 après les nouvelles tentatives) incrémente un compteur, et un succès le remet à zéro.
+- **Ouvert** : la source n'est plus interrogée, et aucun client HTTP n'est créé. L'enrichisseur renvoie tout de suite `skipped` avec `reason: circuit_open` et `retry_in_s`, au lieu d'attendre une panne de plus. Une source en panne ne coûte donc plus rien à l'analyse.
+- **Semi-ouvert** : après 60 s, **une seule** requête d'essai passe. Les autres attendent son résultat (`circuit_open`). Si l'essai réussit, le disjoncteur se referme ; sinon, il se rouvre pour 60 s.
+
+Une réponse 4xx autre que 429 (clé refusée, page absente) prouve que la source répond : ce n'est pas un échec. Une requête annulée (budget de l'orchestrateur dépassé) n'est ni un succès ni un échec. Un échec qui arrive en retard, d'une requête lancée avant l'ouverture, ne prolonge pas la pause. Chaque source a son propre disjoncteur : la panne de crt.sh ne coupe pas VirusTotal.
+
+Le contrat de l'étape 2.2 tient toujours : le disjoncteur lève `SourceUnavailable`, que `Enricher.enrich()` convertit en signal `skipped`.
+
+**Cache.** `ExpiringCache` repose maintenant sur `cachetools.TLRUCache` : durée de vie **par entrée** (Safe Browsing impose la durée de chaque réponse), taille bornée, et l'entrée la moins récemment utilisée sort la première. Le cache est local au processus ; une version partagée (SQLite) viendra avec l'API du module 4.
+
 ## Vérifier une source avec ses propres clés
 
 Les tests automatiques n'utilisent que des réponses simulées (`respx`) : ils ne demandent ni clé ni réseau. Pour vérifier une source contre la vraie API, avec les clés de son `.env` :

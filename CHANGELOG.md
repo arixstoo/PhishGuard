@@ -20,6 +20,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - VirusTotal (API v3) : rapport de l'URL, puis du domaine si l'URL est inconnue, sans jamais soumettre d'analyse ; risque `min(1, (malicious + 0,5 × suspicious) / 5)`. Limiteur local (4 par minute, 500 par jour) qui renvoie `skipped` au lieu de dépasser le quota, cache de 6 h (étape 2.5).
 - urlscan.io : recherche des scans existants par domaine seulement (IP, pays, marques imitées, verdict, capture), cache d'une heure. Soumission d'un scan derrière `URLSCAN_SUBMIT`, désactivée par défaut, en visibilité `unlisted` ou `private`, jamais `public` (étape 2.6).
 - RDAP (âge du domaine, registraire) par l'amorçage IANA et le serveur du registre, barème de risque selon l'âge ; DNS (`dnspython` : A, AAAA, MX, NS, fournisseur de DNS gratuit, allure de *fast flux*, absence de MX) ; Certificate Transparency par crt.sh, en option. Un signal manquant donne toujours `risk = 0` (étape 2.7).
+- Robustesse réseau commune à toutes les sources : client `httpx` partagé (connexion 2 s, lecture 3 s), nouvelles tentatives avec `tenacity` sur les seules erreurs temporaires (5xx, 429 avec un délai court, échecs de connexion ; un `POST` seulement si la requête n'est pas partie), disjoncteur par source (5 échecs consécutifs : pause de 60 s, puis une requête d'essai), cache `cachetools` à durée de vie par entrée (étape 2.8).
 
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 

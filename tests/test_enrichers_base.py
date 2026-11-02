@@ -277,3 +277,13 @@ def test_abstract_intermediate_class_is_allowed():
     with pytest.raises(TypeError):
         KeyedEnricher()
     assert run(Concrete().enrich(URL, DOMAIN)).status == "skipped"
+
+
+def test_unavailable_source_becomes_a_skipped_signal():
+    from phishguard.enrichers import SourceUnavailable
+
+    signal = run(RaisingEnricher(SourceUnavailable("circuit_open", 42.04)).enrich(URL, DOMAIN))
+    assert (signal.status, signal.risk) == ("skipped", 0.0)
+    assert signal.evidence == {"reason": "circuit_open", "retry_in_s": 42.0}
+    signal = run(RaisingEnricher(SourceUnavailable("circuit_open")).enrich(URL, DOMAIN))
+    assert signal.evidence == {"reason": "circuit_open"}

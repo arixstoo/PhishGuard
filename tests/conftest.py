@@ -64,3 +64,16 @@ def split_dataset_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
     path = tmp_path_factory.mktemp("data") / "urls_split.parquet"
     df.assign(split=temporal_group_split(df)).to_parquet(path, index=False)
     return path
+
+
+@pytest.fixture(autouse=True)
+def instant_retry_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Les nouvelles tentatives des enrichisseurs (étape 2.8) n'attendent pas en test.
+
+    Les tests du mécanisme lui-même injectent leur propre ``sleep`` pour mesurer les délais.
+    """
+
+    async def no_wait(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr("phishguard.enrichers.resilience._sleep", no_wait)
