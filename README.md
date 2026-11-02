@@ -141,6 +141,7 @@ data/, models/    generated locally, never committed
 - [End-to-end URL analysis](docs/analysis.md): local model, opt-in enrichment, fusion and ATT&CK in one call, with privacy and degradation guarantees (French)
 - [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
+- [External tools evaluation](docs/external-tools.md): EML Analyzer, Outlook .msg, DeHashed and PhishTool, what was kept and why (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History
