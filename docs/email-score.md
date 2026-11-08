@@ -38,6 +38,11 @@ Chaque règle déclenchée ajoute ses points, et le score est plafonné à 100. 
 | :--- | ---: | :--- |
 | `dangerous_attachment` | 40 | Une pièce jointe peut exécuter du code ou ouvrir une fausse page de connexion. |
 | `disguised_attachment` | 40 | Le nom d'une pièce jointe cache sa vraie extension (facture.pdf.exe). |
+| `type_mismatch` | 40 | Une pièce jointe se fait passer pour un document ou une image, mais contient un programme. *(étape 2.13)* |
+| `credential_form_attachment` | 40 | Une page jointe demande un mot de passe. *(étape 2.13)* |
+| `remote_content_document` | 35 | Un document joint charge du contenu à l'ouverture (modèle distant ou objet caché). *(étape 2.13)* |
+| `hidden_archive_payload` | 35 | Une archive jointe est protégée par mot de passe ou contient un programme. *(étape 2.13)* |
+| `active_pdf` | 30 | Un PDF joint contient du code ou des fichiers qui s'exécutent à l'ouverture. *(étape 2.13)* |
 | `mismatched_link` | 35 | Un lien affiche une adresse mais mène vers un autre site. |
 | `url_model` | 35 | Un lien ressemble aux liens de phishing appris par le modèle URL. |
 | `dmarc_fail` | 30 | Le domaine de l'expéditeur n'a pas autorisé cet envoi (DMARC en échec). |
@@ -57,6 +62,8 @@ Chaque règle déclenchée ajoute ses points, et le score est plafonné à 100. 
 | `return_path_differs` | 5 | L'adresse de retour est sur un autre domaine (fréquent pour les envois en masse). |
 
 **Comment les poids ont été fixés** : à la main, **avant** toute mesure, d'après la gravité du signal et sa rareté dans un email légitime. Un seul signal fort (40, 35) suffit pour « suspect ». Deux signaux forts, ou un fort et deux moyens, donnent « phishing ». Les signaux faibles (texte caché, raccourcisseur, `Return-Path`) ne déclenchent rien seuls, parce qu'ils sont courants dans les newsletters. Ces poids ne sont **pas réglés sur le test**. La ligne « règles, seuil réglé » des résultats montre ce que donnerait un seuil choisi sur la validation.
+
+**Règles de l'étape 2.13** (contenu des pièces jointes, voir [`attachments.md`](attachments.md)) : fixées de la même façon, à la main. Elles ne comptent pas deux fois le même constat. `dangerous_attachment` porte maintenant sur la famille du nom **ou** du contenu : un `.doc` à macros ou un exécutable renommé `.pdf` sont dangereux comme un `.docm` ou un `.exe`. Les nouvelles règles ne couvrent que ce que le nom ne disait pas. `type_mismatch` signale le mensonge sur le type, qui s'ajoute au danger du contenu : un exécutable déguisé en PDF totalise 80 points, donc « phishing ». Les autres couvrent le contenu distant, l'archive qui cache sa charge, le PDF actif et la page de connexion jointe. Les modèles appris de l'étape 1.11 gardent leur propre liste de features : les nouvelles n'y entreront qu'au prochain `make train-email`.
 
 Détails de mise en œuvre :
 - un lien `javascript:` qui affiche une adresse compte dans `non_web_link`, pas aussi dans `mismatched_link` (pas de double compte) ;

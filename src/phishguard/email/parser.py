@@ -31,6 +31,7 @@ from email.parser import BytesParser
 from email.utils import getaddresses, parseaddr
 from typing import Any
 
+from phishguard.email.attachments import DANGEROUS_TYPES, ContentFindings, inspect_content
 from phishguard.email.auth import AuthResults, read_auth_results
 from phishguard.email.html import (
     HiddenText,
@@ -87,6 +88,9 @@ class EmailLimits:
     max_header_bytes: int = 128 * 1024
     max_headers: int = 500
     max_header_field_bytes: int = 32 * 1024
+    # Inspection du contenu des pièces jointes (étape 2.13), bornée par
+    # attachments.InspectionLimits. Désactivable pour un traitement en masse.
+    inspect_attachments: bool = True
 
 
 @dataclass(frozen=True)
@@ -106,12 +110,39 @@ class Attachment:
     content_type: str
     size: int
     extension: str | None
-    risk: str | None  # famille de RISKY_EXTENSIONS, ou None
+    risk: str | None  # famille de RISKY_EXTENSIONS d'après le nom, ou None
     double_extension: bool
     rtlo: bool
+    # Constats sur le contenu réel (étape 2.13, phishguard.email.attachments).
+    content: ContentFindings = field(default_factory=ContentFindings)
+
+    @property
+    def type_mismatch(self) -> bool:
+        """Le nom annonce un fichier anodin, le contenu est exécutable ou actif.
+
+        Exemple : ``facture.pdf`` dont les premiers octets sont ceux d'un exécutable
+        Windows (``MZ``). Un ``outil.exe`` qui contient un exécutable n'est pas un écart.
+        """
+        family = self.content.family
+        return (
+            self.content.detected_type in DANGEROUS_TYPES
+            and family is not None
+            and family != self.risk
+        )
+
+    @property
+    def effective_risk(self) -> str | None:
+        """Famille de risque retenue : celle du contenu si elle est plus grave que le nom."""
+        if self.content.family not in (None, "archive"):
+            return self.content.family
+        return self.risk or self.content.family
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        data = asdict(self)
+        data["content"] = self.content.to_dict()
+        data["type_mismatch"] = self.type_mismatch
+        data["effective_risk"] = self.effective_risk
+        return data
 
 
 @dataclass
@@ -143,7 +174,14 @@ class ParsedEmail:
 
     @property
     def risky_attachments(self) -> list[Attachment]:
-        return [a for a in self.attachments if a.risk or a.double_extension or a.rtlo]
+        return [
+            a
+            for a in self.attachments
+            if a.effective_risk or a.double_extension or a.rtlo or a.type_mismatch
+            or a.content.archive_encrypted or a.content.archive_dangerous_members
+            or a.content.remote_template or a.content.rtf_objects
+            or a.content.credential_form or a.content.pdf_active
+        ]  # fmt: skip
 
     def to_dict(self) -> dict[str, Any]:
         """Forme sérialisable en JSON (pour la CLI, l'API et les tests)."""
@@ -275,9 +313,10 @@ def _filename(part: Message, defects: list[str]) -> str | None:
     return str(name) if name else None
 
 
-def make_attachment(part: Message, filename: str | None) -> Attachment:
+def make_attachment(part: Message, filename: str | None, *, inspect: bool = True) -> Attachment:
     payload = part.get_payload(decode=True)
     size = len(payload) if isinstance(payload, bytes) else 0
+    content = inspect_content(payload) if inspect and size else ContentFindings()
     name = filename or ""
     rtlo = RTLO in name
     # Avec un RTLO, l'extension réelle est celle des caractères stockés, pas celle affichée.
@@ -299,6 +338,7 @@ def make_attachment(part: Message, filename: str | None) -> Attachment:
         risk=risk,
         double_extension=double,
         rtlo=rtlo,
+        content=content,
     )
 
 
@@ -470,7 +510,9 @@ def _read_body(msg: Message, result: ParsedEmail, limits: EmailLimits) -> None:
                 if defect not in result.defects:
                     result.defects.append(defect)
                 continue
-            result.attachments.append(make_attachment(part, filename))
+            result.attachments.append(
+                make_attachment(part, filename, inspect=limits.inspect_attachments)
+            )
             continue
         content_type = part.get_content_type()
         if content_type == "text/plain":

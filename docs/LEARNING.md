@@ -169,3 +169,14 @@ Trois lignes par étape : ce que j'ai fait, ce que j'ai appris, ce qui m'a bloqu
   `tests/test_enricher_contract.py` soumet les six sources à neuf formes de panne et à une liste d'hôtes autorisés. 26 tests. Voir `docs/analysis.md`.
 - **Appris** : un test de vie privée doit bloquer le réseau au plus bas niveau, pas seulement `httpx`. `dnspython` ouvre ses propres sockets, et un test qui ne surveillerait que HTTP aurait laissé passer les requêtes DNS. Il faut aussi tester le contenu de ce qui part, pas seulement le fait que ça parte : une URL de phishing contient souvent l'adresse de la victime. Et un test qui passe du premier coup ne prouve rien : en cassant volontairement le code (enrichissement sans opt-in, URL complète envoyée à urlscan), on vérifie qu'il échoue bien.
 - **Bloqué** : rien de bloquant. Les deux derniers critères de l'étape portent sur l'analyse complète, qui n'existait pas encore : aucune fonction ne reliait le modèle, l'orchestrateur et la fusion. Il a fallu l'écrire d'abord, et c'est elle que l'API du module 4 appellera.
+
+### 2.13 — Contenu des pièces jointes
+- **Fait** : `src/phishguard/email/attachments.py` inspecte en mémoire le contenu de chaque pièce jointe. Il relève :
+  - le vrai type par signature, et un nom qui ment sur ce type ;
+  - les macros VBA (OLE via `olefile`, OOXML, ODF), les modèles distants et les objets OLE des RTF ;
+  - les archives ZIP listées sans décompression ;
+  - les PDF actifs, y compris obfusqués, et les pages HTML qui demandent un mot de passe.
+
+  Cinq nouvelles règles du score email. Étape ajoutée après l'évaluation d'EML Analyzer, dont on a repris l'idée, pas l'outil. 51 tests sur des fichiers fabriqués, sans aucun vrai malware. Voir `docs/attachments.md`.
+- **Appris** : le nom d'un fichier est une déclaration de l'attaquant, son contenu est un fait. Un `.doc` sans « m » peut contenir des macros, et un `.docx` aussi s'il est renommé. Inspecter un fichier hostile demande la même prudence qu'un email hostile : ne jamais décompresser un membre d'archive (une bombe zip de 50 Mo tient en 50 Ko), borner chaque lecture, et ne laisser aucune exception sortir. Il faut aussi éviter de compter deux fois le même constat : un exécutable déguisé est « dangereux » et « menteur », mais pas « dangereux » deux fois.
+- **Bloqué** : pour tester la détection des macros sans versionner un vrai document malveillant, il fallait des fichiers OLE. `olefile` sait les lire, pas les écrire : les tests en fabriquent un minimal à la main, d'après la spécification MS-CFB (en-tête, table FAT, répertoire). Autre surprise : `zipfile` efface le drapeau « chiffré » qu'on lui donne à l'écriture, et il a fallu le poser directement dans les en-têtes de l'archive de test.
