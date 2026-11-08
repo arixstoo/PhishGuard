@@ -104,7 +104,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | --- | --- | --- |
 | M0 Foundations | Repo structure, CI, community files, SMS baseline, phishing 101 | ✅ done |
 | M1 Detection | URL / text / email detectors, temporal split, model cards | ✅ done (`v0.1.0`) |
-| M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping | 🚧 in progress |
+| M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping, response schema, attachment content | ✅ done (`v0.2.0`) |
 | M3 XAI & adversarial | SHAP explanations, evasion catalogue, robustness report | ⏳ planned |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image | ⏳ planned |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, user tests | ⏳ planned |
