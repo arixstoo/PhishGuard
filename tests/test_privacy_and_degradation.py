@@ -15,12 +15,12 @@ import numpy as np
 import pytest
 import respx
 
-from phishguard.analysis import UrlAnalyzer
+from phishguard.analysis import UrlAnalyzer, is_internal_host
 from phishguard.config import Settings
 from phishguard.enrichers.orchestrator import Orchestrator
 from phishguard.fusion.calibration import ScoreCalibrator
 from phishguard.fusion.score import fuse
-from phishguard.urls.features import InvalidUrlError
+from phishguard.urls.features import InvalidUrlError, parse_url
 
 KEY = "privacy-test-key-not-a-real-secret"
 # Une URL de phishing typique : identifiants, adresse de la victime, jeton dans le fragment.
@@ -45,17 +45,37 @@ class FixedModel:
 
 
 class NetworkGuard:
-    """Fait échouer toute tentative d'accès au réseau, HTTP, DNS ou socket brute."""
+    """Fait échouer toute tentative d'accès au réseau, HTTP, DNS ou socket brute.
+
+    Seule exception : ``socket.socketpair()``. Sous Windows, la boucle ``asyncio``
+    l'appelle pour se réveiller elle-même, et il y est émulé par un ``connect`` vers
+    127.0.0.1 : une liaison interne au processus, qui ne quitte pas la machine.
+    """
 
     def __init__(self, monkeypatch):
         self.attempts = []
+        self._in_socketpair = False
+        original_socketpair = socket.socketpair
+
+        def socketpair(*args, **kwargs):
+            self._in_socketpair = True
+            try:
+                return original_socketpair(*args, **kwargs)
+            finally:
+                self._in_socketpair = False
 
         def refuse(kind):
+            original = getattr(socket.socket, kind, None) if kind != "getaddrinfo" else None
+
             def blocked(*args, **kwargs):
+                if self._in_socketpair and original is not None:
+                    return original(*args, **kwargs)
                 self.attempts.append(kind)
                 raise AssertionError(f"accès réseau interdit : {kind}")
 
             return blocked
+
+        monkeypatch.setattr(socket, "socketpair", socketpair)
 
         monkeypatch.setattr(socket, "getaddrinfo", refuse("getaddrinfo"))
         monkeypatch.setattr(socket.socket, "connect", refuse("connect"))
@@ -119,6 +139,59 @@ def test_analysis_without_any_orchestrator_is_local(monkeypatch):
     assert guard.attempts == [] and analysis.enrichment.enrichment == "skipped"
 
 
+INTERNAL_URLS = [
+    "http://192.168.1.10/admin",
+    "http://10.0.0.5:8080/login",
+    "http://127.0.0.1/",
+    "http://0x7f000001/",  # 127.0.0.1 écrit en hexadécimal
+    "http://[::1]/",
+    "http://[fd00::1]/",
+    "http://169.254.169.254/latest/meta-data/",
+    "http://localhost:3000/",
+    "http://nas.lan/",
+    "https://intranet.corp.local/rh/paie",
+]
+
+
+@pytest.mark.parametrize("url", INTERNAL_URLS)
+def test_internal_urls_are_never_sent_to_sources(keyed_env, monkeypatch, url):
+    """Même avec l'opt-in : aucun service public ne connaît un hôte interne, et son nom
+    révélerait le réseau de l'utilisateur."""
+    orch = orchestrator()
+    guard = NetworkGuard(monkeypatch)
+
+    async def scenario():
+        async with orch:
+            return await UrlAnalyzer(FixedModel(0.6), orchestrator=orch).analyze(
+                url, enrichment=True
+            )
+
+    analysis = run(scenario())
+    assert guard.attempts == []
+    assert analysis.enrichment.signals == ()
+    assert analysis.enrichment_skipped == "internal_host"
+    assert analysis.to_dict()["enrichment"]["skipped_reason"] == "internal_host"
+    assert (analysis.score, analysis.verdict) == (60, "suspicious")  # le modèle décide
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://example.com/",
+        "http://8.8.8.8/",
+        "https://a.b.github.io/",
+        "http://[2001:4860::8888]/",
+    ],
+)
+def test_public_urls_are_not_internal(url):
+    assert is_internal_host(parse_url(url)) is False
+
+
+def test_skip_reason_when_enrichment_is_not_requested():
+    analysis = run(UrlAnalyzer(FixedModel(0.1)).analyze(URL))
+    assert analysis.enrichment_skipped == "not_requested"
+
+
 # --------------------------------------------------------------------------- #
 # Vie privée : avec enrichissement, le strict nécessaire
 # --------------------------------------------------------------------------- #
@@ -151,6 +224,7 @@ def test_what_is_sent_when_enrichment_is_enabled(keyed_env):
 
     analysis = run(scenario())
     assert analysis.enrichment.enrichment == "used"
+    assert analysis.enrichment_skipped is None
 
     sent = {}
     for call in respx.calls:
@@ -277,6 +351,13 @@ def test_analysis_serializes_without_secrets(keyed_env):
         payload = json.dumps(run(scenario()).to_dict())
     assert KEY not in payload
     assert json.loads(payload)["enrichment"]["status"] == "used"
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf")])
+def test_non_finite_model_score_is_an_error(value):
+    # Sans ce contrôle, NaN deviendrait 0 et donc un verdict « sûr » silencieux.
+    with pytest.raises(ValueError, match="non fini"):
+        run(UrlAnalyzer(FixedModel(value)).analyze(URL))
 
 
 @pytest.mark.parametrize("url", ["", "not a url", "javascript:alert(1)"])

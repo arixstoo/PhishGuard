@@ -31,7 +31,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 ### Analyse de bout en bout et tests de vie privée
 
-- `UrlAnalyzer` (`phishguard.analysis`) : modèle local, calibration, enrichissement **seulement sur opt-in**, fusion et techniques ATT&CK, en un appel ; point d'entrée de l'API du module 4.
+- `UrlAnalyzer` (`phishguard.analysis`) : modèle local, calibration, enrichissement **seulement sur opt-in**, fusion et techniques ATT&CK, en un appel ; point d'entrée de l'API du module 4. Une URL interne (IP privée ou de bouclage, hôte sans suffixe public) n'est jamais envoyée aux sources, même avec l'opt-in.
 - Tests de vie privée : sans enrichissement, aucun accès réseau (HTTP, DNS, socket) ; avec, ni identifiants, ni fragment, ni clé dans une URL, et le domaine seul pour urlscan, RDAP, DNS et crt.sh. Tests de dégradation : toutes les sources en panne ou trop lentes, le verdict du modèle est renvoyé dans le délai. Contrat commun des six sources face à neuf formes de panne, et liste des hôtes que chacune peut contacter (étape 2.12, [docs/analysis.md](docs/analysis.md)).
 
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)

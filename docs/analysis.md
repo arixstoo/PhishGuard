@@ -21,11 +21,11 @@ analysis.verdict, analysis.score, analysis.mitre, analysis.to_dict()
 | --- | --- | --- |
 | 1. Modèle URL local (étape 1.6) | oui | non |
 | 2. Calibration du score (étape 2.10) | si fournie | non |
-| 3. Enrichissement par les six sources (étapes 2.4 à 2.9) | **seulement si `enrichment=True`** | oui |
+| 3. Enrichissement par les six sources (étapes 2.4 à 2.9) | **seulement si `enrichment=True`**, et jamais pour une URL interne | oui |
 | 4. Fusion : score et verdict (étape 2.10) | oui | non |
 | 5. Techniques MITRE ATT&CK (étape 2.11) | verdict suspect ou phishing | non |
 
-L'enrichissement est **désactivé par défaut** : c'est l'utilisateur qui l'active (opt-in). Une URL invalide lève `InvalidUrlError` : c'est une erreur de l'entrée, que l'API renverra comme telle, pas une panne de source.
+L'enrichissement est **désactivé par défaut** : c'est l'utilisateur qui l'active (opt-in). Quand il n'a pas lieu, `analysis.enrichment_skipped` dit pourquoi : `not_requested` (non demandé, ou aucune source configurée) ou `internal_host`. Un score du modèle non fini (NaN) lève `ValueError` au lieu de devenir un verdict « sûr » silencieux. Une URL invalide lève `InvalidUrlError` : c'est une erreur de l'entrée, que l'API renverra comme telle, pas une panne de source.
 
 ## Garanties vérifiées par les tests
 
@@ -38,6 +38,9 @@ L'enrichissement est **désactivé par défaut** : c'est l'utilisateur qui l'act
   - le DNS ne résout que le domaine enregistré ;
   - Safe Browsing et VirusTotal reçoivent l'URL nettoyée, comme le documente leur section de `docs/enrichers.md` ;
   - aucune clé d'API ne circule dans une URL : elles partent toujours dans un en-tête, qui n'apparaît pas dans les journaux d'accès.
+- **Une URL interne n'est jamais envoyée, même avec l'opt-in.** Adresse IP privée, de bouclage ou de lien local (`192.168.1.10`, `127.0.0.1` y compris écrit `0x7f000001`, `::1`, `169.254.169.254`), ou nom sans suffixe public (`localhost`, `nas.lan`, `intranet.corp.local`) : aucun service public ne les connaît, et leur nom révélerait le réseau de l'utilisateur. Le modèle local décide seul. Le test bloque le réseau comme ci-dessus, avec l'enrichissement activé.
+
+Le blocage du réseau laisse passer un seul appel : `socket.socketpair()`. Sous Windows, la boucle `asyncio` s'en sert pour se réveiller elle-même, et Python l'y émule par une connexion vers 127.0.0.1, interne au processus. Sans cette exception, les tests échouaient sous Windows alors qu'aucune donnée ne sortait.
 
 ### Dégradation
 
@@ -54,4 +57,4 @@ L'enrichissement est **désactivé par défaut** : c'est l'utilisateur qui l'act
 
 Il vérifie aussi que chaque source ne contacte **que son propre service**, par une liste d'hôtes autorisés. Une source qui se mettrait à appeler un autre hôte, par erreur ou après une modification, fait échouer le test.
 
-Ces tests ont eux-mêmes été vérifiés : en cassant volontairement le code (enrichissement sans opt-in, URL complète envoyée à urlscan), ils échouent.
+Ces tests ont eux-mêmes été vérifiés : en cassant volontairement le code (enrichissement sans opt-in, URL complète envoyée à urlscan, URL interne enrichie), ils échouent, sous Linux comme sous Windows.
