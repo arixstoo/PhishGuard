@@ -84,6 +84,15 @@ Comment lire ces chiffres :
 - **La règle du seuil** visait au moins une alerte vraie sur deux à 1 % de prévalence. Elle est atteinte sur la validation mais **pas sur le test, de peu**. Le seuil n'a pas été changé après lecture du test.
 - **Pages internes** : c'est le chiffre à surveiller. Avec l'hypothèse « l'utilisateur ne visite que des pages internes », la précision s'effondre (voir le tableau de prévalence).
 
+## Explicabilité
+
+Chaque score se décompose en contributions SHAP exactes, une par feature, calculées par LightGBM lui-même (TreeSHAP natif, sans dépendance de plus). Détails, 10 URLs expliquées et lecture : [`explain-url.md`](explain-url.md).
+
+![Contribution SHAP de chaque feature sur 2 000 URLs de validation](img/url_v1_shap_summary.png)
+
+- **Trois features portent les trois quarts de l'importance** : la longueur de l'hôte (37 %), le taux de phishing du TLD (24 %) et la longueur du chemin (13 %). Ce sont aussi les trois features les plus exposées aux biais ci-dessous : SHAP rend visibles, URL par URL, les raccourcis mesurés aux étapes 1.3 et 1.5.
+- **Les marques et les homographes pèsent presque zéro en moyenne**, parce qu'ils se déclenchent rarement. Ce sont pourtant les raisons les plus compréhensibles pour un utilisateur : l'étape 3.2 les met en avant quand elles jouent.
+
 ## Biais connus
 
 | Biais | Effet mesuré | Ce qui a été fait |
@@ -107,7 +116,7 @@ Comment lire ces chiffres :
 
 ```bash
 make data          # collecte du jour, construction et split du jeu (voir la réserve ci-dessous)
-make train-url evaluate-url errors-url cards
+make train-url evaluate-url errors-url explain-url cards
 ```
 
 **Réserve** : les flux de phishing sont éphémères. Une collecte faite aujourd'hui ne redonne pas le jeu de ce rapport (empreinte ci-dessus) : elle donne un jeu comparable, avec d'autres chiffres. Retrouver exactement ces chiffres demande les archives chiffrées de la collecte quotidienne (`scripts/sync_feed_archives.py`), qui ne sont pas publiques, à cause des conditions d'OpenPhish.

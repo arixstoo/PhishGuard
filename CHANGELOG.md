@@ -2,6 +2,12 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié] : module 3, explicabilité et robustesse adversariale
+
+### Explicabilité
+
+- Valeurs SHAP du modèle URL (`phishguard.explain.shap_url`) : contribution exacte de chaque feature, calculée par le TreeSHAP natif de LightGBM (identique à la bibliothèque `shap`, vérifié par les tests), avec repli sur `shap.TreeExplainer` pour les autres modèles d'arbres. Les quatre formes de sortie possibles (liste par classe, tableau 3D, matrice, colonne de base) sont normalisées, les autres refusées. `scripts/explain_url.py` (`make explain-url`) produit le graphique global, l'importance de chaque feature et 10 URLs de phishing expliquées par leurs 3 raisons principales ; la lecture montre que la longueur de l'hôte et le TLD portent 60 % de l'importance, reflet des biais connus du jeu (étape 3.1, [docs/explain-url.md](docs/explain-url.md)).
+
 ## [0.2.0] : module 2, Threat Intelligence et fusion des signaux
 
 Le moteur enrichit maintenant un indicateur comme le ferait un analyste avant de conclure : six sources de Threat Intelligence interrogées en parallèle, fusionnées avec le modèle local calibré en un score, un verdict, ses raisons et ses techniques MITRE ATT&CK, dans un schéma de réponse figé. L'enrichissement reste **désactivé par défaut** : sans opt-in, rien ne quitte la machine, et une URL interne n'est jamais envoyée. Vérifié contre les vraies API (Safe Browsing, VirusTotal, urlscan.io, RDAP, DNS) et, pour l'âge des domaines, contre les registres eux-mêmes. Rien n'est encore exposé à l'utilisateur : l'API arrive au module 4.

@@ -38,7 +38,11 @@ dev = [
     "pre-commit",
     "hypothesis",
     "respx",  # réponses HTTP simulées pour les enrichisseurs (module 2)
+    "shap>=0.46",  # les tests comparent les valeurs SHAP de LightGBM à la référence (étape 3.1)
 ]
+# Graphiques SHAP de `make explain-url` (étape 3.1). L'analyse elle-même n'en a pas besoin :
+# les valeurs SHAP du modèle URL sont calculées par LightGBM.
+explain = ["shap>=0.46", "matplotlib"]
 # Approche optionnelle de l'étape 1.9 : télécharge un encodeur de plusieurs centaines de Mo.
 embeddings = ["sentence-transformers"]
 

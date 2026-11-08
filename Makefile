@@ -21,7 +21,7 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install lint format test \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	cards schema
+	explain-url cards schema
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -76,7 +76,7 @@ $(DATASET):
 # Modèles (étapes 1.6 à 1.11)
 # --------------------------------------------------------------------------- #
 
-train: train-url evaluate-url errors-url calibrate-url train-text train-email cards ## Entraîne et évalue tous les modèles
+train: train-url evaluate-url errors-url calibrate-url explain-url train-text train-email cards ## Entraîne et évalue tous les modèles
 
 train-url: $(SPLIT) ## Entraîne et compare les modèles URL, enregistre le meilleur (étape 1.6)
 	$(PYTHON) scripts/train_url.py
@@ -89,6 +89,9 @@ errors-url: $(URL_MODEL) ## Classe les pires erreurs du modèle URL sur la valid
 
 calibrate-url: $(URL_MODEL) ## Calibre les probabilités du modèle URL sur la validation (étape 2.10)
 	$(PYTHON) scripts/calibrate_url.py
+
+explain-url: $(URL_MODEL) ## Valeurs SHAP du modèle URL : graphique global et exemples (étape 3.1)
+	$(PYTHON) scripts/explain_url.py
 
 $(URL_MODEL): $(SPLIT)
 	$(PYTHON) scripts/train_url.py
