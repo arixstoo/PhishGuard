@@ -29,6 +29,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - Fusion pure et versionnée (`fusion/fusion.json`) : règles dures (liste noire, Safe Browsing avant liste blanche), « OU probabiliste » pondéré des signaux utilisables, seuils sûr < 30 ≤ suspect ≤ 70 < phishing, contribution de chaque source. Résultat indépendant de l'ordre des signaux, même si une source répond deux fois. 18 cas de table de vérité et des tests de propriétés (étape 2.10, [docs/fusion.md](docs/fusion.md)).
 - Correspondance MITRE ATT&CK : chaque verdict suspect ou phishing est relié à ses techniques (T1566.001/.002/.003, T1204.001/.002, T1598.001/.002/.003, T1583.001), au moins une pour tout phishing. Catalogue vérifié contre les données officielles d'ATT&CK v20.1 par `scripts/verify_mitre.py` (étape 2.11, [docs/mitre-attack.md](docs/mitre-attack.md)).
 
+### Analyse de bout en bout et tests de vie privée
+
+- `UrlAnalyzer` (`phishguard.analysis`) : modèle local, calibration, enrichissement **seulement sur opt-in**, fusion et techniques ATT&CK, en un appel ; point d'entrée de l'API du module 4. Une URL interne (IP privée ou de bouclage, hôte sans suffixe public) n'est jamais envoyée aux sources, même avec l'opt-in.
+- Tests de vie privée : sans enrichissement, aucun accès réseau (HTTP, DNS, socket) ; avec, ni identifiants, ni fragment, ni clé dans une URL, et le domaine seul pour urlscan, RDAP, DNS et crt.sh. Tests de dégradation : toutes les sources en panne ou trop lentes, le verdict du modèle est renvoyé dans le délai. Contrat commun des six sources face à neuf formes de panne, et liste des hôtes que chacune peut contacter (étape 2.12, [docs/analysis.md](docs/analysis.md)).
+
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 
 Premiers détecteurs, évalués avec une méthode qui cherche les biais avant les scores. Rien n'est encore exposé à l'utilisateur : l'API, l'extension et le bot arrivent aux modules 4 et 5.
