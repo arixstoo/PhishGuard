@@ -25,8 +25,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 ### Fusion du score
 
-- Calibration des probabilités du modèle URL sur la validation (isotone ou Platt, choisie en validation croisée), enregistrée en JSON sans pickle ; `scripts/calibrate_url.py`, `make calibrate-url`.
-- Fusion pure et versionnée (`fusion/fusion.json`) : règles dures (liste noire, Safe Browsing avant liste blanche), « OU probabiliste » pondéré des signaux utilisables, seuils sûr < 30 ≤ suspect ≤ 70 < phishing, contribution de chaque source. 18 cas de table de vérité et des tests de propriétés (étape 2.10, [docs/fusion.md](docs/fusion.md)).
+- Calibration des probabilités du modèle URL sur la validation (isotone ou Platt, choisie en validation croisée), enregistrée en JSON sans pickle ; `scripts/calibrate_url.py`, `make calibrate-url`. Sur `url_v1`, la régression isotone est retenue : ECE de 0,011 à 0,003 en validation croisée (`docs/metrics/url_calibration.json`).
+- Fusion pure et versionnée (`fusion/fusion.json`) : règles dures (liste noire, Safe Browsing avant liste blanche), « OU probabiliste » pondéré des signaux utilisables, seuils sûr < 30 ≤ suspect ≤ 70 < phishing, contribution de chaque source. Résultat indépendant de l'ordre des signaux, même si une source répond deux fois. 18 cas de table de vérité et des tests de propriétés (étape 2.10, [docs/fusion.md](docs/fusion.md)).
 
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 
