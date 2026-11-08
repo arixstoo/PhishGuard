@@ -111,6 +111,39 @@ Le contrat de l'étape 2.2 tient toujours : le disjoncteur lève `SourceUnavaila
 
 **Cache.** `ExpiringCache` repose maintenant sur `cachetools.TLRUCache` : durée de vie **par entrée** (Safe Browsing impose la durée de chaque réponse), taille bornée, et l'entrée la moins récemment utilisée sort la première. Le cache est local au processus ; une version partagée (SQLite) viendra avec l'API du module 4.
 
+## Orchestrateur : toutes les sources en parallèle, sous un budget de temps (étape 2.9)
+
+*Code : `src/phishguard/enrichers/orchestrator.py`.*
+
+```python
+from phishguard.enrichers.orchestrator import Orchestrator
+
+async with Orchestrator.from_settings() as orchestrator:  # client HTTP partagé, fermé à la fin
+    result = await orchestrator.enrich("https://login.exemple.com/verify")
+
+result.signals  # un Signal par source, dans l'ordre du registre
+result.usable  # les signaux « ok », pour la fusion (étape 2.10)
+result.timed_out  # sources arrêtées par le budget
+result.enrichment  # "used", ou "skipped" si l'utilisateur ne l'a pas activé
+result.latency_ms
+```
+
+Toutes les sources actives sont lancées **en même temps** (une tâche asyncio par source), sous un budget global de **2,5 s**. À l'échéance, les sources qui n'ont pas répondu sont **annulées** et marquées `timeout` (`reason: budget_exceeded`), et les autres sont utilisées. Avec six sources, l'analyse dure le temps de la plus lente, borné à 2,5 s, au lieu de la somme de toutes.
+
+Au pire, l'analyse dure le budget plus 0,2 s, le temps laissé aux sources annulées pour libérer leurs connexions : 2,7 s. Le budget laisse de la marge sous l'objectif de 3 s avec enrichissement (exigences non fonctionnelles du cahier des charges). Sans lui, crt.sh, souvent lent, fixerait la latence de chaque analyse.
+
+**L'analyse ne lève jamais d'exception à cause d'une source** : elle se dégrade. Une source en erreur, en délai dépassé, en pause (disjoncteur) ou même hors contrat (une `enrich()` qui lèverait) devient un signal parmi d'autres. Si toutes les sources tombent, le résultat est simplement vide de signaux utilisables, et le verdict du modèle local suffira (étape 2.10).
+
+Autres règles :
+
+- les sources sont réellement **annulées**, pas abandonnées : leurs connexions sont libérées, et une requête d'essai du disjoncteur n'est pas comptée comme un échec ;
+- si l'appelant annule l'analyse (requête HTTP de l'utilisateur interrompue), toutes les sources sont annulées avec elle ;
+- le domaine envoyé aux sources est le **domaine enregistré** de l'URL (`login.exemple.co.uk` donne `exemple.co.uk`), calculé hors ligne avec la liste des suffixes publics ;
+- `sources={"rdap", "dns"}` limite l'analyse à certaines sources ;
+- **vie privée** : `enabled=False` (enrichissement non activé par l'utilisateur) n'appelle **aucune** source, et le résultat l'indique (`enrichment = "skipped"`).
+
+Limite : l'annulation n'interrompt qu'un code qui rend la main à la boucle asyncio. Une source qui ferait un appel bloquant retarderait tout. Les six sources du projet sont asynchrones.
+
 ## Vérifier une source avec ses propres clés
 
 Les tests automatiques n'utilisent que des réponses simulées (`respx`) : ils ne demandent ni clé ni réseau. Pour vérifier une source contre la vraie API, avec les clés de son `.env` :
@@ -120,7 +153,7 @@ python scripts/check_enrichers.py https://testsafebrowsing.appspot.com/s/phishin
 python scripts/check_enrichers.py https://example.com --source google_safe_browsing
 ```
 
-Le script affiche le signal de chaque source. Il se termine avec le code 1 si l'une d'elles est en erreur. **L'URL est envoyée aux services tiers** : n'utilise pas une URL qui contient des données personnelles.
+Le script interroge les sources par l'orchestrateur, sous son budget (`--budget` pour le changer), et affiche le signal de chaque source puis la durée totale. Il se termine avec le code 1 si l'une d'elles est en erreur. **L'URL est envoyée aux services tiers** : n'utilise pas une URL qui contient des données personnelles.
 
 ## Sources
 

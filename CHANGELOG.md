@@ -21,6 +21,22 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - urlscan.io : recherche des scans existants par domaine seulement (IP, pays, marques imitées, verdict, capture), cache d'une heure. Soumission d'un scan derrière `URLSCAN_SUBMIT`, désactivée par défaut, en visibilité `unlisted` ou `private`, jamais `public` (étape 2.6).
 - RDAP (âge du domaine, registraire) par l'amorçage IANA et le serveur du registre, barème de risque selon l'âge ; DNS (`dnspython` : A, AAAA, MX, NS, fournisseur de DNS gratuit, allure de *fast flux*, absence de MX) ; Certificate Transparency par crt.sh, en option. Un signal manquant donne toujours `risk = 0` (étape 2.7).
 - Robustesse réseau commune à toutes les sources : client `httpx` partagé (connexion 2 s, lecture 3 s), nouvelles tentatives avec `tenacity` sur les seules erreurs temporaires (5xx, 429 avec un délai court, échecs de connexion ; un `POST` seulement si la requête n'est pas partie), disjoncteur par source (5 échecs consécutifs : pause de 60 s, puis une requête d'essai), cache `cachetools` à durée de vie par entrée (étape 2.8).
+- Orchestrateur : toutes les sources en parallèle sous un budget global de 2,5 s ; les sources trop lentes sont annulées et marquées `timeout`, l'analyse se dégrade sans jamais échouer. Aucune source appelée si l'utilisateur n'a pas activé l'enrichissement. `scripts/check_enrichers.py` passe par l'orchestrateur (étape 2.9).
+
+### Fusion du score
+
+- Calibration des probabilités du modèle URL sur la validation (isotone ou Platt, choisie en validation croisée), enregistrée en JSON sans pickle ; `scripts/calibrate_url.py`, `make calibrate-url`. Sur `url_v1`, la régression isotone est retenue : ECE de 0,011 à 0,003 en validation croisée (`docs/metrics/url_calibration.json`).
+- Fusion pure et versionnée (`fusion/fusion.json`) : règles dures (liste noire, Safe Browsing avant liste blanche), « OU probabiliste » pondéré des signaux utilisables, seuils sûr < 30 ≤ suspect ≤ 70 < phishing, contribution de chaque source. Résultat indépendant de l'ordre des signaux, même si une source répond deux fois. 18 cas de table de vérité et des tests de propriétés (étape 2.10, [docs/fusion.md](docs/fusion.md)).
+- Correspondance MITRE ATT&CK : chaque verdict suspect ou phishing est relié à ses techniques (T1566.001/.002/.003, T1204.001/.002, T1598.001/.002/.003, T1583.001), au moins une pour tout phishing. Catalogue vérifié contre les données officielles d'ATT&CK v20.1 par `scripts/verify_mitre.py` (étape 2.11, [docs/mitre-attack.md](docs/mitre-attack.md)).
+
+### Analyse de bout en bout et tests de vie privée
+
+- `UrlAnalyzer` (`phishguard.analysis`) : modèle local, calibration, enrichissement **seulement sur opt-in**, fusion et techniques ATT&CK, en un appel ; point d'entrée de l'API du module 4. Une URL interne (IP privée ou de bouclage, hôte sans suffixe public) n'est jamais envoyée aux sources, même avec l'opt-in.
+- Tests de vie privée : sans enrichissement, aucun accès réseau (HTTP, DNS, socket) ; avec, ni identifiants, ni fragment, ni clé dans une URL, et le domaine seul pour urlscan, RDAP, DNS et crt.sh. Tests de dégradation : toutes les sources en panne ou trop lentes, le verdict du modèle est renvoyé dans le délai. Contrat commun des six sources face à neuf formes de panne, et liste des hôtes que chacune peut contacter (étape 2.12, [docs/analysis.md](docs/analysis.md)).
+
+### Documentation
+
+- Évaluation d'outils externes ([docs/external-tools.md](docs/external-tools.md)). EML Analyzer : idée reprise (contenu des pièces jointes), outil non intégré. Format `.msg` : plus tard. DeHashed : écarté (pas de valeur de détection, données personnelles de tiers). PhishTool : référence de comparaison pour les tests utilisateurs de l'étape 5.13, avec son protocole.
 
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 

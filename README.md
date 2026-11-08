@@ -89,6 +89,7 @@ make train-text                         # compare SMS text models, English corpu
 python scripts/parse_email.py msg.eml   # SPF/DKIM/DMARC, sender mismatches, deceptive links, risky attachments (docs/email-parser.md)
 make email-corpora && make train-email  # email score: transparent rules vs learned models (docs/email-score.md)
 python -m phishguard.config             # which Threat Intel sources are enabled (optional keys in .env, docs/secrets.md)
+make calibrate-url                      # calibrate the URL model probabilities on validation (docs/fusion.md)
 python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
 ```
 
@@ -135,8 +136,12 @@ data/, models/    generated locally, never committed
 - [Email score](docs/email-score.md): explainable rules vs learned models, and why public email corpora are biased by era (French)
 - [Enrichers](docs/enrichers.md): the common contract of Threat Intelligence sources, and why an enricher never raises (French)
 - [SSRF protection](docs/ssrf.md): why the server never visits the analysed URL, and the network guard for code that must (French)
+- [Score fusion](docs/fusion.md): calibrated model probability, hard rules and weighted Threat Intelligence signals, with a documented truth table (French)
+- [MITRE ATT&CK mapping](docs/mitre-attack.md): the ATT&CK techniques each detection illustrates, verified against MITRE's official data (French)
+- [End-to-end URL analysis](docs/analysis.md): local model, opt-in enrichment, fusion and ATT&CK in one call, with privacy and degradation guarantees (French)
 - [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
+- [External tools evaluation](docs/external-tools.md): EML Analyzer, Outlook .msg, DeHashed and PhishTool, what was kept and why (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History
