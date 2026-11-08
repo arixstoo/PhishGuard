@@ -13,6 +13,10 @@ Garanties, vérifiées par ``tests/test_privacy_and_degradation.py`` (étape 2.1
 
 - **vie privée** : sans enrichissement, aucune requête ne quitte la machine, ni HTTP ni
   DNS. Le modèle et la fusion sont entièrement locaux ;
+- **vie privée, avec l'enrichissement** : une URL interne (adresse IP privée ou de
+  bouclage, hôte sans suffixe public comme ``localhost`` ou ``intranet.corp.local``)
+  n'est envoyée à aucune source. Aucun service public ne la connaît, et son nom
+  révélerait le réseau de l'utilisateur ;
 - **dégradation** : si toutes les sources sont en panne, l'analyse aboutit quand même,
   avec le verdict du modèle seul.
 
@@ -23,25 +27,56 @@ erreur de l'entrée, pas d'une source, et l'API la renverra comme telle (400).
 from __future__ import annotations
 
 import logging
+import math
 import time
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 import numpy as np
+import tldextract
 
+from phishguard.data.urls import make_domain_extractor
 from phishguard.enrichers.orchestrator import EnrichmentResult, Orchestrator
 from phishguard.fusion.calibration import ScoreCalibrator
 from phishguard.fusion.mitre import Observations, Technique, domain_observations, map_techniques
 from phishguard.fusion.score import FusionConfig, FusionResult, Verdict, fuse
-from phishguard.urls.features import UrlFeatureExtractor, parse_url
+from phishguard.security.netguard import NetGuardError, is_public_ip, parse_ip_literal
+from phishguard.urls.features import ParsedUrl, UrlFeatureExtractor, parse_url
 
 logger = logging.getLogger(__name__)
 
 # Mots de connexion, de vérification ou de compte dans l'URL (features de l'étape 1.5) :
 # la page demande probablement des informations (T1598.003).
 INFORMATION_FEATURES = ("host_kw_hits", "path_kw_hits")
+
+# Pourquoi l'enrichissement n'a pas eu lieu : non demandé (ou aucune source configurée),
+# ou URL interne, jamais envoyée à des tiers.
+SkipReason = Literal["not_requested", "internal_host"]
+
+
+def is_internal_host(parsed: ParsedUrl) -> bool:
+    """Vrai si l'hôte n'est pas joignable sur Internet : IP non publique, ou nom sans
+    suffixe public (``localhost``, ``nas.lan``, ``intranet.corp.local``).
+
+    Les IP écrites en hexadécimal ou en entier (``0x7f000001``) sont décodées comme le
+    ferait un navigateur, par le garde-fou réseau de l'étape 2.3.
+    """
+    if parsed.is_ip:
+        try:
+            ip = parse_ip_literal(parsed.host)
+        except NetGuardError:
+            return True
+        return ip is None or not is_public_ip(ip)
+    return not _suffix_extractor()(parsed.host).suffix
+
+
+@lru_cache(maxsize=1)
+def _suffix_extractor() -> tldextract.TLDExtract:
+    """Liste des suffixes publics embarquée : aucune requête réseau."""
+    return make_domain_extractor()
 
 
 class UrlScorer(Protocol):
@@ -63,6 +98,7 @@ class UrlAnalysis:
     enrichment: EnrichmentResult
     mitre: tuple[Technique, ...]
     latency_ms: int
+    enrichment_skipped: SkipReason | None = None  # None : les sources ont été interrogées
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -78,6 +114,7 @@ class UrlAnalysis:
             "fusion": self.fusion.to_dict(),
             "enrichment": {
                 "status": self.enrichment.enrichment,
+                "skipped_reason": self.enrichment_skipped,
                 "latency_ms": self.enrichment.latency_ms,
                 "signals": [s.model_dump(mode="json") for s in self.enrichment.signals],
             },
@@ -129,11 +166,21 @@ class UrlAnalyzer:
     ) -> UrlAnalysis:
         """Analyse ``url``. L'enrichissement (envoi à des tiers) est désactivé par défaut."""
         start = time.perf_counter()
-        domain = parse_url(url).registered_domain  # lève InvalidUrlError si l'URL est invalide
+        parsed = parse_url(url)  # lève InvalidUrlError si l'URL est invalide
+        domain = parsed.registered_domain
         raw = float(self.model.score([url])[0])
+        if not math.isfinite(raw):
+            # min/max transformeraient NaN en 0, donc en verdict « sûr » : on refuse.
+            raise ValueError(f"score du modèle non fini : {raw!r}")
         probability = self.calibrator(raw) if self.calibrator else min(1.0, max(0.0, raw))
 
-        if enrichment and self.orchestrator is not None:
+        skipped: SkipReason | None = None
+        if not enrichment or self.orchestrator is None:
+            skipped = "not_requested"
+        elif is_internal_host(parsed):
+            skipped = "internal_host"
+            logger.info("URL interne : enrichissement ignoré, rien n'est envoyé aux sources")
+        if skipped is None:
             enriched = await self.orchestrator.enrich(url, domain)
         else:
             budget_ms = round(self.orchestrator.budget_s * 1000) if self.orchestrator else 0
@@ -159,6 +206,7 @@ class UrlAnalyzer:
             enrichment=enriched,
             mitre=mitre,
             latency_ms=round((time.perf_counter() - start) * 1000),
+            enrichment_skipped=skipped,
         )
 
     def _observations(self, url: str, enriched: EnrichmentResult) -> Observations:

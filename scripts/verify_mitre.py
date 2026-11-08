@@ -33,7 +33,7 @@ STIX_URL = (
 
 
 def index_stix(bundle: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], str | None]:
-    """``{identifiant: {name, parent, tactics, revoked, deprecated}}`` et version ATT&CK."""
+    """``{identifiant: {name, tactics, revoked, deprecated}}`` et version ATT&CK."""
     techniques: dict[str, dict[str, Any]] = {}
     version = None
     for obj in bundle.get("objects", []):
@@ -51,37 +51,54 @@ def index_stix(bundle: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], str |
         )
         if ref is None:
             continue
-        techniques[ref["external_id"]] = {
+        entry = {
             "name": obj.get("name"),
             "tactics": [p.get("phase_name") for p in obj.get("kill_chain_phases", [])],
             "revoked": bool(obj.get("revoked")),
             "deprecated": bool(obj.get("x_mitre_deprecated")),
         }
+        # Un identifiant ne devrait apparaître qu'une fois ; sinon, l'objet actif prime
+        # sur une ancienne version révoquée, quel que soit l'ordre du paquet.
+        previous = techniques.get(ref["external_id"])
+        if previous is None or _active(entry) >= _active(previous):
+            techniques[ref["external_id"]] = entry
     return techniques, version
+
+
+def _active(entry: dict[str, Any]) -> bool:
+    return not (entry["revoked"] or entry["deprecated"])
+
+
+def problems(catalog: dict[str, Any], stix: dict[str, dict[str, Any]]) -> list[tuple[str, bool]]:
+    """Écarts entre le catalogue et ATT&CK, chacun avec un drapeau : ``True`` si
+    ``--write`` sait le corriger seul (un nom changé), ``False`` s'il faut décider à la main
+    (technique absente, révoquée ou dépréciée, tactique changée, parent manquant).
+    """
+    found: list[tuple[str, bool]] = []
+    for technique_id, entry in catalog["techniques"].items():
+        official = stix.get(technique_id)
+        if official is None:
+            found.append((f"{technique_id} : absente d'ATT&CK", False))
+            continue
+        if not _active(official):
+            found.append((f"{technique_id} : révoquée ou dépréciée", False))
+        if official["name"] != entry["name"]:
+            text = f"{technique_id} : nom {entry['name']!r}, officiel {official['name']!r}"
+            found.append((text, True))
+        if entry["tactic"] not in official["tactics"]:
+            text = (
+                f"{technique_id} : tactique {entry['tactic']!r}, officielles {official['tactics']}"
+            )
+            found.append((text, False))
+        parent = technique_id.split(".")[0]
+        if "." in technique_id and parent not in catalog["techniques"]:
+            found.append((f"{technique_id} : la technique parente {parent} manque", False))
+    return found
 
 
 def check(catalog: dict[str, Any], stix: dict[str, dict[str, Any]]) -> list[str]:
     """Écarts entre le catalogue et les données officielles (liste vide : à jour)."""
-    problems = []
-    for technique_id, entry in catalog["techniques"].items():
-        official = stix.get(technique_id)
-        if official is None:
-            problems.append(f"{technique_id} : absente d'ATT&CK")
-            continue
-        if official["revoked"] or official["deprecated"]:
-            problems.append(f"{technique_id} : révoquée ou dépréciée")
-        if official["name"] != entry["name"]:
-            problems.append(
-                f"{technique_id} : nom {entry['name']!r}, officiel {official['name']!r}"
-            )
-        if entry["tactic"] not in official["tactics"]:
-            problems.append(
-                f"{technique_id} : tactique {entry['tactic']!r}, officielles {official['tactics']}"
-            )
-        parent = technique_id.split(".")[0]
-        if "." in technique_id and parent not in catalog["techniques"]:
-            problems.append(f"{technique_id} : la technique parente {parent} manque au catalogue")
-    return problems
+    return [text for text, _ in problems(catalog, stix)]
 
 
 def updated(catalog: dict[str, Any], stix: dict[str, dict[str, Any]], version: str | None) -> dict:
@@ -95,6 +112,24 @@ def updated(catalog: dict[str, Any], stix: dict[str, dict[str, Any]], version: s
     return result
 
 
+def dump_catalog(catalog: dict[str, Any]) -> str:
+    """JSON du catalogue, une technique par ligne comme le fichier versionné (diffs lisibles)."""
+    lines = ["{"]
+    head = {k: v for k, v in catalog.items() if k != "techniques"}
+    for key, value in head.items():
+        lines.append(f"  {json.dumps(key)}: {json.dumps(value, indent=2, ensure_ascii=False)},")
+    lines = [line.replace("\n", "\n  ") for line in lines]
+    rows = [
+        f"    {json.dumps(tid)}: {json.dumps(entry, ensure_ascii=False)}"
+        for tid, entry in catalog["techniques"].items()
+    ]
+    lines.append('  "techniques": {')
+    lines.append(",\n".join(rows))
+    lines.append("  }")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -102,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--stix", type=Path, help="fichier STIX local (sinon téléchargé)")
     parser.add_argument("--catalog", type=Path, default=CATALOG)
-    parser.add_argument("--write", action="store_true", help="met à jour le catalogue")
+    parser.add_argument("--write", action="store_true", help="met à jour noms et version")
     args = parser.parse_args(argv)
 
     if args.stix:
@@ -113,19 +148,19 @@ def main(argv: list[str] | None = None) -> int:
         bundle = response.json()
     stix, version = index_stix(bundle)
     catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
-    problems = check(catalog, stix)
+    found = problems(catalog, stix)
 
     print(f"ATT&CK {version} : {len(catalog['techniques'])} techniques vérifiées")
-    for problem in problems:
-        print(f"  - {problem}")
-    if args.write and not any("absente" in p or "révoquée" in p for p in problems):
-        args.catalog.write_text(
-            json.dumps(updated(catalog, stix, version), indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-        print(f"Catalogue mis à jour : {args.catalog}")
-        return 0
-    return 1 if problems else 0
+    for text, _ in found:
+        print(f"  - {text}")
+    if not args.write:
+        return 1 if found else 0
+    if any(not fixable for _, fixable in found):
+        print("Catalogue non modifié : ces écarts demandent une décision à la main.")
+        return 1
+    args.catalog.write_text(dump_catalog(updated(catalog, stix, version)), encoding="utf-8")
+    print(f"Catalogue mis à jour : {args.catalog}")
+    return 0
 
 
 if __name__ == "__main__":

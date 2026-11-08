@@ -11,7 +11,7 @@ Un verdict ``safe`` n'en a aucune.
 | Message via un service tiers (SMS, messagerie)  | T1566.003 Phishing: Spearphishing via Service |
 | L'utilisateur est incité à cliquer              | T1204.001 User Execution: Malicious Link   |
 | L'utilisateur est incité à ouvrir un fichier    | T1204.002 User Execution: Malicious File   |
-| Le message demande des informations             | T1598 Phishing for Information (.002, .003) |
+| Le message demande des informations             | T1598 Phishing for Information (.001 à .003) |
 | Domaine récent ou imitant une marque            | T1583.001 Acquire Infrastructure: Domains  |
 
 Un verdict de phishing reçoit **toujours** au moins une technique : à défaut de constat
@@ -26,6 +26,7 @@ recherchent tels quels. Les phrases pour l'utilisateur viendront du module 3.
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from functools import lru_cache
@@ -123,6 +124,8 @@ def map_techniques(verdict: Verdict, observations: Observations) -> tuple[Techni
             found.append(("T1598.003", "lien vers une page qui demande des informations"))
         elif obs.risky_attachment:
             found.append(("T1598.002", "pièce jointe qui demande des informations"))
+        elif obs.channel in ("sms", "messaging"):
+            found.append(("T1598.001", f"informations demandées par {obs.channel}"))
         else:
             found.append(("T1598", "le message demande des informations"))
 
@@ -156,8 +159,15 @@ def domain_observations(
             continue
         key = {"rdap": "age_days", "certificate_transparency": "first_seen_days"}.get(signal.source)
         days = signal.evidence.get(key) if key else None
-        if isinstance(days, int) and 0 <= days < RECENT_DAYS:
+        if isinstance(days, int) and not isinstance(days, bool) and 0 <= days < RECENT_DAYS:
             recent = True
     features = url_features or {}
-    lookalike = any(bool(features.get(name)) for name in LOOKALIKE_FEATURES)
+    lookalike = any(_is_set(features.get(name)) for name in LOOKALIKE_FEATURES)
     return {"recent_domain": recent, "lookalike_domain": lookalike}
+
+
+def _is_set(value: Any) -> bool:
+    """Feature booléenne activée. Une valeur manquante ou NaN (``bool(nan)`` vaut ``True``) ne l'est pas."""
+    if isinstance(value, float) and math.isnan(value):
+        return False
+    return bool(value)
