@@ -199,7 +199,7 @@ def normalize(text: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", text) if not unicodedata.combining(c))
 
 
-def _keyword_patterns(keywords: Iterable[str]) -> tuple[re.Pattern[str], ...]:
+def keyword_patterns(keywords: Iterable[str]) -> tuple[re.Pattern[str], ...]:
     patterns = []
     # Les mots-clés passent par la même normalisation que les messages.
     for keyword in dict.fromkeys(normalize(k) for k in keywords):
@@ -210,9 +210,9 @@ def _keyword_patterns(keywords: Iterable[str]) -> tuple[re.Pattern[str], ...]:
     return tuple(patterns)
 
 
-_URGENCY = _keyword_patterns(URGENCY_KEYWORDS)
-_REWARD = _keyword_patterns(REWARD_KEYWORDS)
-_ACCOUNT = _keyword_patterns(ACCOUNT_KEYWORDS)
+_URGENCY = keyword_patterns(URGENCY_KEYWORDS)
+_REWARD = keyword_patterns(REWARD_KEYWORDS)
+_ACCOUNT = keyword_patterns(ACCOUNT_KEYWORDS)
 
 
 def _hits(patterns: tuple[re.Pattern[str], ...], text: str) -> int:

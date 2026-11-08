@@ -39,6 +39,14 @@ reasons:
   signal.certificate_transparency: "The site's security certificate is very recent."
   signal.other: "The source {source} reports a risk."
 
+  text.model: "The style of this message looks like known fraudulent messages."
+  text.terms: "Words like \"{terms}\" often appear in fraudulent messages."
+  text.urgency: "The message pressures you to act fast or threatens a penalty."
+  text.money: "The message talks about money: a payment, a prize or a refund."
+  text.link: "The message pushes you to open a link."
+  text.code: "The message mentions a code or a password: never share it."
+  text.account: "The message mentions your account, your card or a parcel."
+
   email.dmarc_fail: "The sender's domain did not authorise this email."
   email.spf_fail: "The server that sent this email is not authorised by the sender's domain."
   email.spf_softfail: "The server that sent this email is probably not authorised by the sender's domain."

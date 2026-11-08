@@ -63,6 +63,16 @@ Le deuxième exemple en anglais et en arabe :
 7. **Une raison générale en dernier recours.** Si aucune feature compréhensible n'explique un verdict suspect ou phishing, la réponse dit « La forme de cette adresse ressemble à celle de liens de phishing connus. » Pour un verdict sûr, aucune raison n'est inventée.
 8. **Toujours un conseil d'action**, selon le canal (URL, email, SMS et messageries) et le verdict.
 
+## Messages (étape 3.3)
+
+Les SMS et les messageries suivent les mêmes règles, avec leurs propres raisons ([`explain-text.md`](explain-text.md)) :
+
+- d'abord les **catégories** de leurre qui ont fait monter le score : `text.urgency`, `text.money`, `text.link`, `text.code`, `text.account` ;
+- puis une raison `text.terms` qui cite les trois mots les plus influents, pour un verdict suspect ou phishing seulement ;
+- à défaut, `text.model`.
+
+Un mot n'est jamais recopié s'il s'agit d'un lien, d'un nombre (un code reçu, un numéro), d'un mot-outil ou d'un mot de moins de trois caractères.
+
 ## Les gabarits
 
 Les phrases sont dans un fichier YAML par langue, pas dans le code : les reformuler après les tests utilisateurs ne demande aucune modification Python.

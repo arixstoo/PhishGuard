@@ -47,6 +47,12 @@ Fiche d'identité du modèle de détection de spam et de smishing dans les SMS. 
 Taille 386 Kio, latence p50 0,53 ms par message.
 <!-- generated:card-text:end -->
 
+## Explicabilité et calibration
+
+- **Contribution de chaque mot** (étape 3.3, [`explain-text.md`](explain-text.md)) : le modèle étant linéaire, la contribution d'un n-gramme est exactement `coefficient × tfidf`. Elle est ramenée aux mots du message sans rien perdre : la somme redonne la marge du SVM (écart de 7 × 10⁻¹⁶ sur le jeu FR/AR).
+- **Raisons lisibles** : catégories de leurre (urgence, argent, lien, code, compte), puis mots les plus influents, avec un conseil d'action, en français, en anglais et en arabe.
+- **Calibration** : la marge est ramenée à une probabilité par la méthode de Platt, apprise sur la validation (`make calibrate-text`). L'ECE passe de 0,034 à 0,003 en validation croisée ([`metrics/text_calibration.json`](metrics/text_calibration.json)).
+
 ## Biais connus
 
 - **Langue** : entraîné sur de l'anglais. Le modèle retenu (n-grammes de caractères) signale **43 % des SMS légitimes français et 40 % des arabes** du jeu rédigé : il a appris « pas de l'anglais = suspect ». Les n-grammes de mots, eux, ne détectent que 10 à 17 % du smishing FR/AR. Les features smishing, indépendantes de la langue, transfèrent mieux (90 à 95 % du smishing détecté, seules ou avec les caractères) mais signalent encore 30 à 37 % des messages légitimes ([`text-models.md`](text-models.md#lecture)).
