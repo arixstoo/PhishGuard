@@ -14,6 +14,12 @@ des champs est dans ``docs/response-schema.md``.
 
 Les réponses sont construites par :meth:`AnalysisResponse.from_url_analysis` (URL) ; les
 analyses de SMS et d'emails rempliront le même contrat au module 4.
+
+Historique :
+
+- ``1.1.0`` (étape 3.2) : raisons en langage simple, au plus trois, avec leurs variables
+  (``params``) ; ``language`` et ``advice`` (conseil d'action, toujours présent) ajoutés ;
+- ``1.0.0`` (étape 2.11 bis) : contrat initial.
 """
 
 from __future__ import annotations
@@ -24,34 +30,27 @@ from typing import TYPE_CHECKING, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from phishguard.enrichers.base import SignalStatus
+from phishguard.explain.reasons import (
+    DEFAULT_LANGUAGE,
+    MAX_REASONS,
+    Explanation,
+    Language,
+    ReasonBuilder,
+)
 from phishguard.fusion.mitre import Channel
-from phishguard.fusion.score import MODEL, FusionResult, Thresholds, Verdict
+from phishguard.fusion.score import FusionResult, Thresholds, Verdict
 
 if TYPE_CHECKING:
     from phishguard.analysis import UrlAnalysis
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 Confidence = Literal["low", "medium", "high"]
 Enrichment = Literal["used", "skipped"]
 
 # Écart au seuil le plus proche (en points de score) à partir duquel un verdict sûr ou
 # phishing est donné avec une confiance moyenne, puis haute.
 CONFIDENCE_MARGINS = {"medium": 10, "high": 20}
-# Une contribution plus petite (en points de score) n'est pas citée comme raison.
-MIN_REASON_POINTS = 0.5
-
-HARD_RULE_MESSAGES = {
-    "blocklist": "Le domaine figure dans votre liste noire personnelle.",
-    "google_safe_browsing": "Google Safe Browsing signale cette page comme dangereuse.",
-    "allowlist": "Le domaine figure dans votre liste blanche personnelle.",
-}
-SIGNAL_MESSAGES = {
-    "virustotal": "Des moteurs antivirus de VirusTotal signalent cette adresse.",
-    "urlscan": "urlscan.io a jugé la page suspecte lors d'une visite isolée.",
-    "rdap": "Le domaine a été enregistré récemment.",
-    "dns": "La configuration DNS du domaine ressemble à celle de domaines jetables.",
-    "certificate_transparency": "Le premier certificat du domaine est très récent.",
-}
+MESSAGE_MAX_LENGTH = 300
 
 
 class _Strict(BaseModel):
@@ -59,12 +58,21 @@ class _Strict(BaseModel):
 
 
 class Reason(_Strict):
-    """Une raison du verdict. Le code est stable ; le message peut être reformulé."""
+    """Une raison du verdict, en langage simple (étape 3.2).
+
+    Le ``code`` est stable : un client peut s'en servir pour traduire ou choisir une
+    icône, avec les variables de ``params``. Le ``message`` est déjà rédigé dans la langue
+    de la réponse et peut être reformulé d'une version à l'autre. C'est du **texte
+    brut** : à insérer comme texte, jamais comme HTML.
+    """
 
     code: str = Field(min_length=1, pattern=r"^[a-z0-9_]+(\.[a-z0-9_]+)*$")
     source: str = Field(min_length=1)
     points: float = Field(ge=0, le=100, description="Part du score attribuée à cette raison")
-    message: str = Field(min_length=1)
+    message: str = Field(min_length=1, max_length=MESSAGE_MAX_LENGTH)
+    params: dict[str, str | int] = Field(
+        default_factory=dict, description="Variables de la phrase (marque, nombre de jours…)"
+    )
 
 
 class SignalOut(_Strict):
@@ -94,13 +102,21 @@ class AnalysisResponse(_Strict):
     verdict: Verdict
     score: int = Field(ge=0, le=100)
     confidence: Confidence
-    reasons: list[Reason]
+    reasons: list[Reason] = Field(
+        max_length=MAX_REASONS, description="Au plus trois raisons, de la plus forte"
+    )
     signals: dict[str, SignalOut] = Field(description="Une entrée par source interrogée")
     mitre: list[TechniqueOut]
     model_version: str = Field(min_length=1)
     fusion_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
     enrichment: Enrichment
     latency_ms: int = Field(ge=0)
+    language: Language = Field(default=DEFAULT_LANGUAGE, description="Langue des phrases")
+    advice: str = Field(
+        min_length=1,
+        max_length=MESSAGE_MAX_LENGTH,
+        description="Conseil d'action, toujours présent, selon le canal et le verdict",
+    )
 
     @model_validator(mode="after")
     def _consistent(self) -> AnalysisResponse:
@@ -117,16 +133,28 @@ class AnalysisResponse(_Strict):
 
     @classmethod
     def from_url_analysis(
-        cls, analysis: UrlAnalysis, *, model_version: str | None = None
+        cls,
+        analysis: UrlAnalysis,
+        *,
+        model_version: str | None = None,
+        language: str = DEFAULT_LANGUAGE,
     ) -> AnalysisResponse:
-        """Réponse d'une analyse d'URL. ``model_version`` remplace celle du modèle analysé."""
+        """Réponse d'une analyse d'URL. ``model_version`` remplace celle du modèle analysé ;
+        ``language`` choisit la langue des raisons et du conseil (``fr``, ``en``, ``ar``)."""
         fusion = analysis.fusion
+        explanation = ReasonBuilder(language).for_fusion(
+            fusion,
+            channel="url",
+            signals=analysis.enrichment.signals,
+            url=analysis.url,
+            explanation=analysis.explanation,
+        )
         return cls(
             channel="url",
             verdict=analysis.verdict,
             score=analysis.score,
             confidence=confidence(fusion, Thresholds(**fusion.thresholds)),
-            reasons=reasons(fusion),
+            reasons=reasons(explanation),
             signals={
                 s.source: SignalOut(
                     status=s.status, risk=s.risk, latency_ms=s.latency_ms, evidence=s.evidence
@@ -138,6 +166,8 @@ class AnalysisResponse(_Strict):
             fusion_version=fusion.config_version,
             enrichment=analysis.enrichment.enrichment,
             latency_ms=analysis.latency_ms,
+            language=explanation.language,
+            advice=explanation.advice,
         )
 
     def to_json(self) -> str:
@@ -165,40 +195,15 @@ def confidence(fusion: FusionResult, thresholds: Thresholds) -> Confidence:
     return "low"
 
 
-def reasons(fusion: FusionResult) -> list[Reason]:
-    """Raisons du verdict, de la plus forte à la plus faible.
-
-    Une règle dure est l'unique raison. Sinon, chaque source qui a fait monter le score
-    (au moins un demi-point) est citée avec sa part du score. Les phrases restent
-    sobres : le module 3 (explicabilité) les détaillera.
-    """
-    if fusion.hard_rule is not None:
-        points = 100.0 if fusion.verdict == "phishing" else 0.0
-        message = HARD_RULE_MESSAGES.get(fusion.hard_rule, f"Règle appliquée : {fusion.hard_rule}.")
-        return [
-            Reason(
-                code=f"hard_rule.{fusion.hard_rule}",
-                source=fusion.hard_rule,
-                points=points,
-                message=message,
-            )
-        ]
-    found = []
-    for c in fusion.contributions:  # déjà triées par points décroissants
-        if c.points < MIN_REASON_POINTS:
-            continue
-        if c.source == MODEL:
-            message = f"Le modèle local estime la probabilité de phishing à {c.risk:.0%}."
-            code = "model"
-        else:
-            message = SIGNAL_MESSAGES.get(c.source, f"La source {c.source} signale un risque.")
-            code = f"signal.{c.source}"
-        found.append(
-            Reason(
-                code=code, source=c.source, points=round(min(c.points, 100.0), 1), message=message
-            )
+def reasons(explanation: Explanation) -> list[Reason]:
+    """Raisons du contrat, à partir de l'explication de l'étape 3.2
+    (:class:`~phishguard.explain.reasons.ReasonBuilder`)."""
+    return [
+        Reason(
+            code=r.code, source=r.source, points=r.points, message=r.message, params=dict(r.params)
         )
-    return found
+        for r in explanation.reasons
+    ]
 
 
 def json_schema() -> dict[str, Any]:

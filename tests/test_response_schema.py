@@ -15,6 +15,7 @@ from pydantic import ValidationError
 from phishguard.analysis import UrlAnalyzer
 from phishguard.enrichers import Signal
 from phishguard.enrichers.orchestrator import EnrichmentResult
+from phishguard.explain.reasons import ReasonBuilder
 from phishguard.fusion.score import default_config, fuse
 from phishguard.schema import (
     SCHEMA_VERSION,
@@ -40,6 +41,8 @@ SPEC_FIELDS = {
     "latency_ms",
 }
 PROJECT_FIELDS = {"schema_version", "channel", "fusion_version"}
+# Ajoutés par la version 1.1.0 (étape 3.2).
+EXPLANATION_FIELDS = {"language", "advice"}
 
 
 class FixedModel:
@@ -80,7 +83,7 @@ def ok(source, risk, **evidence):
 
 def test_response_has_exactly_the_contract_fields():
     payload = json.loads(analyze(0.9).to_response().to_json())
-    assert set(payload) == SPEC_FIELDS | PROJECT_FIELDS
+    assert set(payload) == SPEC_FIELDS | PROJECT_FIELDS | EXPLANATION_FIELDS
     assert payload["schema_version"] == SCHEMA_VERSION
     assert payload["channel"] == "url"
     assert payload["model_version"] == "url_test"
@@ -93,7 +96,10 @@ def test_enriched_phishing_response():
     assert (response.verdict, response.score, response.enrichment) == ("phishing", 97, "used")
     assert set(response.signals) == {"rdap", "virustotal"}
     assert response.signals["rdap"].evidence == {"age_days": 3}
-    assert [r.code for r in response.reasons] == ["signal.virustotal", "signal.rdap", "model"]
+    codes = [r.code for r in response.reasons]
+    assert codes == ["signal.virustotal", "signal.domain_age", "model"]
+    assert response.reasons[1].params == {"n": 3}
+    assert "3 jours" in response.reasons[1].message
     assert sum(r.points for r in response.reasons) == pytest.approx(97, abs=0.5)
     assert any(t.id == "T1583.001" for t in response.mitre)  # domaine de 3 jours
 
@@ -159,7 +165,17 @@ def test_confidence_follows_the_distance_to_the_thresholds(probability, expected
 
 def test_small_contributions_are_not_reasons():
     result = fuse(0.004)  # 0,4 point
-    assert reasons(result) == []
+    assert reasons(ReasonBuilder().for_fusion(result)) == []
+
+
+def test_response_always_carries_an_advice_in_the_requested_language():
+    for score in (0.05, 0.5, 0.95):
+        analysis = analyze(score)
+        french, english = analysis.to_response(), analysis.to_response("en")
+        assert french.language == "fr" and english.language == "en"
+        assert french.advice and english.advice and french.advice != english.advice
+    with pytest.raises(ValueError):
+        analyze(0.5).to_response("de")
 
 
 # --------------------------------------------------------------------------- #
@@ -185,6 +201,9 @@ def _payload(**overrides):
         {"channel": "fax"},
         {"schema_version": "v1"},
         {"unexpected": True},  # aucun champ inconnu
+        {"advice": ""},  # le conseil est obligatoire (1.1.0)
+        {"language": "de"},
+        {"reasons": [{"code": "model", "source": "model", "points": 1, "message": "m"}] * 4},
         {"mitre": [{"id": "X1", "name": "n", "tactic": "t", "url": "https://x", "reason": "r"}]},
     ],
 )

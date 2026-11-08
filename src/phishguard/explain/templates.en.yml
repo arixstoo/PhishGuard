@@ -1,0 +1,76 @@
+# User-facing reason templates, in English (step 3.2).
+#
+# Same keys and placeholders as templates.fr.yml (checked by the tests). Writing rules:
+# one short sentence, plain words, a verifiable observation rather than an accusation.
+
+language: en
+version: 1
+
+reasons:
+  hard_rule.blocklist: "This site is on your personal blocklist."
+  hard_rule.google_safe_browsing: "Google Safe Browsing reports this page as dangerous."
+  hard_rule.allowlist: "This site is on your personal allowlist."
+
+  model: "The shape of this address looks like known phishing links."
+
+  url.brand_lookalike: "The address looks like {brand}'s, but it is not theirs."
+  url.homograph: "The address imitates {brand} with characters that look like Latin letters."
+  url.mixed_script: "The address mixes letters from different alphabets to imitate a well-known site."
+  url.brand_in_host: "The address contains the name {brand}, but it is not an official {brand} site."
+  url.brand_in_path: "The link mentions {brand}, but the site does not belong to {brand}."
+  url.ip_host: "The link leads to a numeric address (IP address) instead of a site name."
+  url.userinfo: "The address contains an \"@\" that hides the site actually visited."
+  url.port: "The link uses an unusual network entry point (port)."
+  url.shortener: "The link goes through a URL shortener that hides its real destination."
+  url.risky_tld: "The \".{tld}\" extension is very often used by phishing sites."
+  url.login_keywords: "The address contains words like \"login\" or \"verify\", typical of fake sign-in pages."
+  url.embedded_url: "The link contains another address, to mislead you about where it goes."
+  url.many_subdomains: "The address stacks {n} subdomains to look legitimate."
+  url.long_host: "The site name is unusually long ({n} characters)."
+  url.many_hyphens: "The site name contains many hyphens ({n})."
+  url.many_digits: "The site name contains many digits ({n})."
+
+  signal.domain_age: "This site was created only {n} days ago."
+  signal.rdap: "This site was created recently."
+  signal.virustotal: "VirusTotal antivirus engines report this site as dangerous."
+  signal.virustotal_engines: "{n} VirusTotal antivirus engines report this site as dangerous."
+  signal.urlscan: "urlscan.io found the page suspicious during an isolated visit."
+  signal.dns: "The site's technical setup looks like that of throwaway sites."
+  signal.certificate_transparency: "The site's security certificate is very recent."
+  signal.other: "The source {source} reports a risk."
+
+  email.dmarc_fail: "The sender's domain did not authorise this email."
+  email.spf_fail: "The server that sent this email is not authorised by the sender's domain."
+  email.spf_softfail: "The server that sent this email is probably not authorised by the sender's domain."
+  email.dkim_fail: "The email's signature is invalid: it may have been altered or forged."
+  email.reply_to_differs: "Your reply would go to a different address than the sender's."
+  email.display_name_spoof: "The display name imitates an address other than the sender's real one."
+  email.return_path_differs: "The return address is on another domain (common for bulk mailings)."
+  email.mismatched_link: "The link shown does not lead where it claims to."
+  email.non_web_link: "A link runs code instead of opening a page."
+  email.form: "The email contains a form: a legitimate service sends you to its website instead."
+  email.ip_link: "A link leads to a numeric address (IP address) instead of a site name."
+  email.url_model: "A link looks like known phishing links."
+  email.shortener_link: "A link goes through a URL shortener that hides its real destination."
+  email.dangerous_attachment: "An attachment can launch a program or open a fake sign-in page."
+  email.disguised_attachment: "An attachment's name hides what it really is (for example \"invoice.pdf.exe\")."
+  email.type_mismatch: "An attachment pretends to be a document or an image, but contains a program."
+  email.remote_content_document: "An attached document downloads content when opened, a technique used to install malware."
+  email.hidden_archive_payload: "An attached archive is password-protected or contains a program, which antivirus cannot check."
+  email.active_pdf: "An attached PDF contains code or files that run when it is opened."
+  email.credential_form_attachment: "An attached page asks for a password: a legitimate service never does this by attachment."
+  email.archive_attachment: "An archive is attached: its content cannot be checked without opening it."
+  email.hidden_text: "The email contains hidden text, often used to fool filters."
+  email.zero_width_chars: "Invisible characters split words, often to fool filters."
+  email.urgent_account_request: "The message pressures you to act on an account, a card or a parcel."
+
+advice:
+  url.phishing: "Do not enter any password or bank details. Open the site by typing its address yourself."
+  url.suspicious: "Be careful: do not type anything on this page. If in doubt, open the official site by typing its address yourself."
+  url.safe: "No worrying signs. Stay alert if the page asks for a password or a payment."
+  email.phishing: "Do not open any link or attachment and do not reply. Contact the organisation through its official details."
+  email.suspicious: "Be careful: do not open links or attachments until you have checked the sender another way."
+  email.safe: "No worrying signs. Stay alert if the email asks for a password, a code or a payment."
+  message.phishing: "Do not click the link and do not reply. Contact the organisation through its official number or website."
+  message.suspicious: "Be careful: do not click and do not share any code until you have checked the sender another way."
+  message.safe: "No worrying signs. Never share a code received by message, even with someone claiming to be your bank."
