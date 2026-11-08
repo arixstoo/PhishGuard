@@ -42,7 +42,8 @@ def ids(verdict, **kwargs):
         ({"channel": "messaging"}, ["T1566.003"]),
         ({"channel": "url"}, ["T1566", "T1204.001"]),
         ({"channel": "url", "requests_information": True}, ["T1204.001", "T1598.003"]),
-        ({"channel": "sms", "requests_information": True}, ["T1566.003", "T1598"]),
+        ({"channel": "sms", "requests_information": True}, ["T1566.003", "T1598.001"]),
+        ({"channel": "email", "requests_information": True}, ["T1598"]),
         (
             {"channel": "email", "risky_attachment": True, "requests_information": True},
             ["T1566.001", "T1204.002", "T1598.002"],
@@ -129,6 +130,22 @@ def test_unusable_or_incomplete_signals_are_ignored():
 def test_lookalike_domain_from_url_features(feature):
     assert domain_observations([], {feature: 1.0, "host_len": 12})["lookalike_domain"] is True
     assert domain_observations([], {feature: 0.0})["lookalike_domain"] is False
+    # bool(nan) vaut True : une feature manquante ne doit pas devenir une imitation.
+    assert domain_observations([], {feature: float("nan")})["lookalike_domain"] is False
+
+
+def test_boolean_age_is_not_a_number_of_days():
+    signal = Signal(source="rdap", status="ok", evidence={"age_days": True})
+    assert domain_observations([signal])["recent_domain"] is False
+
+
+def test_messaging_information_request_is_spearphishing_service():
+    found = {
+        t.id: t
+        for t in map_techniques("phishing", Observations("messaging", requests_information=True))
+    }
+    assert found["T1598.001"].name == "Phishing for Information: Spearphishing Service"
+    assert found["T1598.001"].tactic == "Reconnaissance"
 
 
 def test_unknown_channel_and_technique_are_rejected():
@@ -159,7 +176,7 @@ def _load_script():
     return module
 
 
-def fake_stix(version="20.0", rename=None, revoke=None):
+def fake_stix(version="20.0", rename=None, revoke=None, tactic=None):
     """Paquet STIX minimal, construit à partir du catalogue du projet."""
     objects = [{"type": "x-mitre-collection", "x_mitre_version": version}]
     for technique_id, entry in catalog()["techniques"].items():
@@ -168,7 +185,9 @@ def fake_stix(version="20.0", rename=None, revoke=None):
                 "type": "attack-pattern",
                 "name": (rename or {}).get(technique_id, entry["name"]),
                 "revoked": technique_id == revoke,
-                "kill_chain_phases": [{"phase_name": entry["tactic"]}],
+                "kill_chain_phases": [
+                    {"phase_name": (tactic or {}).get(technique_id, entry["tactic"])}
+                ],
                 "external_references": [
                     {"source_name": "mitre-attack", "external_id": technique_id}
                 ],
@@ -189,7 +208,7 @@ def run_script(tmp_path, bundle, *extra):
 def test_script_accepts_an_up_to_date_catalog(tmp_path, capsys):
     code, _ = run_script(tmp_path, fake_stix())
     assert code == 0
-    assert "12 techniques vérifiées" in capsys.readouterr().out
+    assert f"{len(catalog()['techniques'])} techniques vérifiées" in capsys.readouterr().out
 
 
 def test_script_detects_a_renamed_technique(tmp_path, capsys):
@@ -220,3 +239,26 @@ def test_script_updates_names_and_version(tmp_path):
 def test_script_refuses_to_write_when_a_technique_is_revoked(tmp_path):
     code, unchanged = run_script(tmp_path, fake_stix(revoke="T1598"), "--write")
     assert code == 1 and unchanged == catalog()
+
+
+def test_script_refuses_to_write_when_a_tactic_changed(tmp_path, capsys):
+    # --write ne corrige que les noms : une tactique changée ne doit pas passer en silence.
+    bundle = fake_stix(tactic={"T1583.001": "initial-access"})
+    code, unchanged = run_script(tmp_path, bundle, "--write")
+    assert code == 1 and unchanged == catalog()
+    assert "T1583.001 : tactique" in capsys.readouterr().out
+
+
+def test_script_prefers_the_active_object_over_a_revoked_duplicate():
+    bundle = fake_stix()
+    revoked_copy = {**bundle["objects"][1], "name": "Old", "revoked": True}
+    bundle["objects"].append(revoked_copy)
+    stix, _ = _load_script().index_stix(bundle)
+    assert stix[revoked_copy["external_references"][0]["external_id"]]["revoked"] is False
+
+
+def test_written_catalog_keeps_one_technique_per_line(tmp_path):
+    _, written = run_script(tmp_path, fake_stix(version="21.0"), "--write")
+    text = (tmp_path / "mitre_attack.json").read_text(encoding="utf-8")
+    assert written["attack_version"] == "21.0"
+    assert '"T1566.002": {"name": "Spearphishing Link", "tactic": "initial-access"}' in text
