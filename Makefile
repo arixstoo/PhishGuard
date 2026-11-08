@@ -21,7 +21,7 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install lint format test \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	cards
+	cards schema
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -117,3 +117,6 @@ train-email: $(EMAIL_CORPORA) $(EMAIL_SAMPLES) ## Compare règles et modèles du
 
 cards: ## Met à jour les chiffres des model cards et du README depuis docs/metrics/
 	$(PYTHON) scripts/model_cards.py
+
+schema: ## Régénère le schéma JSON de la réponse d'analyse (étape 2.11 bis)
+	$(PYTHON) scripts/export_schema.py
