@@ -250,3 +250,43 @@ def test_end_to_end_without_keys_only_keyless_sources_answer(monkeypatch, tmp_pa
     assert statuses["certificate_transparency"] == ("skipped", "disabled")
     assert statuses["rdap"][0] == "ok" and statuses["dns"][0] == "ok"
     assert all(isinstance(s, Signal) for s in result.signals)
+
+
+# --------------------------------------------------------------------------- #
+# Corrections de la relecture
+# --------------------------------------------------------------------------- #
+
+
+async def stubborn_enrich(url, domain):
+    """``enrich()`` hors contrat : ignore l'annulation, puis lève une fois abandonnée."""
+    try:
+        await asyncio.sleep(10)
+    except asyncio.CancelledError:
+        await asyncio.sleep(0.3)  # dépasse le délai de grâce de l'annulation
+        raise RuntimeError("erreur tardive") from None
+
+
+def test_abandoned_source_late_error_is_logged_not_lost(caplog, monkeypatch):
+    stubborn = Fixed("stubborn")
+    monkeypatch.setattr(stubborn, "enrich", stubborn_enrich)
+    orchestrator = Orchestrator([stubborn, Fixed("fast")], budget_s=0.1)
+    loop_errors = []
+
+    async def scenario():
+        asyncio.get_running_loop().set_exception_handler(lambda _l, ctx: loop_errors.append(ctx))
+        result = await orchestrator.enrich(URL)
+        await asyncio.sleep(0.4)  # la source abandonnée finit par lever
+        return result
+
+    with caplog.at_level("WARNING", logger="phishguard.enrichers.orchestrator"):
+        result = run(scenario())
+    assert result.by_source["stubborn"].status == "timeout"
+    assert result.by_source["fast"].status == "ok"
+    assert "erreur après abandon" in caplog.text
+    assert loop_errors == []
+
+
+def test_sources_given_as_a_string_are_rejected():
+    orchestrator = Orchestrator([Fixed("dns")])
+    with pytest.raises(TypeError):
+        run(orchestrator.enrich(URL, sources="dns"))

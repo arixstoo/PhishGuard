@@ -17,7 +17,7 @@ result.score, result.verdict, result.hard_rule, result.contributions
 
 ## 1. Calibrer le modèle
 
-Un score de 0,9 doit vouloir dire « environ 90 % des URLs de ce score sont du phishing ». Un modèle à arbres comme `url_v1` (LightGBM) classe bien les URLs, mais ses scores ne sont pas des probabilités : souvent trop proches de 0 ou de 1. Or la fusion combine le modèle avec d'autres sources, et un score trop confiant écraserait tous les autres signaux.
+Un score de 0,9 doit vouloir dire « environ 90 % des URLs de ce score sont du phishing ». Un modèle à arbres comme `url_v1` (LightGBM) classe bien les URLs, mais rien ne garantit que ses scores soient des probabilités. Or la fusion combine le modèle avec d'autres sources, et un score trop confiant écraserait tous les autres signaux.
 
 `scripts/calibrate_url.py` (ou `make calibrate-url`) apprend sur la **validation** une fonction croissante score → probabilité :
 
@@ -31,6 +31,20 @@ Les deux méthodes sont comparées en **validation croisée sur la validation** 
 - le **score de Brier** : l'écart quadratique moyen entre la probabilité et le label ;
 - l'**ECE** (*expected calibration error*) : l'écart moyen entre la probabilité annoncée et la proportion observée, tranche par tranche ;
 - la perte logarithmique et le tableau de fiabilité.
+
+### Résultats sur `url_v1`
+
+Mesurés par `make calibrate-url` sur les 21 007 URLs de la validation (20 % de phishing), en validation croisée à 5 plis (`docs/metrics/url_calibration.json`) :
+
+| Méthode | Brier | ECE | Perte logarithmique |
+| --- | --- | --- | --- |
+| Score brut | 0,0320 | 0,0109 | 0,1184 |
+| **Isotone (retenue)** | **0,0315** | **0,0029** | **0,1168** |
+| Platt | 0,0332 | 0,0091 | 0,1319 |
+
+Le score brut est déjà correct **en moyenne** (ECE de 1,1 point), car 90 % des URLs ont un score sous 0,1 ou au-dessus de 0,9, deux zones où il est juste. Mais il est **trop confiant au milieu**, là où se jouent les verdicts « suspect » : les URLs notées entre 0,6 et 0,7 ne sont du phishing qu'à 49 %, celles entre 0,5 et 0,6 à 41 %. Après calibration isotone, les tranches de 0,5 à 0,6 et de 0,6 à 0,7 annoncent en moyenne 0,56 et 0,66, pour 60 % et 71 % observés, et l'ECE est divisée par près de 4. La méthode de Platt fait moins bien : sa sigmoïde ne suit pas la forme en S très marquée des scores LightGBM.
+
+Une réserve : la validation a aussi servi à choisir le modèle à l'étape 1.6. Ces mesures sont donc un peu optimistes, mais le test reste intact pour une mesure finale.
 
 C'est ce que fait `sklearn.calibration.CalibratedClassifierCV` sur un estimateur déjà entraîné, à une différence près : on calibre le **score** (une seule colonne), pas l'estimateur. La calibration tient dans quelques points enregistrés en **JSON** (`models/url_v1_calibration.json`), sans `pickle` : elle se relit sans exécuter de code et se porte telle quelle dans l'extension (module 5). La fonction étant croissante, le classement des URLs, et donc les seuils de l'étape 1.7, ne changent pas.
 

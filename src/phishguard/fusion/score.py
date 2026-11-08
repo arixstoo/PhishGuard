@@ -44,6 +44,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from functools import lru_cache
 from importlib import resources
+from numbers import Real
 from pathlib import Path
 from typing import Any, Literal
 
@@ -184,11 +185,16 @@ def fuse(
     ``blocklisted`` viennent des listes personnelles de l'utilisateur.
     """
     config = config or default_config()
-    if not (isinstance(model_probability, int | float) and 0 <= model_probability <= 1):
+    # Real couvre float, int et les flottants numpy ; bool est exclu (True n'est pas 1,0).
+    if (
+        isinstance(model_probability, bool)
+        or not isinstance(model_probability, Real)
+        or not 0 <= model_probability <= 1  # faux aussi pour NaN
+    ):
         raise ValueError(f"probabilité du modèle hors de [0, 1] : {model_probability!r}")
     signals = tuple(signals)
-    usable = {s.source: s for s in signals if s.status is SignalStatus.OK}
-    ignored = tuple(sorted(s.source for s in signals if s.status is not SignalStatus.OK))
+    usable = _usable_signals(signals)
+    ignored = tuple(sorted({s.source for s in signals if s.source not in usable}))
     common = {
         "ignored": ignored,
         "config_version": config.version,
@@ -224,6 +230,23 @@ def fuse(
         contributions=_contributions(effects, probability),
         **common,
     )
+
+
+def _usable_signals(signals: tuple[Signal, ...]) -> dict[str, Signal]:
+    """Un signal ``ok`` par source ; en cas de doublon, celui de plus fort risque.
+
+    L'orchestrateur ne renvoie qu'un signal par source, mais :func:`fuse` ne doit pas
+    dépendre de l'ordre de ses entrées : garder le dernier vu le ferait. Retenir le plus
+    fort risque est déterministe et prudent.
+    """
+    usable: dict[str, Signal] = {}
+    for signal in signals:
+        if signal.status is not SignalStatus.OK:
+            continue
+        current = usable.get(signal.source)
+        if current is None or signal.risk > current.risk:
+            usable[signal.source] = signal
+    return usable
 
 
 def _contributions(

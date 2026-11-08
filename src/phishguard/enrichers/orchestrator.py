@@ -21,6 +21,8 @@ Usage ::
 Le contexte ``async with`` crée le client HTTP partagé par toutes les sources (étape 2.8)
 et le ferme à la fin.
 
+Au pire, l'analyse dure ``budget_s + CANCEL_GRACE_S`` (2,7 s), toujours sous les 3 s.
+
 Limite : l'annulation ne peut interrompre qu'un code qui rend la main à la boucle
 asyncio. Une source qui bloquerait la boucle (appel synchrone) retarderait tout ; les
 enrichisseurs du projet sont tous asynchrones.
@@ -147,6 +149,8 @@ class Orchestrator:
         budget_ms = round(self.budget_s * 1000)
         if not enabled:
             return EnrichmentResult((), "skipped", 0, budget_ms)
+        if isinstance(sources, str):  # "dns" serait lu lettre par lettre
+            raise TypeError("sources attend une collection de noms, pas une chaîne")
         if sources is not None:
             unknown = set(sources) - set(self.sources)
             if unknown:
@@ -201,3 +205,11 @@ async def _cancel(tasks: Collection[asyncio.Task[Signal]]) -> None:
     _, still_running = await asyncio.wait(tasks, timeout=CANCEL_GRACE_S)
     for task in still_running:
         logger.warning("source %s : annulation ignorée", task.get_name())
+        # Tâche abandonnée : son issue sera lue à la fin, pour qu'une exception tardive
+        # soit journalisée ici et non signalée par asyncio comme « jamais récupérée ».
+        task.add_done_callback(_log_late_outcome)
+
+
+def _log_late_outcome(task: asyncio.Task[Signal]) -> None:
+    if not task.cancelled() and (exc := task.exception()) is not None:
+        logger.warning("source %s : erreur après abandon", task.get_name(), exc_info=exc)
