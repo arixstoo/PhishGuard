@@ -401,3 +401,91 @@ def test_resilient_client_exposes_post_and_request():
             return (await client.post(API, json={"a": 1})).status_code, client.is_closed
 
     assert run(scenario()) == (201, False)
+
+
+# --------------------------------------------------------------------------- #
+# Corrections de la relecture
+# --------------------------------------------------------------------------- #
+
+
+def test_retry_after_date_without_timezone_is_read_as_utc():
+    soon = (datetime.now(UTC) + timedelta(seconds=30)).strftime("%a, %d %b %Y %H:%M:%S -0000")
+    assert 25 <= retry_after(httpx.Response(503, headers={"Retry-After": soon})) <= 31
+
+
+@respx.mock
+def test_post_is_not_retried_after_a_server_error():
+    """Une soumission a peut-être été traitée avant le 5xx : la renvoyer ferait un doublon."""
+    route = respx.post(API).mock(return_value=httpx.Response(503))
+
+    async def scenario():
+        async with httpx.AsyncClient() as raw:
+            client = ResilientClient(raw, CircuitBreaker("x"), POLICY, Sleeps())
+            return (await client.post(API, json={"url": "https://example.test/"})).status_code
+
+    assert run(scenario()) == 503
+    assert route.call_count == 1
+
+
+@respx.mock
+def test_post_is_retried_when_the_request_was_never_sent():
+    route = respx.post(API).mock(side_effect=[httpx.ConnectError("refusée"), httpx.Response(200)])
+
+    async def scenario():
+        async with httpx.AsyncClient() as raw:
+            client = ResilientClient(raw, CircuitBreaker("x"), POLICY, Sleeps())
+            return (await client.post(API, json={})).status_code
+
+    assert run(scenario()) == 200
+    assert route.call_count == 2
+
+
+@respx.mock
+def test_post_is_not_retried_after_a_broken_connection():
+    route = respx.post(API).mock(side_effect=httpx.RemoteProtocolError("rompue"))
+
+    async def scenario():
+        async with httpx.AsyncClient() as raw:
+            client = ResilientClient(raw, CircuitBreaker("x"), POLICY, Sleeps())
+            await client.post(API, json={})
+
+    with pytest.raises(httpx.RemoteProtocolError):
+        run(scenario())
+    assert route.call_count == 1
+
+
+def test_late_failure_does_not_extend_the_pause():
+    clock = Clock()
+    breaker = CircuitBreaker("src", failure_threshold=1, clock=clock)
+    breaker.record_failure()  # ouverture
+    clock.now += 50
+    breaker.record_failure()  # requête lancée avant l'ouverture, qui échoue en retard
+    clock.now += 10
+    assert breaker.state is CircuitState.HALF_OPEN
+
+
+def test_check_does_not_reserve_the_probe():
+    clock = Clock()
+    breaker = CircuitBreaker("src", failure_threshold=1, clock=clock)
+    breaker.record_failure()
+    with pytest.raises(CircuitOpen):
+        breaker.check()
+    clock.now += 60
+    breaker.check()
+    breaker.check()
+    breaker.before_call()  # l'essai est toujours disponible
+    with pytest.raises(CircuitOpen):
+        breaker.check()
+
+
+def test_open_breaker_skips_without_creating_a_client(monkeypatch):
+    """Source en pause : aucun client httpx n'est créé (contexte TLS coûteux)."""
+    source = Lookup(breaker=CircuitBreaker("lookup", failure_threshold=1))
+    source.breaker.record_failure()
+
+    def forbidden(**_kwargs):
+        raise AssertionError("client créé alors que la source est en pause")
+
+    monkeypatch.setattr("phishguard.enrichers.http.create_shared_client", forbidden)
+    signal = run(source.enrich("https://example.test/", "example.test"))
+    assert signal.status == "skipped" and signal.evidence["reason"] == "circuit_open"

@@ -11,6 +11,11 @@ Deux mécanismes complémentaires, appliqués à chaque requête HTTP d'un enric
   quota épuisé (VirusTotal) : réessayer ne ferait que le consommer davantage ;
 - échecs de connexion (``ConnectError``, ``ConnectTimeout``, ``RemoteProtocolError``).
 
+Une requête **non idempotente** (``POST``, comme la soumission d'un scan urlscan) n'est
+retentée que si elle n'a certainement pas quitté la machine (``ConnectError``,
+``ConnectTimeout``) : après un 5xx ou une connexion rompue, la source a peut-être déjà
+traité la requête, et la renvoyer créerait un doublon.
+
 Un délai de **lecture** dépassé n'est pas retenté : la source a reçu la requête et elle
 est lente, recommencer doublerait l'attente. Le délai entre deux tentatives croît de
 façon exponentielle (0,2 s puis 0,4 s, avec un peu d'aléa) et ne dépasse jamais
@@ -33,6 +38,7 @@ import random
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import UTC
 from email.utils import parsedate_to_datetime
 from enum import StrEnum
 from typing import Any
@@ -50,6 +56,9 @@ RETRYABLE_ERRORS: tuple[type[Exception], ...] = (
     httpx.ConnectTimeout,
     httpx.RemoteProtocolError,
 )
+# Erreurs levées avant l'envoi de la requête : la retenter ne crée jamais de doublon.
+NOT_SENT_ERRORS: tuple[type[Exception], ...] = (httpx.ConnectError, httpx.ConnectTimeout)
+IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE"})
 RETRY_AFTER_HEADERS = ("Retry-After", "X-Rate-Limit-Reset-After")
 
 Sleep = Callable[[float], Awaitable[None]]
@@ -102,6 +111,8 @@ def retry_after(response: httpx.Response) -> float | None:
             when = parsedate_to_datetime(value)
         except (TypeError, ValueError):
             continue
+        if when.tzinfo is None:  # une date HTTP est toujours en UTC
+            when = when.replace(tzinfo=UTC)
         return max(0.0, when.timestamp() - time.time())
     return None
 
@@ -119,10 +130,13 @@ async def send_with_retry(
     send: Callable[[], Awaitable[httpx.Response]],
     policy: RetryPolicy = DEFAULT_RETRY,
     sleep: Sleep | None = None,
+    *,
+    idempotent: bool = True,
 ) -> httpx.Response:
     """Appelle ``send`` et le relance sur les erreurs temporaires, selon ``policy``.
 
-    Renvoie la dernière réponse, même en erreur, ou relève la dernière exception.
+    Renvoie la dernière réponse, même en erreur, ou relève la dernière exception. Avec
+    ``idempotent=False``, seules les erreurs levées avant l'envoi sont retentées.
     ``send`` doit être une fonction ``async`` (pas une ``lambda`` qui renvoie une
     coroutine : ``tenacity`` ne l'attendrait pas).
     """
@@ -131,8 +145,9 @@ async def send_with_retry(
         outcome = state.outcome
         assert outcome is not None
         if outcome.failed:
-            return isinstance(outcome.exception(), RETRYABLE_ERRORS)
-        return should_retry(outcome.result(), policy)
+            retryable = RETRYABLE_ERRORS if idempotent else NOT_SENT_ERRORS
+            return isinstance(outcome.exception(), retryable)
+        return idempotent and should_retry(outcome.result(), policy)
 
     def wait(state: RetryCallState) -> float:
         outcome = state.outcome
@@ -215,14 +230,24 @@ class CircuitBreaker:
     def _remaining(self) -> float:
         return self._opened_at + self.reset_timeout - self._clock()
 
-    def before_call(self) -> None:
-        """Lève :class:`CircuitOpen` si la source ne doit pas être interrogée."""
+    def check(self) -> None:
+        """Lève :class:`CircuitOpen` si la source est en pause, sans réserver d'essai.
+
+        Permet de renoncer avant tout travail coûteux (création d'un client ``httpx``).
+        """
         state = self.state
         if state is CircuitState.OPEN:
             raise CircuitOpen(self.source, self._remaining())
-        if state is CircuitState.HALF_OPEN:
-            if self._probe_in_flight:
-                raise CircuitOpen(self.source, None)  # une requête d'essai est déjà en cours
+        if state is CircuitState.HALF_OPEN and self._probe_in_flight:
+            raise CircuitOpen(self.source, None)
+
+    def before_call(self) -> None:
+        """Lève :class:`CircuitOpen` si la source ne doit pas être interrogée.
+
+        En semi-ouvert, réserve l'unique requête d'essai.
+        """
+        self.check()
+        if self._state is CircuitState.HALF_OPEN:
             self._probe_in_flight = True
 
     def record_success(self) -> None:
@@ -235,14 +260,15 @@ class CircuitBreaker:
     def record_failure(self) -> None:
         self._failures += 1
         self._probe_in_flight = False
+        if self.state is CircuitState.OPEN:
+            return  # requête lancée avant l'ouverture : la pause en cours n'est pas prolongée
         if self._state is CircuitState.HALF_OPEN or self._failures >= self.failure_threshold:
-            if self._state is not CircuitState.OPEN:
-                logger.warning(
-                    "source %s en panne (%d échecs) : pause de %.0f s",
-                    self.source,
-                    self._failures,
-                    self.reset_timeout,
-                )
+            logger.warning(
+                "source %s en panne (%d échecs) : pause de %.0f s",
+                self.source,
+                self._failures,
+                self.reset_timeout,
+            )
             self._state = CircuitState.OPEN
             self._opened_at = self._clock()
 
@@ -290,7 +316,12 @@ class ResilientClient:
             return await self._client.send(request, stream=stream)
 
         try:
-            response = await send_with_retry(attempt, self.retry, self._sleep)
+            response = await send_with_retry(
+                attempt,
+                self.retry,
+                self._sleep,
+                idempotent=request.method in IDEMPOTENT_METHODS,
+            )
         except httpx.HTTPError:
             self.breaker.record_failure()
             raise

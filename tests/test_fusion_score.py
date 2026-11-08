@@ -9,12 +9,16 @@ moins de 30 jours = 0,8 ; premier certificat de moins de 7 jours = 0,6.
 
 import json
 
+import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from phishguard.enrichers import Signal
+from phishguard.enrichers.ct import risk_from_first_seen
+from phishguard.enrichers.rdap import risk_from_age
+from phishguard.enrichers.virustotal import risk_from_stats
 from phishguard.fusion.score import (
     FusionConfig,
     default_config,
@@ -111,6 +115,23 @@ def test_seventy_one_is_phishing():
     assert fuse(0.71).verdict == "phishing"
 
 
+def test_plan_example_with_the_real_source_scales():
+    # La table utilise des risques déjà normalisés : on vérifie ici qu'ils sont bien ceux
+    # que produisent les sources (étapes 2.5 et 2.7) pour l'exemple du plan.
+    vt = risk_from_stats({"malicious": 6, "suspicious": 0, "harmless": 60, "undetected": 10})
+    signals = [ok("rdap", risk_from_age(3)), ok("virustotal", vt)]
+    assert (vt, risk_from_age(3)) == (1.0, 1.0)
+    assert (fuse(0.2, signals).score, fuse(0.2, signals).verdict) == (97, "phishing")
+
+
+def test_new_infrastructure_with_the_real_source_scales():
+    signals = [
+        ok("rdap", risk_from_age(5)),
+        ok("certificate_transparency", risk_from_first_seen(2)),
+    ]
+    assert fuse(0.05, signals).score == 71
+
+
 # --------------------------------------------------------------------------- #
 # Règles dures et détails du résultat
 # --------------------------------------------------------------------------- #
@@ -155,10 +176,32 @@ def test_result_is_serializable():
     assert payload["thresholds"] == {"suspicious": 30, "phishing": 70}
 
 
-@pytest.mark.parametrize("bad", [-0.1, 1.1, float("nan"), "0.5", None])
+@pytest.mark.parametrize("bad", [-0.1, 1.1, float("nan"), "0.5", None, True, np.float64("nan")])
 def test_invalid_model_probability_is_rejected(bad):
     with pytest.raises(ValueError):
         fuse(bad)
+
+
+@pytest.mark.parametrize("value", [np.float32(0.5), np.float64(0.5), 0, 1])
+def test_numeric_model_probabilities_are_accepted(value):
+    # Le modèle renvoie des flottants numpy : float32 ne doit pas être refusé.
+    assert fuse(value).score == round(float(value) * 100)
+
+
+def test_duplicate_source_signals_do_not_depend_on_order():
+    high, low = ok("virustotal", 1.0), ok("virustotal", 0.0)
+    assert fuse(0.1, [high, low]) == fuse(0.1, [low, high])
+    assert fuse(0.1, [high, low]).score == 91  # le plus fort risque est retenu
+
+
+def test_a_source_with_one_usable_answer_is_not_ignored():
+    result = fuse(0.1, [down("virustotal"), ok("virustotal", 1.0)])
+    assert result.ignored == ()
+    assert result.contributions[0].source == "virustotal"
+
+
+def test_signals_can_be_a_generator():
+    assert fuse(0.1, (s for s in [ok("virustotal", 1.0), down("rdap")])).ignored == ("rdap",)
 
 
 # --------------------------------------------------------------------------- #
