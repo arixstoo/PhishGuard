@@ -24,7 +24,7 @@ techniques = map_techniques(
 | Message reçu par un service tiers (SMS, messagerie, réseau social) | T1566.003 Phishing: Spearphishing via Service | Initial Access |
 | L'utilisateur est incité à ouvrir un lien (y compris une URL analysée seule) | T1204.001 User Execution: Malicious Link | Execution |
 | L'utilisateur est incité à ouvrir un fichier | T1204.002 User Execution: Malicious File | Execution |
-| Le message demande des informations (identifiants, codes, paiement) | T1598 Phishing for Information, ou .003 avec un lien, .002 avec une pièce jointe | Reconnaissance |
+| Le message demande des informations (identifiants, codes, paiement) | T1598 Phishing for Information, ou .003 avec un lien, .002 avec une pièce jointe, .001 par SMS ou messagerie | Reconnaissance |
 | Domaine de moins de 30 jours (RDAP ou premier certificat) ou imitant une marque (typosquatting, homographe) | T1583.001 Acquire Infrastructure: Domains | Resource Development |
 
 **Un verdict de phishing reçoit toujours au moins une technique** : à défaut d'un vecteur plus précis (email sans lien ni pièce jointe identifiés), T1566 Phishing. Un test le vérifie sur les 128 combinaisons de constats.
@@ -47,7 +47,9 @@ python scripts/verify_mitre.py           # télécharge les données de MITRE et
 python scripts/verify_mitre.py --write   # met à jour les noms et la version vérifiée
 ```
 
-Vérification faite le 01/11/2026 sur **ATT&CK Enterprise v20.0** (publiée le 13/10/2026) : les 12 techniques du catalogue sont à jour. Cette vérification a relevé que T1656 Impersonation, une piste pour les emails qui usurpent une marque, est **révoquée** dans cette version : elle n'est pas utilisée.
+`--write` ne corrige que les **noms**. Une technique absente, révoquée ou dépréciée, une tactique changée ou une technique parente manquante demandent une décision : le script refuse alors d'écrire et sort en erreur.
+
+Première vérification le 01/11/2026 sur **ATT&CK Enterprise v20.0** (publiée le 13/10/2026), refaite le 08/11/2026 sur la **v20.1** : les 13 techniques du catalogue sont à jour, noms et tactiques compris. Cette vérification a relevé que T1656 Impersonation, une piste pour les emails qui usurpent une marque, est **révoquée** dans cette version : elle n'est pas utilisée.
 
 ATT&CK publie deux versions par an : relancer le script à chaque version. Les intitulés restent en anglais, ce sont ceux de MITRE, que les analystes recherchent tels quels. Les phrases pour l'utilisateur viendront du module 3.
 

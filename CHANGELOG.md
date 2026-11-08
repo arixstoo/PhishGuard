@@ -27,7 +27,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 - Calibration des probabilités du modèle URL sur la validation (isotone ou Platt, choisie en validation croisée), enregistrée en JSON sans pickle ; `scripts/calibrate_url.py`, `make calibrate-url`. Sur `url_v1`, la régression isotone est retenue : ECE de 0,011 à 0,003 en validation croisée (`docs/metrics/url_calibration.json`).
 - Fusion pure et versionnée (`fusion/fusion.json`) : règles dures (liste noire, Safe Browsing avant liste blanche), « OU probabiliste » pondéré des signaux utilisables, seuils sûr < 30 ≤ suspect ≤ 70 < phishing, contribution de chaque source. Résultat indépendant de l'ordre des signaux, même si une source répond deux fois. 18 cas de table de vérité et des tests de propriétés (étape 2.10, [docs/fusion.md](docs/fusion.md)).
-- Correspondance MITRE ATT&CK : chaque verdict suspect ou phishing est relié à ses techniques (T1566.001/.002/.003, T1204.001/.002, T1598, T1583.001), au moins une pour tout phishing. Catalogue vérifié contre les données officielles d'ATT&CK v20.0 par `scripts/verify_mitre.py` (étape 2.11, [docs/mitre-attack.md](docs/mitre-attack.md)).
+- Correspondance MITRE ATT&CK : chaque verdict suspect ou phishing est relié à ses techniques (T1566.001/.002/.003, T1204.001/.002, T1598.001/.002/.003, T1583.001), au moins une pour tout phishing. Catalogue vérifié contre les données officielles d'ATT&CK v20.1 par `scripts/verify_mitre.py` (étape 2.11, [docs/mitre-attack.md](docs/mitre-attack.md)).
 
 ## [0.1.0] : module 1, données et détection (URL, SMS, email)
 
