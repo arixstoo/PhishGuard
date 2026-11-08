@@ -46,8 +46,9 @@ Repository = "https://github.com/arixstoo/PhishGuard"
 Issues = "https://github.com/arixstoo/PhishGuard/issues"
 
 [tool.setuptools.package-data]
-# Listes de référence des features URL, relues aussi par l'extension (module 5).
-phishguard = ["urls/data/*.json"]
+# Listes de référence des features URL, relues aussi par l'extension (module 5), et
+# paramètres versionnés de la fusion du score (étape 2.10).
+phishguard = ["urls/data/*.json", "fusion/*.json"]
 
 [tool.ruff]
 line-length = 100

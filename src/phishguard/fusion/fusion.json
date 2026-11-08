@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "thresholds": {
+    "suspicious": 30,
+    "phishing": 70
+  },
+  "hard_rules": {
+    "phishing_sources": ["google_safe_browsing"]
+  },
+  "weights": {
+    "model": 1.0,
+    "virustotal": 0.9,
+    "urlscan": 0.8,
+    "rdap": 0.6,
+    "dns": 0.5,
+    "certificate_transparency": 0.4
+  },
+  "rationale": {
+    "model": "Probabilité calibrée du modèle URL local : elle entre telle quelle, c'est le point de départ de chaque analyse.",
+    "virustotal": "Verdict agrégé de dizaines de moteurs, déjà amorti (1 moteur = 0,2, 5 moteurs = 1). Source la plus fiable après Safe Browsing.",
+    "urlscan": "Verdict d'un navigateur isolé sur la page réelle, mais un seul juge et parfois un scan ancien.",
+    "rdap": "Un domaine de quelques jours est un signal fort, mais des services légitimes en créent aussi : il ne suffit pas seul.",
+    "dns": "Signaux faibles (DNS gratuit, fast flux), déjà plafonnés à 0,5 par la source.",
+    "certificate_transparency": "Un premier certificat récent recoupe l'âge RDAP ; un domaine ancien peut obtenir son premier certificat tard."
+  }
+}
