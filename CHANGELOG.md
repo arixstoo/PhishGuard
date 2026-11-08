@@ -2,7 +2,9 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
-## [Non publié] : module 2, Threat Intelligence et fusion des signaux
+## [0.2.0] : module 2, Threat Intelligence et fusion des signaux
+
+Le moteur enrichit maintenant un indicateur comme le ferait un analyste avant de conclure : six sources de Threat Intelligence interrogées en parallèle, fusionnées avec le modèle local calibré en un score, un verdict, ses raisons et ses techniques MITRE ATT&CK, dans un schéma de réponse figé. L'enrichissement reste **désactivé par défaut** : sans opt-in, rien ne quitte la machine, et une URL interne n'est jamais envoyée. Vérifié contre les vraies API (Safe Browsing, VirusTotal, urlscan.io, RDAP, DNS) et, pour l'âge des domaines, contre les registres eux-mêmes. Rien n'est encore exposé à l'utilisateur : l'API arrive au module 4.
 
 ### Configuration
 
