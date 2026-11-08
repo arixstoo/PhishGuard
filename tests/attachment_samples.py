@@ -97,7 +97,16 @@ def docx(*, macros: bool = False, remote_template: bool = False) -> bytes:
     return zip_file(members)
 
 
-PE = b"MZ\x90\x00\x03\x00\x00\x00" + b"\x00" * 56 + b"This program cannot be run in DOS mode."
+# En-tête DOS (« MZ », e_lfanew = 0x80 lu en 0x3C), puis la signature « PE\0\0 » que
+# vérifie le chargeur Windows. Aucun code : le fichier ne peut rien exécuter.
+PE = (
+    b"MZ\x90\x00\x03\x00\x00\x00"
+    + b"\x00" * 52
+    + (0x80).to_bytes(4, "little")
+    + b"This program cannot be run in DOS mode.".ljust(0x40, b"\x00")
+    + b"PE\x00\x00"
+    + b"\x00" * 20
+)
 ELF = b"\x7fELF\x02\x01\x01" + b"\x00" * 57
 LNK = b"L\x00\x00\x00\x01\x14\x02\x00" + b"\x00" * 68
 ISO = b"\x00" * 0x8001 + b"CD001" + b"\x00" * 100

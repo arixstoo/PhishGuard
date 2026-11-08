@@ -67,6 +67,9 @@ def email_with(filename, data, maintype="application", subtype="octet-stream"):
         (b"Bonjour, ceci est un texte.", None),
         (b"", None),
     ],
+    # Identifiants courts : pytest recopie l'identifiant dans PYTEST_CURRENT_TEST, et
+    # Windows refuse une variable d'environnement de plus de 32 767 caractères (ISO).
+    ids=lambda value: value if isinstance(value, str) or value is None else f"{len(value)}B",
 )
 def test_detect_type_by_signature(data, expected):
     assert detect_type(data) == expected
@@ -189,6 +192,75 @@ def test_legitimate_attachments_trigger_no_new_rule(filename, data):
     (attachment,) = email.attachments
     assert not attachment.type_mismatch
     assert not NEW_RULES & set(score_email(email).triggered)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        b"MZ,Mozambique,2024\nFR,France,2024\n" * 10,  # « MZ » : code pays en tête d'un CSV
+        b"MZ" + b"\x00" * 200,  # en-tête DOS sans signature PE
+        b"MZ" + b"\x00" * 58 + (0x40).to_bytes(4, "little") + b"XX\x00\x00",  # mauvaise signature
+        b"MZ" + b"\x00" * 58 + (0xFFFFFFF0).to_bytes(4, "little"),  # adresse hors du fichier
+    ],
+)
+def test_text_starting_with_mz_is_not_an_executable(data):
+    assert detect_type(data) != "pe_executable"
+    (attachment,) = email_with("pays.csv", data, "text", "csv").attachments
+    assert not attachment.type_mismatch
+    assert score_email(email_with("pays.csv", data, "text", "csv")).verdict == "safe"
+
+
+@pytest.mark.parametrize(
+    "relation",
+    [
+        # Guillemets simples et espaces autour de « = » : du XML valide, à détecter aussi.
+        (
+            b"<Relationship Id='rId1' Type='http://schemas.openxmlformats.org/officeDocument/"
+            b"2006/relationships/attachedTemplate' Target='https://t.example.test/t.dotm' "
+            b"TargetMode = 'External'/>"
+        ),
+        (
+            b'<pr:Relationship TargetMode="External" Target="https://t.example.test/t.dotm" '
+            b'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/'
+            b'attachedTemplate" Id="rId1"/>'
+        ),
+    ],
+)
+def test_remote_template_is_detected_whatever_the_xml_quoting(relation):
+    rels = b"<Relationships>" + relation + b"</Relationships>"
+    data = S.zip_file(
+        {"[Content_Types].xml": S.CONTENT_TYPES, "word/_rels/settings.xml.rels": rels}
+    )
+    assert inspect_content(data).remote_template
+
+
+def test_local_template_and_other_external_links_are_not_remote_templates():
+    rels = (
+        b'<Relationships><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/'
+        b'officeDocument/2006/relationships/attachedTemplate" Target="Normal.dotm"/>'
+        b'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/'
+        b'2006/relationships/hyperlink" Target="https://example.test/" TargetMode="External"/>'
+        b"</Relationships>"
+    )
+    data = S.zip_file(
+        {"[Content_Types].xml": S.CONTENT_TYPES, "word/_rels/settings.xml.rels": rels}
+    )
+    assert not inspect_content(data).remote_template
+
+
+def test_unreadable_ooxml_member_keeps_the_other_findings(monkeypatch):
+    # Un .rels illisible (compression inconnue, membre corrompu) ne doit pas effacer les
+    # macros déjà trouvées.
+    import zipfile
+
+    def broken_open(self, *args, **kwargs):
+        raise NotImplementedError("compression inconnue")
+
+    data = S.docx(macros=True, remote_template=True)  # construit avant de casser open()
+    monkeypatch.setattr(zipfile.ZipFile, "open", broken_open)
+    findings = inspect_content(data)
+    assert findings.macros and findings.detected_type == "ooxml"
+    assert "ooxml_rels_unreadable" in findings.errors
 
 
 def test_executable_with_its_real_name_is_not_a_mismatch():

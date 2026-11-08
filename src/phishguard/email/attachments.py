@@ -36,7 +36,9 @@ from __future__ import annotations
 
 import io
 import re
+import struct
 import zipfile
+import zlib
 from dataclasses import asdict, dataclass, field
 
 import olefile
@@ -93,6 +95,10 @@ OLE_VBA_STORAGES = frozenset({"macros", "_vba_project_cur", "vba"})
 
 _PDF_NAME = re.compile(rb"/([A-Za-z0-9#]{1,40})")
 _HEX_ESCAPE = re.compile(rb"#([0-9A-Fa-f]{2})")
+# Éléments <Relationship …> d'un fichier .rels. Les attributs XML acceptent les deux
+# guillemets et des espaces autour de « = » : chercher une chaîne exacte se contourne.
+_RELATIONSHIP = re.compile(rb"<\s*(?:\w+:)?relationship\b[^>]*>", re.IGNORECASE)
+_EXTERNAL_MODE = re.compile(rb"\btargetmode\s*=\s*[\"']\s*external\s*[\"']", re.IGNORECASE)
 _PASSWORD_INPUT = re.compile(rb"<input\b[^>]{0,500}?type\s*=\s*[\"']?password", re.IGNORECASE)
 _HTML_START = re.compile(rb"^\s*(<!doctype\s+html|<html|<head|<body|<script|<form|<meta|<svg)",
                          re.IGNORECASE)  # fmt: skip
@@ -141,7 +147,7 @@ class ContentFindings:
 def detect_type(data: bytes) -> str | None:
     """Type du fichier d'après sa signature, ou None s'il n'est pas reconnu."""
     head = data[:16]
-    if head.startswith(b"MZ"):
+    if head.startswith(b"MZ") and _has_pe_header(data):
         return "pe_executable"
     if head.startswith(b"\x7fELF"):
         return "elf_executable"
@@ -180,6 +186,19 @@ def detect_type(data: bytes) -> str | None:
     if _HTML_START.match(text):
         return "html"
     return None
+
+
+def _has_pe_header(data: bytes) -> bool:
+    """Signature ``PE\\0\\0`` à l'adresse lue en 0x3C (``e_lfanew``), comme le chargeur Windows.
+
+    « MZ » seul ne suffit pas : un texte peut commencer par ces deux lettres (code pays du
+    Mozambique en tête d'un CSV). Un exécutable Windows a toujours son en-tête PE, dans les
+    premiers kilo-octets du fichier.
+    """
+    if len(data) < 0x40:
+        return False
+    (offset,) = struct.unpack_from("<I", data, 0x3C)
+    return 0x40 <= offset <= 0x10000 and data[offset : offset + 4] == b"PE\x00\x00"
 
 
 # --------------------------------------------------------------------------- #
@@ -281,10 +300,17 @@ def _remote_template(
         if info.file_size > limits.max_xml_member_bytes or info.flag_bits & 0x1:
             errors.append("ooxml_rels_skipped")
             continue
-        with archive.open(info) as member:
-            xml = member.read(limits.max_xml_member_bytes).lower()
-        if b"attachedtemplate" in xml and b'targetmode="external"' in xml:
-            return True
+        try:
+            with archive.open(info) as member:
+                xml = member.read(limits.max_xml_member_bytes)
+        except (zipfile.BadZipFile, NotImplementedError, RuntimeError, OSError, EOFError,
+                zlib.error):  # fmt: skip
+            # Membre corrompu ou compression inconnue : les autres constats sont gardés.
+            errors.append("ooxml_rels_unreadable")
+            continue
+        for relation in _RELATIONSHIP.findall(xml):
+            if b"attachedtemplate" in relation.lower() and _EXTERNAL_MODE.search(relation):
+                return True
     return False
 
 
