@@ -90,6 +90,7 @@ python scripts/parse_email.py msg.eml   # SPF/DKIM/DMARC, sender mismatches, dec
 make email-corpora && make train-email  # email score: transparent rules vs learned models (docs/email-score.md)
 python -m phishguard.config             # which Threat Intel sources are enabled (optional keys in .env, docs/secrets.md)
 make calibrate-url                      # calibrate the URL model probabilities on validation (docs/fusion.md)
+make schema                             # regenerate the analysis response JSON Schema (docs/response-schema.md)
 python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
 ```
 
@@ -140,6 +141,7 @@ data/, models/    generated locally, never committed
 - [Score fusion](docs/fusion.md): calibrated model probability, hard rules and weighted Threat Intelligence signals, with a documented truth table (French)
 - [MITRE ATT&CK mapping](docs/mitre-attack.md): the ATT&CK techniques each detection illustrates, verified against MITRE's official data (French)
 - [End-to-end URL analysis](docs/analysis.md): local model, opt-in enrichment, fusion and ATT&CK in one call, with privacy and degradation guarantees (French)
+- [Analysis response schema](docs/response-schema.md): the frozen JSON contract (verdict, score, confidence, reasons, signals, ATT&CK techniques) that the API, extension and bot rely on, with its [JSON Schema](docs/schema/analysis-response.v1.json) (French)
 - [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
 - [External tools evaluation](docs/external-tools.md): EML Analyzer, Outlook .msg, DeHashed and PhishTool, what was kept and why (French)

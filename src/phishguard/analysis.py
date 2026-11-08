@@ -33,7 +33,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import numpy as np
 import tldextract
@@ -45,6 +45,9 @@ from phishguard.fusion.mitre import Observations, Technique, domain_observations
 from phishguard.fusion.score import FusionConfig, FusionResult, Verdict, fuse
 from phishguard.security.netguard import NetGuardError, is_public_ip, parse_ip_literal
 from phishguard.urls.features import ParsedUrl, UrlFeatureExtractor, parse_url
+
+if TYPE_CHECKING:
+    from phishguard.schema import AnalysisResponse
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +102,13 @@ class UrlAnalysis:
     mitre: tuple[Technique, ...]
     latency_ms: int
     enrichment_skipped: SkipReason | None = None  # None : les sources ont été interrogées
+    model_version: str = "unknown"  # ``metadata["model_version"]`` du modèle (``url_v1``)
+
+    def to_response(self) -> AnalysisResponse:
+        """Réponse au format figé de l'étape 2.11 bis (``phishguard.schema``)."""
+        from phishguard.schema import AnalysisResponse
+
+        return AnalysisResponse.from_url_analysis(self)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -138,6 +148,10 @@ class UrlAnalyzer:
         self.calibrator = calibrator
         self.orchestrator = orchestrator
         self.config = config
+        metadata = getattr(model, "metadata", None)
+        self.model_version = str(
+            (metadata.get("model_version") if isinstance(metadata, Mapping) else None) or "unknown"
+        )
         self._features = UrlFeatureExtractor()  # constats ATT&CK (marques, mots-clés)
         if calibrator is None:
             logger.warning("modèle URL non calibré : la fusion reçoit le score brut")
@@ -207,6 +221,7 @@ class UrlAnalyzer:
             mitre=mitre,
             latency_ms=round((time.perf_counter() - start) * 1000),
             enrichment_skipped=skipped,
+            model_version=self.model_version,
         )
 
     def _observations(self, url: str, enriched: EnrichmentResult) -> Observations:

@@ -1,0 +1,229 @@
+{
+  "$defs": {
+    "Reason": {
+      "additionalProperties": false,
+      "description": "Une raison du verdict. Le code est stable ; le message peut être reformulé.",
+      "properties": {
+        "code": {
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$",
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "points": {
+          "description": "Part du score attribuée à cette raison",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "source",
+        "points",
+        "message"
+      ],
+      "title": "Reason",
+      "type": "object"
+    },
+    "SignalOut": {
+      "additionalProperties": false,
+      "description": "Réponse d'une source de Threat Intelligence (étapes 2.4 à 2.7).",
+      "properties": {
+        "evidence": {
+          "additionalProperties": true,
+          "title": "Evidence",
+          "type": "object"
+        },
+        "latency_ms": {
+          "minimum": 0,
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "risk": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Risk",
+          "type": "number"
+        },
+        "status": {
+          "$ref": "#/$defs/SignalStatus"
+        }
+      },
+      "required": [
+        "status",
+        "risk",
+        "latency_ms"
+      ],
+      "title": "SignalOut",
+      "type": "object"
+    },
+    "SignalStatus": {
+      "enum": [
+        "ok",
+        "error",
+        "skipped",
+        "timeout"
+      ],
+      "title": "SignalStatus",
+      "type": "string"
+    },
+    "TechniqueOut": {
+      "additionalProperties": false,
+      "description": "Technique MITRE ATT&CK illustrée par la détection (étape 2.11).",
+      "properties": {
+        "id": {
+          "pattern": "^T\\d{4}(\\.\\d{3})?$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "tactic": {
+          "minLength": 1,
+          "title": "Tactic",
+          "type": "string"
+        },
+        "url": {
+          "pattern": "^https://attack\\.mitre\\.org/techniques/",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tactic",
+        "url",
+        "reason"
+      ],
+      "title": "TechniqueOut",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/arixstoo/PhishGuard/schema/analysis-response/1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Réponse d'une analyse, quel que soit le canal (URL, SMS, email).",
+  "properties": {
+    "channel": {
+      "enum": [
+        "url",
+        "email",
+        "sms",
+        "messaging"
+      ],
+      "title": "Channel",
+      "type": "string"
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "enrichment": {
+      "enum": [
+        "used",
+        "skipped"
+      ],
+      "title": "Enrichment",
+      "type": "string"
+    },
+    "fusion_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Fusion Version",
+      "type": "string"
+    },
+    "latency_ms": {
+      "minimum": 0,
+      "title": "Latency Ms",
+      "type": "integer"
+    },
+    "mitre": {
+      "items": {
+        "$ref": "#/$defs/TechniqueOut"
+      },
+      "title": "Mitre",
+      "type": "array"
+    },
+    "model_version": {
+      "minLength": 1,
+      "title": "Model Version",
+      "type": "string"
+    },
+    "reasons": {
+      "items": {
+        "$ref": "#/$defs/Reason"
+      },
+      "title": "Reasons",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "score": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Score",
+      "type": "integer"
+    },
+    "signals": {
+      "additionalProperties": {
+        "$ref": "#/$defs/SignalOut"
+      },
+      "description": "Une entrée par source interrogée",
+      "title": "Signals",
+      "type": "object"
+    },
+    "verdict": {
+      "enum": [
+        "safe",
+        "suspicious",
+        "phishing"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    }
+  },
+  "required": [
+    "channel",
+    "verdict",
+    "score",
+    "confidence",
+    "reasons",
+    "signals",
+    "mitre",
+    "model_version",
+    "fusion_version",
+    "enrichment",
+    "latency_ms"
+  ],
+  "title": "AnalysisResponse",
+  "type": "object"
+}
