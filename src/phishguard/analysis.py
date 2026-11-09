@@ -34,7 +34,7 @@ import logging
 import math
 import time
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Protocol
@@ -116,13 +116,15 @@ class UrlAnalysis:
     enrichment_skipped: SkipReason | None = None  # None : les sources ont été interrogées
     model_version: str = "unknown"  # ``metadata["model_version"]`` du modèle (``url_v1``)
     explanation: UrlExplanation | None = None  # valeurs SHAP du score brut (étape 3.1)
+    model_thresholds: Mapping[str, float] = field(default_factory=dict)  # vue analyste
 
-    def to_response(self, language: str = "fr") -> AnalysisResponse:
+    def to_response(self, language: str = "fr", *, analyst: bool = True) -> AnalysisResponse:
         """Réponse au format figé de l'étape 2.11 bis (``phishguard.schema``), raisons et
-        conseil rédigés dans ``language`` (``fr``, ``en`` ou ``ar``)."""
+        conseil rédigés dans ``language`` (``fr``, ``en`` ou ``ar``), avec la vue analyste
+        de l'étape 3.4 sauf ``analyst=False``."""
         from phishguard.schema import AnalysisResponse
 
-        return AnalysisResponse.from_url_analysis(self, language=language)
+        return AnalysisResponse.from_url_analysis(self, language=language, analyst=analyst)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -174,6 +176,8 @@ class UrlAnalyzer:
         self.model_version = str(
             (metadata.get("model_version") if isinstance(metadata, Mapping) else None) or "unknown"
         )
+        thresholds = getattr(model, "thresholds", None)
+        self.model_thresholds = dict(thresholds) if isinstance(thresholds, Mapping) else {}
         self._features = UrlFeatureExtractor()  # constats ATT&CK (marques, mots-clés)
         if calibrator is None:
             logger.warning("modèle URL non calibré : la fusion reçoit le score brut")
@@ -245,6 +249,7 @@ class UrlAnalyzer:
             enrichment_skipped=skipped,
             model_version=self.model_version,
             explanation=explanation,
+            model_thresholds=self.model_thresholds,
         )
 
     def _score(self, url: str) -> tuple[float, UrlExplanation | None]:
@@ -325,12 +330,14 @@ class TextAnalysis:
     latency_ms: int
     model_version: str = "unknown"
     explanation: TextExplanation | None = None
+    model_thresholds: Mapping[str, float] = field(default_factory=dict)  # vue analyste
 
-    def to_response(self, language: str = "fr") -> AnalysisResponse:
-        """Réponse au format de l'étape 2.11 bis, raisons rédigées dans ``language``."""
+    def to_response(self, language: str = "fr", *, analyst: bool = True) -> AnalysisResponse:
+        """Réponse au format de l'étape 2.11 bis, raisons rédigées dans ``language``, avec
+        la vue analyste de l'étape 3.4 sauf ``analyst=False``."""
         from phishguard.schema import AnalysisResponse
 
-        return AnalysisResponse.from_text_analysis(self, language=language)
+        return AnalysisResponse.from_text_analysis(self, language=language, analyst=analyst)
 
     def to_dict(self) -> dict[str, Any]:
         """Résumé sans le texte ni ses mots (journalisable)."""
@@ -441,6 +448,9 @@ class TextAnalyzer:
             latency_ms=round((time.perf_counter() - start) * 1000),
             model_version=self.model_version,
             explanation=explanation,
+            model_thresholds=(
+                {"decision": self._threshold} if hasattr(self.model, "threshold") else {}
+            ),
         )
 
 

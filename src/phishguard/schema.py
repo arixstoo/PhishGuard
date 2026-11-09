@@ -18,6 +18,8 @@ d'email remplira le même contrat au module 4.
 
 Historique :
 
+- ``1.2.0`` (étape 3.4) : vue analyste ``analyst``, facultative (modèle, explication,
+  fusion, versions) ;
 - ``1.1.0`` (étape 3.2) : raisons en langage simple, au plus trois, avec leurs variables
   (``params``) ; ``language`` et ``advice`` (conseil d'action, toujours présent) ajoutés ;
 - ``1.0.0`` (étape 2.11 bis) : contrat initial.
@@ -33,18 +35,23 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from phishguard.enrichers.base import SignalStatus
 from phishguard.explain.reasons import (
     DEFAULT_LANGUAGE,
+    FRAGMENT_MAX_LENGTH,
     MAX_REASONS,
     Explanation,
     Language,
     ReasonBuilder,
+    load_templates,
+    safe_fragment,
 )
 from phishguard.fusion.mitre import Channel
 from phishguard.fusion.score import FusionResult, Thresholds, Verdict
 
 if TYPE_CHECKING:
     from phishguard.analysis import TextAnalysis, UrlAnalysis
+    from phishguard.explain.shap_url import UrlExplanation
+    from phishguard.explain.text import TextExplanation
 
-SCHEMA_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2.0"
 Confidence = Literal["low", "medium", "high"]
 Enrichment = Literal["used", "skipped"]
 
@@ -95,6 +102,94 @@ class TechniqueOut(_Strict):
     reason: str = Field(min_length=1)
 
 
+# --------------------------------------------------------------------------- #
+# Vue analyste (étape 3.4)
+# --------------------------------------------------------------------------- #
+
+ANALYST_TERMS = 10  # mots les plus influents dans chaque sens (texte)
+ExplanationMethod = Literal["tree_shap", "linear"]
+ExplanationSpace = Literal["log_odds", "probability", "margin"]
+
+
+class FeatureOut(_Strict):
+    """Une feature du modèle URL : sa valeur et sa contribution SHAP (étape 3.1)."""
+
+    name: str = Field(min_length=1)
+    value: float
+    contribution: float
+
+
+class TermOut(_Strict):
+    """Un mot du message et sa contribution au score (étape 3.3), nettoyé comme les
+    raisons : à afficher comme texte, jamais comme HTML."""
+
+    term: str = Field(min_length=1, max_length=FRAGMENT_MAX_LENGTH)
+    contribution: float
+
+
+class ExplanationOut(_Strict):
+    """Décomposition du score brut du modèle : ``base_value + somme des contributions``.
+
+    ``features`` (URL) les donne toutes, de la plus forte en valeur absolue à la plus
+    faible ; ``terms_phishing`` et ``terms_safe`` (texte) les mots les plus influents dans
+    chaque sens.
+    """
+
+    method: ExplanationMethod
+    space: ExplanationSpace
+    base_value: float
+    output: float = Field(description="Score brut du modèle, dans ``space``")
+    features: list[FeatureOut] = Field(default_factory=list)
+    terms_phishing: list[TermOut] = Field(default_factory=list, max_length=ANALYST_TERMS)
+    terms_safe: list[TermOut] = Field(default_factory=list, max_length=ANALYST_TERMS)
+
+
+class ModelOut(_Strict):
+    """Sortie du modèle local, avant la fusion."""
+
+    version: str = Field(min_length=1)
+    raw_score: float = Field(description="Probabilité (URL) ou marge du SVM (texte)")
+    probability: float = Field(ge=0, le=1, description="Après calibration (étape 2.10)")
+    calibrated: bool
+    thresholds: dict[str, float] = Field(
+        default_factory=dict, description="Seuils de décision du modèle seul, sur son score brut"
+    )
+
+
+class ContributionOut(_Strict):
+    """Part d'une source (ou du modèle) dans le score fusionné (étape 2.10)."""
+
+    source: str = Field(min_length=1)
+    risk: float = Field(ge=0, le=1)
+    weight: float = Field(ge=0, le=1)
+    points: float = Field(ge=0, le=100)
+
+
+class FusionOut(_Strict):
+    """Détail de la fusion : probabilité, seuils, règle dure, contributions."""
+
+    probability: float = Field(ge=0, le=1)
+    thresholds: dict[str, int]
+    hard_rule: str | None = None
+    contributions: list[ContributionOut] = Field(default_factory=list)
+    ignored: list[str] = Field(default_factory=list, description="Sources non utilisables")
+
+
+class AnalystView(_Strict):
+    """Ce que voit un analyste, ou l'utilisateur qui déplie « Détails techniques ».
+
+    Les signaux bruts des sources restent dans ``signals`` (contrat 1.0.0) ; la vue
+    analyste ajoute le modèle, son explication, la fusion et les versions.
+    """
+
+    model: ModelOut
+    explanation: ExplanationOut | None = None
+    fusion: FusionOut
+    versions: dict[str, str] = Field(
+        description="Versions du schéma, du modèle, de la fusion, des gabarits, de l'explication"
+    )
+
+
 class AnalysisResponse(_Strict):
     """Réponse d'une analyse, quel que soit le canal (URL, SMS, email)."""
 
@@ -118,6 +213,10 @@ class AnalysisResponse(_Strict):
         max_length=MESSAGE_MAX_LENGTH,
         description="Conseil d'action, toujours présent, selon le canal et le verdict",
     )
+    analyst: AnalystView | None = Field(
+        default=None,
+        description="Détails techniques (étape 3.4) : à n'afficher qu'à la demande",
+    )
 
     @model_validator(mode="after")
     def _consistent(self) -> AnalysisResponse:
@@ -128,6 +227,11 @@ class AnalysisResponse(_Strict):
             raise ValueError("un verdict sûr ne cite aucune technique ATT&CK")
         if self.enrichment == "skipped" and self.signals:
             raise ValueError("sans enrichissement, aucune source n'a pu répondre")
+        if self.analyst is not None:
+            if self.analyst.model.version != self.model_version:
+                raise ValueError("la vue analyste décrit un autre modèle que la réponse")
+            if self.analyst.versions.get("fusion") != self.fusion_version:
+                raise ValueError("la vue analyste décrit une autre fusion que la réponse")
         return self
 
     # ------------------------------------------------------------------ #
@@ -139,10 +243,13 @@ class AnalysisResponse(_Strict):
         *,
         model_version: str | None = None,
         language: str = DEFAULT_LANGUAGE,
+        analyst: bool = True,
     ) -> AnalysisResponse:
         """Réponse d'une analyse d'URL. ``model_version`` remplace celle du modèle analysé ;
-        ``language`` choisit la langue des raisons et du conseil (``fr``, ``en``, ``ar``)."""
+        ``language`` choisit la langue des raisons et du conseil (``fr``, ``en``, ``ar``) ;
+        ``analyst=False`` omet la vue analyste (un bot qui ne l'affiche jamais)."""
         fusion = analysis.fusion
+        version = model_version or analysis.model_version
         explanation = ReasonBuilder(language).for_fusion(
             fusion,
             channel="url",
@@ -163,12 +270,24 @@ class AnalysisResponse(_Strict):
                 for s in analysis.enrichment.signals
             },
             mitre=[TechniqueOut(**t.to_dict()) for t in analysis.mitre],
-            model_version=model_version or analysis.model_version,
+            model_version=version,
             fusion_version=fusion.config_version,
             enrichment=analysis.enrichment.enrichment,
             latency_ms=analysis.latency_ms,
             language=explanation.language,
             advice=explanation.advice,
+            analyst=analyst_view(
+                version=version,
+                raw_score=analysis.model_score,
+                probability=analysis.model_probability,
+                calibrated=analysis.calibrated,
+                thresholds=analysis.model_thresholds,
+                fusion=fusion,
+                language=explanation.language,
+                explanation=url_explanation_out(analysis.explanation),
+            )
+            if analyst
+            else None,
         )
 
     @classmethod
@@ -178,10 +297,12 @@ class AnalysisResponse(_Strict):
         *,
         model_version: str | None = None,
         language: str = DEFAULT_LANGUAGE,
+        analyst: bool = True,
     ) -> AnalysisResponse:
         """Réponse d'une analyse de message (étape 3.3). L'analyse est locale : aucun
-        signal, enrichissement ``skipped``."""
+        signal, enrichissement ``skipped``. ``analyst=False`` omet la vue analyste."""
         fusion = analysis.fusion
+        version = model_version or analysis.model_version
         explanation = ReasonBuilder(language).for_fusion(
             fusion,
             channel=analysis.channel,
@@ -196,12 +317,24 @@ class AnalysisResponse(_Strict):
             reasons=reasons(explanation),
             signals={},
             mitre=[TechniqueOut(**t.to_dict()) for t in analysis.mitre],
-            model_version=model_version or analysis.model_version,
+            model_version=version,
             fusion_version=fusion.config_version,
             enrichment="skipped",
             latency_ms=analysis.latency_ms,
             language=explanation.language,
             advice=explanation.advice,
+            analyst=analyst_view(
+                version=version,
+                raw_score=analysis.model_score,
+                probability=analysis.model_probability,
+                calibrated=analysis.calibrated,
+                thresholds=analysis.model_thresholds,
+                fusion=fusion,
+                language=explanation.language,
+                explanation=text_explanation_out(analysis.explanation),
+            )
+            if analyst
+            else None,
         )
 
     def to_json(self) -> str:
@@ -238,6 +371,95 @@ def reasons(explanation: Explanation) -> list[Reason]:
         )
         for r in explanation.reasons
     ]
+
+
+def url_explanation_out(explanation: UrlExplanation | None) -> ExplanationOut | None:
+    """Explication SHAP du modèle URL, toutes les features, par contribution absolue."""
+    if explanation is None:
+        return None
+    ranked = sorted(explanation.attributions, key=lambda a: (-abs(a.shap), a.name))
+    return ExplanationOut(
+        method="tree_shap",
+        space=explanation.space,
+        base_value=round(explanation.base_value, 6),
+        output=round(explanation.raw_score, 6),
+        features=[
+            FeatureOut(name=a.name, value=a.value, contribution=round(a.shap, 6)) for a in ranked
+        ],
+    )
+
+
+def _terms_out(terms: Any) -> list[TermOut]:
+    found = []
+    for term in terms:
+        cleaned = safe_fragment(term.term)
+        if cleaned:
+            found.append(TermOut(term=cleaned, contribution=round(term.contribution, 6)))
+    return found
+
+
+def text_explanation_out(explanation: TextExplanation | None) -> ExplanationOut | None:
+    """Contributions du modèle de texte : les mots les plus influents dans chaque sens.
+
+    Les mots sont nettoyés par :func:`~phishguard.explain.reasons.safe_fragment` : ce
+    sont ceux de l'utilisateur, renvoyés à lui seul, mais jamais insérables comme HTML.
+    """
+    if explanation is None:
+        return None
+    return ExplanationOut(
+        method="linear",
+        space=explanation.space,
+        base_value=round(explanation.intercept, 6),
+        output=round(explanation.decision, 6),
+        terms_phishing=_terms_out(explanation.top(ANALYST_TERMS)),
+        terms_safe=_terms_out(explanation.top(ANALYST_TERMS, direction="safe")),
+    )
+
+
+def analyst_view(
+    *,
+    version: str,
+    raw_score: float,
+    probability: float,
+    calibrated: bool,
+    thresholds: Any,
+    fusion: FusionResult,
+    language: str,
+    explanation: ExplanationOut | None,
+) -> AnalystView:
+    """Vue analyste d'une analyse, quel que soit le canal."""
+    return AnalystView(
+        model=ModelOut(
+            version=version,
+            raw_score=raw_score,
+            probability=probability,
+            calibrated=calibrated,
+            thresholds={str(k): float(v) for k, v in dict(thresholds or {}).items()},
+        ),
+        explanation=explanation,
+        fusion=FusionOut(
+            probability=min(1.0, max(0.0, fusion.probability)),
+            thresholds=dict(fusion.thresholds),
+            hard_rule=fusion.hard_rule,
+            contributions=[
+                ContributionOut(
+                    source=c.source,
+                    risk=c.risk,
+                    weight=c.weight,
+                    points=round(min(max(c.points, 0.0), 100.0), 3),
+                )
+                for c in fusion.contributions
+            ],
+            ignored=list(fusion.ignored),
+        ),
+        versions={
+            "schema": SCHEMA_VERSION,
+            "model": version,
+            "fusion": fusion.config_version,
+            "templates": f"{language}-{load_templates(language).version}",
+            "explanation": explanation.method if explanation is not None else "none",
+        },
+    )
 
 
 def json_schema() -> dict[str, Any]:

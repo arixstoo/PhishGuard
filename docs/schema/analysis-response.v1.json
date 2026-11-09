@@ -1,5 +1,264 @@
 {
   "$defs": {
+    "AnalystView": {
+      "additionalProperties": false,
+      "description": "Ce que voit un analyste, ou l'utilisateur qui déplie « Détails techniques ».\n\nLes signaux bruts des sources restent dans ``signals`` (contrat 1.0.0) ; la vue\nanalyste ajoute le modèle, son explication, la fusion et les versions.",
+      "properties": {
+        "explanation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExplanationOut"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "fusion": {
+          "$ref": "#/$defs/FusionOut"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelOut"
+        },
+        "versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Versions du schéma, du modèle, de la fusion, des gabarits, de l'explication",
+          "title": "Versions",
+          "type": "object"
+        }
+      },
+      "required": [
+        "model",
+        "fusion",
+        "versions"
+      ],
+      "title": "AnalystView",
+      "type": "object"
+    },
+    "ContributionOut": {
+      "additionalProperties": false,
+      "description": "Part d'une source (ou du modèle) dans le score fusionné (étape 2.10).",
+      "properties": {
+        "points": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "risk": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Risk",
+          "type": "number"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "weight": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "source",
+        "risk",
+        "weight",
+        "points"
+      ],
+      "title": "ContributionOut",
+      "type": "object"
+    },
+    "ExplanationOut": {
+      "additionalProperties": false,
+      "description": "Décomposition du score brut du modèle : ``base_value + somme des contributions``.\n\n``features`` (URL) les donne toutes, de la plus forte en valeur absolue à la plus\nfaible ; ``terms_phishing`` et ``terms_safe`` (texte) les mots les plus influents dans\nchaque sens.",
+      "properties": {
+        "base_value": {
+          "title": "Base Value",
+          "type": "number"
+        },
+        "features": {
+          "items": {
+            "$ref": "#/$defs/FeatureOut"
+          },
+          "title": "Features",
+          "type": "array"
+        },
+        "method": {
+          "enum": [
+            "tree_shap",
+            "linear"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "output": {
+          "description": "Score brut du modèle, dans ``space``",
+          "title": "Output",
+          "type": "number"
+        },
+        "space": {
+          "enum": [
+            "log_odds",
+            "probability",
+            "margin"
+          ],
+          "title": "Space",
+          "type": "string"
+        },
+        "terms_phishing": {
+          "items": {
+            "$ref": "#/$defs/TermOut"
+          },
+          "maxItems": 10,
+          "title": "Terms Phishing",
+          "type": "array"
+        },
+        "terms_safe": {
+          "items": {
+            "$ref": "#/$defs/TermOut"
+          },
+          "maxItems": 10,
+          "title": "Terms Safe",
+          "type": "array"
+        }
+      },
+      "required": [
+        "method",
+        "space",
+        "base_value",
+        "output"
+      ],
+      "title": "ExplanationOut",
+      "type": "object"
+    },
+    "FeatureOut": {
+      "additionalProperties": false,
+      "description": "Une feature du modèle URL : sa valeur et sa contribution SHAP (étape 3.1).",
+      "properties": {
+        "contribution": {
+          "title": "Contribution",
+          "type": "number"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "contribution"
+      ],
+      "title": "FeatureOut",
+      "type": "object"
+    },
+    "FusionOut": {
+      "additionalProperties": false,
+      "description": "Détail de la fusion : probabilité, seuils, règle dure, contributions.",
+      "properties": {
+        "contributions": {
+          "items": {
+            "$ref": "#/$defs/ContributionOut"
+          },
+          "title": "Contributions",
+          "type": "array"
+        },
+        "hard_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hard Rule"
+        },
+        "ignored": {
+          "description": "Sources non utilisables",
+          "items": {
+            "type": "string"
+          },
+          "title": "Ignored",
+          "type": "array"
+        },
+        "probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "thresholds": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Thresholds",
+          "type": "object"
+        }
+      },
+      "required": [
+        "probability",
+        "thresholds"
+      ],
+      "title": "FusionOut",
+      "type": "object"
+    },
+    "ModelOut": {
+      "additionalProperties": false,
+      "description": "Sortie du modèle local, avant la fusion.",
+      "properties": {
+        "calibrated": {
+          "title": "Calibrated",
+          "type": "boolean"
+        },
+        "probability": {
+          "description": "Après calibration (étape 2.10)",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "raw_score": {
+          "description": "Probabilité (URL) ou marge du SVM (texte)",
+          "title": "Raw Score",
+          "type": "number"
+        },
+        "thresholds": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Seuils de décision du modèle seul, sur son score brut",
+          "title": "Thresholds",
+          "type": "object"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "raw_score",
+        "probability",
+        "calibrated"
+      ],
+      "title": "ModelOut",
+      "type": "object"
+    },
     "Reason": {
       "additionalProperties": false,
       "description": "Une raison du verdict, en langage simple (étape 3.2).\n\nLe ``code`` est stable : un client peut s'en servir pour traduire ou choisir une\nicône, avec les variables de ``params``. Le ``message`` est déjà rédigé dans la langue\nde la réponse et peut être reformulé d'une version à l'autre. C'est du **texte\nbrut** : à insérer comme texte, jamais comme HTML.",
@@ -134,9 +393,31 @@
       ],
       "title": "TechniqueOut",
       "type": "object"
+    },
+    "TermOut": {
+      "additionalProperties": false,
+      "description": "Un mot du message et sa contribution au score (étape 3.3), nettoyé comme les\nraisons : à afficher comme texte, jamais comme HTML.",
+      "properties": {
+        "contribution": {
+          "title": "Contribution",
+          "type": "number"
+        },
+        "term": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Term",
+          "type": "string"
+        }
+      },
+      "required": [
+        "term",
+        "contribution"
+      ],
+      "title": "TermOut",
+      "type": "object"
     }
   },
-  "$id": "https://github.com/arixstoo/PhishGuard/schema/analysis-response/1.1.0",
+  "$id": "https://github.com/arixstoo/PhishGuard/schema/analysis-response/1.2.0",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Réponse d'une analyse, quel que soit le canal (URL, SMS, email).",
@@ -147,6 +428,18 @@
       "minLength": 1,
       "title": "Advice",
       "type": "string"
+    },
+    "analyst": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AnalystView"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Détails techniques (étape 3.4) : à n'afficher qu'à la demande"
     },
     "channel": {
       "enum": [
@@ -218,7 +511,7 @@
       "type": "array"
     },
     "schema_version": {
-      "default": "1.1.0",
+      "default": "1.2.0",
       "pattern": "^\\d+\\.\\d+\\.\\d+$",
       "title": "Schema Version",
       "type": "string"
