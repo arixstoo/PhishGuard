@@ -1,6 +1,6 @@
 # Jeu de test « phishing rédigé par un LLM »
 
-*Étape 3.10 du cahier des charges. Code : `src/phishguard/data/llm_phishing.py` (chargeur et règles de sûreté), `scripts/evaluate_llm_phishing.py` (`make llm-phishing`). Tests : `tests/test_llm_phishing.py`. Résultats : [robustness-report.md](robustness-report.md#phishing-rédigé-par-un-llm-étape-310).*
+*Étape 3.10 du cahier des charges. Code : `src/phishguard/data/llm_phishing.py` (chargeur et règles de sûreté), `scripts/evaluate_llm_phishing.py` (`make llm-phishing`). Tests : `tests/test_llm_phishing.py`. Résultats : [robustness-report.md](robustness-report.md#7-phishing-rédigé-par-un-llm-étape-310).*
 
 Ce jeu mesure ce que deviennent les modèles de texte face à des leurres **sans faute**, et face à des courriers professionnels légitimes **aussi bien écrits**. Il est **défensif et local** : il sert uniquement à évaluer les détecteurs de PhishGuard. Il ne sort pas de la machine, il n'est envoyé à personne et il n'est pas versionné.
 

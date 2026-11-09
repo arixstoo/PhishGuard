@@ -46,6 +46,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
   - un domaine récent sur le lien ferait passer le rappel de l'analyse de 76 % à 92 % (scénario), mais ne réduit aucun faux positif.
 
   Conclusion : face à des messages bien écrits, le texte seul ne distingue plus un leurre d'un vrai courrier ; les signaux d'infrastructure et d'authentification deviennent l'essentiel (étape 3.10).
+- Rapport de robustesse final ([docs/robustness-report.md](docs/robustness-report.md)) : résumé « en bref », puis modèle de menace, méthodologie, jeux de données, résultats avant défenses, défenses, résultats après défenses, phishing rédigé par un LLM, limites et pistes futures ; tableaux détaillés par passage en annexe. Graphique du rappel et du FPR par technique, un passage par couleur (`scripts/plot_robustness.py`, `make plot-robustness`, palette catégorielle validée pour les daltonismes). Les limites qualifient les chiffres de borne optimiste, faute d'attaque automatisée ou combinée (étape 3.11).
 
 ## [0.2.0] : module 2, Threat Intelligence et fusion des signaux
 

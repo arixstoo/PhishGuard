@@ -1,6 +1,6 @@
 # Normalisation défensive des entrées
 
-*Étape 3.8 du cahier des charges. Code : `src/phishguard/security/normalize.py`. Tests : `tests/test_security_normalize.py`. Effet mesuré : [robustness-report.md](robustness-report.md#défense-1--normalisation-étape-38).*
+*Étape 3.8 du cahier des charges. Code : `src/phishguard/security/normalize.py`. Tests : `tests/test_security_normalize.py`. Effet mesuré : [robustness-report.md](robustness-report.md#51-normalisation-étape-38).*
 
 Plusieurs techniques d'évasion du [catalogue](evasion-catalog.md) changent les caractères d'un leurre sans changer ce que lit la victime : homoglyphes (TXT-01), caractères de largeur nulle (TXT-02), formes de pleine chasse, homographes d'un nom de domaine (URL-02). La défense ramène l'entrée à ce qu'elle **montre**, avant le modèle, **à l'entraînement comme à l'inférence** : le modèle lit alors ce que lit l'utilisateur.
 
