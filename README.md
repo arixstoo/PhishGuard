@@ -35,7 +35,7 @@ has already been reported. PhishGuard aims to fill the gap for non-technical use
 - [ ] SMS / text and raw email (`.eml`) analysis: SPF, DKIM, DMARC, display-vs-real links
 - [ ] Opt-in Threat Intelligence enrichment (Safe Browsing, VirusTotal, urlscan.io, RDAP, CT logs)
 - [ ] Explanations (SHAP + readable reasons) and MITRE ATT&CK mapping
-- [ ] Adversarial robustness benchmark (homoglyphs, typosquatting, zero-width characters…)
+- [x] Adversarial robustness benchmark (homoglyphs, typosquatting, zero-width characters…)
 - [ ] Hardened REST API (FastAPI, OpenAPI, rate limiting, SSRF guard)
 - [ ] Chrome extension (local inference, Gmail banner, link hover), Telegram bot, web page
 - [ ] FR / EN / AR interface (RTL)
@@ -111,7 +111,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | M0 Foundations | Repo structure, CI, community files, SMS baseline, phishing 101 | ✅ done |
 | M1 Detection | URL / text / email detectors, temporal split, model cards | ✅ done (`v0.1.0`) |
 | M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping, response schema, attachment content | ✅ done (`v0.2.0`) |
-| M3 XAI & adversarial | SHAP explanations, evasion catalogue, robustness report | 🚧 in progress |
+| M3 XAI & adversarial | SHAP explanations, readable reasons, evasion catalogue, normalisation, adversarial training, LLM-phishing test, robustness report | ✅ done (`v0.3.0`) |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image | ⏳ planned |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, user tests | ⏳ planned |
 | M6 Launch | Deployment, Chrome Web Store, docs site, v1.0 | ⏳ planned |
