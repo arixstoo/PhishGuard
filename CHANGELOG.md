@@ -40,6 +40,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
   - SMS : rappel propre identique (94,8 %), FPR propre de 1,47 % à 1,18 %, FPR sous leetspeak de 10,2 % à 5,2 %. La dilution résiste (−29,2 points avec 50 mots).
 
   Le banc ajoute un résumé, une ligne par défense (rappel et FPR propres, moyenne et pire cas sous perturbation). `leetspeak` et `add_long_param` acceptent leur table et leurs noms de paramètres (étape 3.9).
+- Phishing rédigé par un LLM (`phishguard.data.llm_phishing`, `scripts/evaluate_llm_phishing.py`, `make llm-phishing`, [docs/llm-phishing.md](docs/llm-phishing.md)). Le jeu est défensif et local, jamais versionné : 150 phishing et 150 courriers légitimes d'entreprise, sans faute, rédigés par un LLM, plus 40 messages légitimes de contrôle avec lien. Le chargeur refuse tout fichier qui cite un domaine non réservé, une vraie adresse ou un numéro de téléphone. Résultats :
+  - le rappel tient (90 à 91 %), mais **57 à 63 % des courriers légitimes sont signalés** (1,2 à 1,5 % sur le SMS) et la ROC-AUC passe de 0,99 à 0,71. Le modèle a appris « registre commercial = spam » ;
+  - la règle « lien + demande de code ou de compte » paraît précise sur le jeu principal, mais le contrôle montre qu'elle signale 52,5 % des messages légitimes avec lien : elle ne sera pas ajoutée à la fusion ;
+  - un domaine récent sur le lien ferait passer le rappel de l'analyse de 76 % à 92 % (scénario), mais ne réduit aucun faux positif.
+
+  Conclusion : face à des messages bien écrits, le texte seul ne distingue plus un leurre d'un vrai courrier ; les signaux d'infrastructure et d'authentification deviennent l'essentiel (étape 3.10).
 
 ## [0.2.0] : module 2, Threat Intelligence et fusion des signaux
 
