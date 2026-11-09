@@ -36,7 +36,7 @@ Fiche d'identité du modèle de détection de spam et de smishing dans les SMS. 
 <!-- generated:card-text:start -->
 *Généré par `scripts/model_cards.py` depuis [`metrics/text_v1.json`](metrics/text_v1.json).*
 
-**Modèle** : approche `char_svm` (`C=0.1`), seuil -0,2538 (1 % FPR sur la validation), SHA-256 `d583ba3f3e3a`, corpus `7d039a24a608`.
+**Modèle** : approche `char_svm` (`C=0.1`), seuil -0,2532 (1 % FPR sur la validation), SHA-256 `0b93f67b536e`, corpus `7d039a24a608`.
 
 | Jeu | Messages | Précision | Rappel | FPR | PR-AUC |
 | :--- | ---: | ---: | ---: | ---: | ---: |
@@ -44,7 +44,7 @@ Fiche d'identité du modèle de détection de spam et de smishing dans les SMS. 
 | Jeu français rédigé (hors distribution) | 60 | 0,629 | 0,733 | 43 % | 0,769 |
 | Jeu arabe rédigé (hors distribution) | 40 | 0,619 | 0,650 | 40 % | 0,731 |
 
-Taille 386 Kio, latence p50 0,53 ms par message.
+Taille 386 Kio, latence p50 1,25 ms par message.
 <!-- generated:card-text:end -->
 
 ## Explicabilité et calibration

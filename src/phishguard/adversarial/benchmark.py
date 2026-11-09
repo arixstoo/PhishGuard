@@ -109,6 +109,7 @@ def evaluate_perturbations(
                 "technique": perturbation.technique,
                 "vector": perturbation.vector,
                 "description": perturbation.description,
+                "creates_lookalike": perturbation.creates_lookalike,
                 "changed": {
                     "phishing": rate(changed[positive]),
                     "legitimate": rate(changed[negative]),

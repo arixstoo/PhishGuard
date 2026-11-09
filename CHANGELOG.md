@@ -22,6 +22,19 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
   - SMS français / arabe : déjà 42 % de faux positifs sans aucune perturbation.
 
   Trois variantes à intensité maximale ont été ajoutées aux perturbations (étape 3.7).
+- Normalisation défensive (`phishguard.security.normalize`), à l'entraînement comme à l'inférence ([docs/normalization.md](docs/normalization.md)) :
+  - NFKC, puis retrait des caractères de format (Cf) et de contrôle (Cc) ;
+  - repli des homoglyphes vers le latin, limité aux mots qui imitent l'écriture latine : un texte russe, grec ou arabe reste intact ;
+  - règle d'alerte forte pour un hôte qui imite des lettres latines (`host_script_alert`, y compris un label entièrement cyrillique). Les hôtes ne sont jamais repliés, sans quoi `аpple.com` deviendrait `apple.com` ;
+  - journalisation des entrées modifiées, avec des comptes seulement.
+
+  Où elle s'applique :
+  - `TextNormalizer` est le prétraitement des vectoriseurs TF-IDF : même texte pour l'entraînement, le score et les explications. `text_v1` est réentraîné, avec les mêmes chiffres sur le test propre ;
+  - les mots-clés smishing replient aussi les homoglyphes ;
+  - `parse_url` normalise le texte brut avant les features ;
+  - `UrlAnalysis.host_alert` porte l'alerte, que l'étape 3.12 branchera sur la fusion.
+
+  Banc d'essai relancé : sous homoglyphes et largeur nulle, le rappel SMS revient exactement à celui du texte propre (`zero_width_dense` : de 78,1 % à 94,8 %). Les homographes d'hôte sont signalés à 99,4 % au lieu de 75,1 %. Le FPR sur les données propres est inchangé (URL 0,83 %, SMS 1,47 %). Les évasions de forme (sous-domaines, dilution) restent entières, comme prévu. Coût : 0,53 → 1,25 ms par SMS (étape 3.8).
 
 ## [0.2.0] : module 2, Threat Intelligence et fusion des signaux
 

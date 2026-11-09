@@ -13,7 +13,8 @@ Fonctions pures, sans réseau ni état, comme les features URL : elles seront po
 l'identique dans l'extension et le bot (module 5). :data:`FEATURES` en est le contrat.
 
 Normalisation avant la recherche des mots-clés (:func:`normalize`) : minuscules (casefold),
-caractères de format invisibles retirés (espace sans chasse U+200B…),
+caractères de format invisibles retirés (espace sans chasse U+200B…), homoglyphes
+cyrilliques et grecs repliés vers le latin (étape 3.8),
 accents latins retirés (``sécurité`` → ``securite``), signes diacritiques arabes (tashkil,
 tatwil) retirés et formes de l'alif unifiées (``أ إ آ`` → ``ا``). Un mot-clé latin doit
 commencer un mot (``free`` dans ``freedom`` compte, dans ``carefree`` non) ; un mot-clé
@@ -30,6 +31,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from phishguard.security.normalize import fold_confusables
 from phishguard.urls.brands import load_shorteners
 
 URGENCY_KEYWORDS = (
@@ -194,6 +196,8 @@ def normalize(text: str) -> str:
     # Les caractères de format invisibles (U+200B…, catégorie Cf) servent à couper les
     # mots-clés pour tromper les filtres : « bloqu\u200bé » doit rester « bloque ».
     text = "".join(c for c in text if unicodedata.category(c) != "Cf")
+    # Homoglyphes (« blоqué » avec un « о » cyrillique) repliés vers le latin (étape 3.8).
+    text = fold_confusables(text)[0]
     text = _ARABIC_DIACRITICS_RE.sub("", text).translate(_ALIF_FORMS)
     # NFD sépare les accents (et la hamza portée par ؤ ou ئ) de leur lettre ; on les retire.
     return "".join(c for c in unicodedata.normalize("NFD", text) if not unicodedata.combining(c))

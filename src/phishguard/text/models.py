@@ -44,6 +44,7 @@ from sklearn.svm import LinearSVC
 
 from phishguard.data.urls import LABEL_LEGITIMATE
 from phishguard.evaluation.metrics import binary_report, threshold_at_fpr
+from phishguard.security.normalize import TextNormalizer
 from phishguard.text.smishing import SmishingFeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -132,15 +133,28 @@ class SentenceEmbedder(BaseEstimator, TransformerMixin):
 # --------------------------------------------------------------------------- #
 
 
+# Normalisation défensive (étape 3.8) : le prétraitement remplace ``lowercase`` et
+# ``strip_accents`` du vectoriseur, et les refait après NFKC, retrait des caractères
+# invisibles et repli des homoglyphes. Le même objet sert à l'inférence et aux
+# explications.
+
+
 def word_tfidf() -> TfidfVectorizer:
     return TfidfVectorizer(
-        lowercase=True, strip_accents="unicode", ngram_range=(1, 2), min_df=2, sublinear_tf=True
+        preprocessor=TextNormalizer(lowercase=True, accents=True),
+        ngram_range=(1, 2),
+        min_df=2,
+        sublinear_tf=True,
     )
 
 
 def char_tfidf() -> TfidfVectorizer:
     return TfidfVectorizer(
-        lowercase=True, analyzer="char_wb", ngram_range=(2, 5), min_df=2, sublinear_tf=True
+        preprocessor=TextNormalizer(lowercase=True),
+        analyzer="char_wb",
+        ngram_range=(2, 5),
+        min_df=2,
+        sublinear_tf=True,
     )
 
 

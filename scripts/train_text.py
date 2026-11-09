@@ -46,6 +46,7 @@ from phishguard.reporting import (
     markdown_table,
     update_generated_block,
 )
+from phishguard.security.normalize import NORMALIZATION_VERSION
 from phishguard.text import models as M
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -314,6 +315,8 @@ def main(argv: list[str] | None = None) -> int:
             "sms_sha256": sms_sha,
             "seed": args.seed,
             "validation": selected.validation,
+            # Normalisation défensive appliquée par le vectoriseur (étape 3.8).
+            "normalization": NORMALIZATION_VERSION,
         },
     )
     model.save(args.model_out)

@@ -329,6 +329,9 @@ class Perturbation:
 
     ``technique`` renvoie à la fiche du catalogue (``docs/evasion-catalog.md``).
     ``apply_one(sample, seed)`` reçoit déjà la graine propre à l'échantillon.
+    ``creates_lookalike`` : la perturbation fabrique une imitation (un autre domaine). Un
+    échantillon légitime perturbé n'est alors plus légitime, et le signaler est juste :
+    son « FPR » ne mesure pas une fausse alerte.
     """
 
     name: str
@@ -336,6 +339,7 @@ class Perturbation:
     technique: str
     description: str
     apply_one: Callable[[str, int], str]
+    creates_lookalike: bool = False
 
     def __call__(self, sample: str, seed: int = 0) -> str:
         return self.apply_one(sample, sample_seed(seed, sample))
@@ -452,6 +456,7 @@ PERTURBATIONS: dict[str, Perturbation] = {
             "URL-02",
             "30 % des lettres remplaçables de l'hôte (hors TLD) en cyrillique",
             lambda s, seed: swap_host_homoglyphs(s, rate=0.3, seed=seed),
+            creates_lookalike=True,
         ),
     )
 }

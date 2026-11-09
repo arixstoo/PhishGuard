@@ -16,6 +16,7 @@ Ce rapport mesure ce que gagne un attaquant qui modifie la forme de ses leurres 
   - **rappel** du phishing perturbé et son écart au rappel d'origine (**Δ rappel**) : ce que gagne l'attaquant ;
   - **FPR** du légitime perturbé de la même façon (**Δ FPR**). Un message légitime peut contenir des chiffres, une URL légitime de longs paramètres. Une défense qui signale toute forme inhabituelle n'est pas une défense ;
   - **Échappés** : phishing détecté sans perturbation, manqué avec.
+- **Rejouer un passage** : `make robustness` relance le passage `baseline`. Le modèle SMS d'origine, remplacé à l'étape 3.8, se rejoue avec `--text-model` sur sa copie locale (`models/baseline/text_v1.joblib`, non versionnée comme tous les modèles). Le passage `normalization` se relance avec `--label normalization --url-host-rule`.
 - **Ce qui est perturbé** : tous les échantillons, phishing et légitimes. Ceux où la technique ne s'applique pas (une URL sur une adresse IP n'a pas de sous-domaine) restent dans le calcul, inchangés. La colonne « Phishing modifié » donne la part réellement touchée.
 
 ## Résultats avant défenses
@@ -107,51 +108,129 @@ Le modèle, entraîné sur de l'anglais, signale 42 % des messages légitimes fr
 | dilution du texte | `pad_benign`, `pad_benign_long` | entraînement adversarial (3.9), catégories de leurre |
 | chiffres pris pour un indice de spam | `leetspeak` | entraînement adversarial (3.9) |
 
+## Défense 1 : normalisation (étape 3.8)
+
+La normalisation ([normalization.md](normalization.md)) ramène l'entrée à ce qu'elle montre, à l'entraînement comme à l'inférence :
+
+- NFKC, puis retrait des caractères de format et de contrôle ;
+- repli des homoglyphes pour le texte ;
+- pour les hôtes, une règle d'alerte au lieu d'un repli.
+
+Le modèle SMS a été réentraîné avec la normalisation dans son vectoriseur. Le modèle URL est inchangé : sur les 98 031 URLs d'entraînement, une seule est modifiée par la normalisation. Ce passage lui ajoute la règle d'alerte des hôtes, appliquée comme une alerte forte : un hôte qui imite des lettres latines est signalé quel que soit le score.
+
+<!-- generated:robustness-normalization:start -->
+*Généré par `scripts/robustness_benchmark.py` le 2026-11-09, passage `normalization` : normalisation de l'étape 3.8 : SMS réentraîné avec NFKC, invisibles retirés et homoglyphes repliés ; règle d'alerte des hôtes qui imitent le latin. Graine des perturbations : 0. Intervalles de Wilson à 95 % entre crochets ; « Échappés » : phishing détecté sans perturbation, manqué avec. Chiffres complets : [`metrics/robustness_normalization.json`](metrics/robustness_normalization.json).*
+
+#### URL (test)
+
+Modèle `url_v1` (`9aa07df2ec23`), seuil `fpr_0_5pct` (score > 0,8263), 4 200 URLs de phishing et 16 804 légitimes.
+
+| Perturbation | Technique | Phishing modifié | Rappel | Δ rappel | FPR | Δ FPR | Échappés |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| *aucune* |  |  | 73,9 % [72,6–75,2 %] |  | 0,83 % [0,71–0,98 %] |  |  |
+| `url_subdomains` | URL-03 | 100 % | 61,4 % [59,9–62,9 %] | **−12,5 pts** | 5,56 % [5,22–5,91 %] | +4,73 pts | 676 |
+| `url_benign_path` | URL-04 | 100 % | 70,0 % [68,6–71,4 %] | **−3,9 pts** | 11,34 % [10,87–11,83 %] | +10,51 pts | 433 |
+| `url_long_param` | URL-06 | 100 % | 82,2 % [81,0–83,3 %] | **+8,3 pts** | 49,14 % [48,38–49,89 %] | +48,30 pts | 126 |
+| `url_uppercase` | URL-07 | 100 % | 73,9 % [72,6–75,2 %] | **±0,0 pts** | 0,83 % [0,71–0,98 %] | ±0,00 pts | 0 |
+| `url_homoglyphs` | URL-02 | 98 % | 99,4 % [99,1–99,6 %] | **+25,5 pts** | 97,22 % [96,96–97,46 %] ¹ | +96,39 pts | 0 |
+
+¹ La perturbation fabrique une imitation : une URL légitime réécrite en homoglyphes désigne un autre domaine, et la signaler est juste. Ce FPR ne mesure pas de fausses alertes.
+
+Règle d'alerte de l'étape 3.8 appliquée : un hôte qui imite des lettres latines est signalé quel que soit le score du modèle.
+
+Pire perturbation : `url_subdomains` (URL-03), −12,5 pts de rappel ; 676 phishing détectés sans perturbation passent.
+
+#### SMS (test UCI, anglais)
+
+Modèle `text_v1` (`0b93f67b536e`), seuil `decision` (score > -0,2532), 96 spams et 678 légitimes.
+
+| Perturbation | Technique | Phishing modifié | Rappel | Δ rappel | FPR | Δ FPR | Échappés |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| *aucune* |  |  | 94,8 % [88,4–97,8 %] |  | 1,47 % [0,80–2,69 %] |  |  |
+| `zero_width` | TXT-02 | 100 % | 94,8 % [88,4–97,8 %] | **±0,0 pts** | 1,47 % [0,80–2,69 %] | ±0,00 pts | 0 |
+| `homoglyphs` | TXT-01 | 100 % | 94,8 % [88,4–97,8 %] | **±0,0 pts** | 1,47 % [0,80–2,69 %] | ±0,00 pts | 0 |
+| `leetspeak` | TXT-04 | 99 % | 96,9 % [91,2–98,9 %] | **+2,1 pts** | 10,18 % [8,12–12,68 %] | +8,70 pts | 0 |
+| `split_symbols` | TXT-03 | 99 % | 94,8 % [88,4–97,8 %] | **±0,0 pts** | 0,59 % [0,23–1,51 %] | −0,88 pts | 0 |
+| `pad_benign` | TXT-05 | 100 % | 83,3 % [74,6–89,5 %] | **−11,5 pts** | 0,15 % [0,03–0,83 %] | −1,33 pts | 11 |
+| `homoglyphs_full` | TXT-01 | 100 % | 94,8 % [88,4–97,8 %] | **±0,0 pts** | 1,47 % [0,80–2,69 %] | ±0,00 pts | 0 |
+| `zero_width_dense` | TXT-02 | 100 % | 94,8 % [88,4–97,8 %] | **±0,0 pts** | 1,47 % [0,80–2,69 %] | ±0,00 pts | 0 |
+| `pad_benign_long` | TXT-05 | 100 % | 63,5 % [53,6–72,5 %] | **−31,2 pts** | 0,00 % [0,00–0,56 %] | −1,47 pts | 30 |
+
+Pire perturbation : `pad_benign_long` (TXT-05), −31,2 pts de rappel ; 30 phishing détectés sans perturbation passent.
+
+#### SMS français / arabe (hors distribution)
+
+Modèle `text_v1` (`0b93f67b536e`), seuil `decision` (score > -0,2532), 50 messages frauduleux et 50 légitimes.
+
+| Perturbation | Technique | Phishing modifié | Rappel | Δ rappel | FPR | Δ FPR | Échappés |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| *aucune* |  |  | 70,0 % [56,2–80,9 %] |  | 42,00 % [29,37–55,77 %] |  |  |
+| `zero_width` | TXT-02 | 100 % | 70,0 % [56,2–80,9 %] | **±0,0 pts** | 42,00 % [29,37–55,77 %] | ±0,00 pts | 0 |
+| `homoglyphs` | TXT-01 | 86 % | 70,0 % [56,2–80,9 %] | **±0,0 pts** | 42,00 % [29,37–55,77 %] | ±0,00 pts | 0 |
+| `leetspeak` | TXT-04 | 86 % | 82,0 % [69,2–90,2 %] | **+12,0 pts** | 64,00 % [50,14–75,86 %] | +22,00 pts | 1 |
+| `split_symbols` | TXT-03 | 100 % | 64,0 % [50,1–75,9 %] | **−6,0 pts** | 24,00 % [14,30–37,41 %] | −18,00 pts | 3 |
+| `pad_benign` | TXT-05 | 100 % | 2,0 % [0,4–10,5 %] | **−68,0 pts** | 0,00 % [0,00–7,14 %] | −42,00 pts | 34 |
+| `homoglyphs_full` | TXT-01 | 86 % | 70,0 % [56,2–80,9 %] | **±0,0 pts** | 42,00 % [29,37–55,77 %] | ±0,00 pts | 0 |
+| `zero_width_dense` | TXT-02 | 100 % | 70,0 % [56,2–80,9 %] | **±0,0 pts** | 42,00 % [29,37–55,77 %] | ±0,00 pts | 0 |
+| `pad_benign_long` | TXT-05 | 100 % | 0,0 % [0,0–7,1 %] | **−70,0 pts** | 0,00 % [0,00–7,14 %] | −42,00 pts | 35 |
+
+Pire perturbation : `pad_benign_long` (TXT-05), −70,0 pts de rappel ; 35 phishing détectés sans perturbation passent.
+<!-- generated:robustness-normalization:end -->
+
+### Lecture
+
+- **Les évasions de caractères sont annulées.** Sous homoglyphes et largeur nulle, à intensité modérée comme maximale, le rappel SMS revient **exactement** à celui du texte propre (94,8 %). `zero_width_dense` passait de 94,8 % à 78,1 % ; il ne coûte plus rien. Le message perturbé et le message propre donnent le même texte normalisé, donc le même score : c'est une garantie, pas une moyenne.
+- **Le jeu français / arabe en profite aussi** : sous `zero_width_dense`, le rappel remonte de 28 % à 70 %, et de 58 % à 70 % sous `homoglyphs_full`.
+- **Les homographes d'hôte sont presque tous signalés** : 99,4 % de rappel au lieu de 75,1 %. Toutes les URLs réécrites déclenchent l'alerte. Les 27 phishing encore manqués sont des URLs que la perturbation n'a pas pu modifier (adresse IP, aucune lettre remplaçable). Le « FPR » de 97 % de cette ligne mesure des imitations, pas des fausses alertes (note ¹).
+- **Aucun faux positif de plus sur les données propres** : FPR de 0,83 % (URL) et 1,47 % (SMS), comme avant. La règle d'alerte ne se déclenche sur aucune URL légitime du test. Sous `zero_width` et `homoglyphs`, le FPR du légitime perturbé passe de 0,88 % à 1,47 % : il ne monte pas, il **redevient** celui du texte propre. La perturbation faisait baisser le score des messages légitimes, et la normalisation l'annule dans les deux sens.
+- **Les évasions de forme sont intactes**, comme prévu : sous-domaines (−12,5 points), chemin bénin, long paramètre, dilution (−31,2 points avec 50 mots), leetspeak. La normalisation ne les visait pas. Elles sont la cible de l'entraînement adversarial (étape 3.9).
+- **Coût** : la normalisation est écrite en Python, caractère par caractère. Elle fait passer la latence du modèle SMS de 0,53 ms à 1,25 ms par message (p50, [text-models.md](text-models.md)). C'est négligeable pour un message, et à surveiller pour l'analyse par lots.
+
 ## Comparaison des passages
 
 Un passage par défense : `baseline` (modèles d'origine), puis chaque défense, sur les mêmes jeux et avec les mêmes perturbations.
 
 <!-- generated:robustness-comparison:start -->
-*Généré par `scripts/robustness_benchmark.py` à partir de `robustness_baseline.json`. Rappel et FPR au seuil de décision de chaque modèle.*
+*Généré par `scripts/robustness_benchmark.py` à partir de `robustness_baseline.json`, `robustness_normalization.json`. Rappel et FPR au seuil de décision de chaque modèle.*
 
 #### URL (test)
 
-| Perturbation | Rappel `baseline` | FPR `baseline` |
-| :--- | ---: | ---: |
-| *aucune* | 73,9 % | 0,83 % |
-| `url_subdomains` | 61,4 % | 5,56 % |
-| `url_benign_path` | 70,0 % | 11,34 % |
-| `url_long_param` | 82,2 % | 49,14 % |
-| `url_uppercase` | 73,9 % | 0,83 % |
-| `url_homoglyphs` | 75,1 % | 1,02 % |
+| Perturbation | Rappel `baseline` | FPR `baseline` | Rappel `normalization` | FPR `normalization` |
+| :--- | ---: | ---: | ---: | ---: |
+| *aucune* | 73,9 % | 0,83 % | 73,9 % | 0,83 % |
+| `url_subdomains` | 61,4 % | 5,56 % | 61,4 % | 5,56 % |
+| `url_benign_path` | 70,0 % | 11,34 % | 70,0 % | 11,34 % |
+| `url_long_param` | 82,2 % | 49,14 % | 82,2 % | 49,14 % |
+| `url_uppercase` | 73,9 % | 0,83 % | 73,9 % | 0,83 % |
+| `url_homoglyphs` | 75,1 % | 1,02 % | 99,4 % | 97,22 % |
 
 #### SMS (test UCI, anglais)
 
-| Perturbation | Rappel `baseline` | FPR `baseline` |
-| :--- | ---: | ---: |
-| *aucune* | 94,8 % | 1,47 % |
-| `zero_width` | 92,7 % | 0,88 % |
-| `homoglyphs` | 93,8 % | 0,88 % |
-| `leetspeak` | 96,9 % | 10,03 % |
-| `split_symbols` | 94,8 % | 0,59 % |
-| `pad_benign` | 83,3 % | 0,15 % |
-| `homoglyphs_full` | 89,6 % | 0,29 % |
-| `zero_width_dense` | 78,1 % | 0,15 % |
-| `pad_benign_long` | 62,5 % | 0,00 % |
+| Perturbation | Rappel `baseline` | FPR `baseline` | Rappel `normalization` | FPR `normalization` |
+| :--- | ---: | ---: | ---: | ---: |
+| *aucune* | 94,8 % | 1,47 % | 94,8 % | 1,47 % |
+| `zero_width` | 92,7 % | 0,88 % | 94,8 % | 1,47 % |
+| `homoglyphs` | 93,8 % | 0,88 % | 94,8 % | 1,47 % |
+| `leetspeak` | 96,9 % | 10,03 % | 96,9 % | 10,18 % |
+| `split_symbols` | 94,8 % | 0,59 % | 94,8 % | 0,59 % |
+| `pad_benign` | 83,3 % | 0,15 % | 83,3 % | 0,15 % |
+| `homoglyphs_full` | 89,6 % | 0,29 % | 94,8 % | 1,47 % |
+| `zero_width_dense` | 78,1 % | 0,15 % | 94,8 % | 1,47 % |
+| `pad_benign_long` | 62,5 % | 0,00 % | 63,5 % | 0,00 % |
 
 #### SMS français / arabe (hors distribution)
 
-| Perturbation | Rappel `baseline` | FPR `baseline` |
-| :--- | ---: | ---: |
-| *aucune* | 70,0 % | 42,00 % |
-| `zero_width` | 70,0 % | 46,00 % |
-| `homoglyphs` | 70,0 % | 38,00 % |
-| `leetspeak` | 82,0 % | 66,00 % |
-| `split_symbols` | 64,0 % | 24,00 % |
-| `pad_benign` | 2,0 % | 0,00 % |
-| `homoglyphs_full` | 58,0 % | 42,00 % |
-| `zero_width_dense` | 28,0 % | 20,00 % |
-| `pad_benign_long` | 0,0 % | 0,00 % |
+| Perturbation | Rappel `baseline` | FPR `baseline` | Rappel `normalization` | FPR `normalization` |
+| :--- | ---: | ---: | ---: | ---: |
+| *aucune* | 70,0 % | 42,00 % | 70,0 % | 42,00 % |
+| `zero_width` | 70,0 % | 46,00 % | 70,0 % | 42,00 % |
+| `homoglyphs` | 70,0 % | 38,00 % | 70,0 % | 42,00 % |
+| `leetspeak` | 82,0 % | 66,00 % | 82,0 % | 64,00 % |
+| `split_symbols` | 64,0 % | 24,00 % | 64,0 % | 24,00 % |
+| `pad_benign` | 2,0 % | 0,00 % | 2,0 % | 0,00 % |
+| `homoglyphs_full` | 58,0 % | 42,00 % | 70,0 % | 42,00 % |
+| `zero_width_dense` | 28,0 % | 20,00 % | 70,0 % | 42,00 % |
+| `pad_benign_long` | 0,0 % | 0,00 % | 0,0 % | 0,00 % |
 <!-- generated:robustness-comparison:end -->
 
 ## Limites

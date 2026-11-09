@@ -56,6 +56,13 @@ from phishguard.fusion.mitre import (
 )
 from phishguard.fusion.score import FusionConfig, FusionResult, Verdict, fuse
 from phishguard.security.netguard import NetGuardError, is_public_ip, parse_ip_literal
+from phishguard.security.normalize import (
+    HostAlert,
+    host_script_alert,
+    log_normalization,
+    normalize_text,
+    normalize_url_text,
+)
 from phishguard.urls.features import ParsedUrl, UrlFeatureExtractor, parse_url
 
 if TYPE_CHECKING:
@@ -117,6 +124,9 @@ class UrlAnalysis:
     model_version: str = "unknown"  # ``metadata["model_version"]`` du modèle (``url_v1``)
     explanation: UrlExplanation | None = None  # valeurs SHAP du score brut (étape 3.1)
     model_thresholds: Mapping[str, float] = field(default_factory=dict)  # vue analyste
+    # Hôte qui imite des lettres latines (étape 3.8) : alerte forte, branchée sur la
+    # fusion à l'étape 3.12.
+    host_alert: HostAlert | None = None
 
     def to_response(self, language: str = "fr", *, analyst: bool = True) -> AnalysisResponse:
         """Réponse au format figé de l'étape 2.11 bis (``phishguard.schema``), raisons et
@@ -146,6 +156,7 @@ class UrlAnalysis:
             },
             "mitre": [t.to_dict() for t in self.mitre],
             "explanation": None if self.explanation is None else self.explanation.to_dict(),
+            "host_alert": self.host_alert,
             "latency_ms": self.latency_ms,
         }
 
@@ -208,6 +219,11 @@ class UrlAnalyzer:
         start = time.perf_counter()
         parsed = parse_url(url)  # lève InvalidUrlError si l'URL est invalide
         domain = parsed.registered_domain
+        # Normalisation (étape 3.8) : faite par parse_url ; journalisée ici, une fois.
+        log_normalization(normalize_url_text(url).report, "url")
+        host_alert = host_script_alert(parsed.host)
+        if host_alert is not None:
+            logger.info("hôte qui imite des lettres latines (%s)", host_alert)
         raw, explanation = self._score(url)
         if not math.isfinite(raw):
             # min/max transformeraient NaN en 0, donc en verdict « sûr » : on refuse.
@@ -250,6 +266,7 @@ class UrlAnalyzer:
             model_version=self.model_version,
             explanation=explanation,
             model_thresholds=self.model_thresholds,
+            host_alert=host_alert,
         )
 
     def _score(self, url: str) -> tuple[float, UrlExplanation | None]:
@@ -415,6 +432,8 @@ class TextAnalyzer:
             raise ValueError(f"message trop long : plus de {MAX_TEXT_CHARS} caractères")
         if channel not in TEXT_CHANNELS:
             raise ValueError(f"canal {channel!r} : {TEXT_CHANNELS} attendus")
+        # Le modèle normalise lui-même le texte (étape 3.8) ; le fait est journalisé ici.
+        log_normalization(normalize_text(text).report, channel)
 
         raw = float(self.model.score([text])[0])
         if not math.isfinite(raw):
