@@ -35,6 +35,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
   - `UrlAnalysis.host_alert` porte l'alerte, que l'étape 3.12 branchera sur la fusion.
 
   Banc d'essai relancé : sous homoglyphes et largeur nulle, le rappel SMS revient exactement à celui du texte propre (`zero_width_dense` : de 78,1 % à 94,8 %). Les homographes d'hôte sont signalés à 99,4 % au lieu de 75,1 %. Le FPR sur les données propres est inchangé (URL 0,83 %, SMS 1,47 %). Les évasions de forme (sous-domaines, dilution) restent entières, comme prévu. Coût : 0,53 → 1,25 ms par SMS (étape 3.8).
+- Entraînement adversarial (`phishguard.adversarial.augment`, `scripts/train_adversarial.py`, `make train-adversarial`) : une copie perturbée de chaque échantillon d'entraînement, avec la même étiquette, puis réentraînement de la configuration déjà retenue de chaque modèle. Seule la donnée change. Le générateur d'entraînement est distinct de celui du banc : vocabulaires disjoints (vérifié par les tests), autres séparateurs, autre table leet, intensités tirées dans une plage et autre graine. Ni la validation ni le test ne sont augmentés. Les deux classes sont perturbées, un choix fait avant la mesure ; l'ablation « phishing seul » montre qu'il apprend au modèle que toute forme ajoutée signale le phishing (94 % de FPR sous long paramètre). Résultats (`url_v2`, `text_v2`) :
+  - URL : FPR sous long paramètre de 49,1 % à 0,77 %, sous chemin bénin de 11,3 % à 0,71 %, sous sous-domaines de 5,6 % à 0,96 % ; rappel sous sous-domaines de 61,4 % à 66,9 %. Prix : 10,3 points de rappel sur les URLs propres (73,9 % → 63,6 %), le raccourci de forme retiré étant en partie un biais du jeu ;
+  - SMS : rappel propre identique (94,8 %), FPR propre de 1,47 % à 1,18 %, FPR sous leetspeak de 10,2 % à 5,2 %. La dilution résiste (−29,2 points avec 50 mots).
+
+  Le banc ajoute un résumé, une ligne par défense (rappel et FPR propres, moyenne et pire cas sous perturbation). `leetspeak` et `add_long_param` acceptent leur table et leurs noms de paramètres (étape 3.9).
 
 ## [0.2.0] : module 2, Threat Intelligence et fusion des signaux
 

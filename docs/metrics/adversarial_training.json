@@ -1,0 +1,172 @@
+{
+  "report_version": "1.0.0",
+  "metadata": {
+    "generated_at": "2026-11-09T12:46:42+00:00",
+    "generator_version": "1.0.0",
+    "classes": "both",
+    "copies": 1,
+    "seed": 3009,
+    "splits_augmented": [
+      "train"
+    ],
+    "recipes": {
+      "pad_words": {
+        "vector": "text",
+        "technique": "TXT-05",
+        "description": "8 à 60 mots anodins ajoutés à la fin"
+      },
+      "leet_symbols": {
+        "vector": "text",
+        "technique": "TXT-04",
+        "description": "20 à 80 % des lettres en chiffres ou symboles"
+      },
+      "split_dashes": {
+        "vector": "text",
+        "technique": "TXT-03",
+        "description": "30 à 80 % des mots coupés par « - », « _ » ou « * »"
+      },
+      "subdomains": {
+        "vector": "url",
+        "technique": "URL-03",
+        "description": "1 à 3 sous-domaines d'allure légitime"
+      },
+      "benign_path": {
+        "vector": "url",
+        "technique": "URL-04",
+        "description": "page déplacée sous 1 à 4 répertoires"
+      },
+      "long_param": {
+        "vector": "url",
+        "technique": "URL-06",
+        "description": "paramètre de suivi de 40 à 320 caractères"
+      }
+    }
+  },
+  "models": {
+    "url": {
+      "reference": {
+        "version": "url_v1",
+        "sha256": "9aa07df2ec23eb0ff02c224cf01b013bcf97ad9554bd53f41ac2ff08f201bc94",
+        "validation": {
+          "pr_auc": 0.9564,
+          "roc_auc": 0.9811,
+          "recall_at_fpr_1pct": 0.8406,
+          "recall_at_fpr_0_1pct": 0.6713,
+          "threshold": 0.695953,
+          "recall": 0.8406,
+          "fpr_homepages": 0.0034,
+          "fpr_internal_pages": 0.0682
+        }
+      },
+      "trained": {
+        "version": "url_v2",
+        "sha256": "323749b07023646faae4dcd3ce5e912405be5a32fec45a8888ee153c1e99dea8",
+        "validation": {
+          "pr_auc": 0.9375,
+          "roc_auc": 0.9752,
+          "recall_at_fpr_1pct": 0.7675,
+          "recall_at_fpr_0_1pct": 0.6172,
+          "threshold": 0.630398,
+          "recall": 0.7675,
+          "fpr_homepages": 0.0046,
+          "fpr_internal_pages": 0.057
+        },
+        "thresholds": {
+          "fpr_5pct": 0.173195,
+          "fpr_2pct": 0.414354,
+          "fpr_1pct": 0.630398,
+          "fpr_0_5pct": 0.777369,
+          "fpr_0_2pct": 0.923695,
+          "fpr_0_1pct": 0.959187
+        }
+      },
+      "config": {
+        "model": "lightgbm",
+        "params": {
+          "n_estimators": 300,
+          "learning_rate": 0.05,
+          "num_leaves": 63,
+          "min_child_samples": 20
+        },
+        "feature_set": "without_scheme"
+      },
+      "augmentation": {
+        "original": 98031,
+        "added": 98031,
+        "added_phishing": 19599,
+        "added_legitimate": 78432,
+        "skipped": 0,
+        "by_recipe": {
+          "subdomains": 32657,
+          "benign_path": 32716,
+          "long_param": 32658
+        }
+      }
+    },
+    "text": {
+      "reference": {
+        "version": "text_v1",
+        "sha256": "0b93f67b536e175c2c155d44c5198480d78d2f50ba78b422b481cd0f699a276e",
+        "validation": {
+          "n": 774,
+          "positives": 96,
+          "confusion_matrix": {
+            "tn": 672,
+            "fp": 6,
+            "fn": 2,
+            "tp": 94
+          },
+          "precision": 0.94,
+          "recall": 0.9792,
+          "f1": 0.9592,
+          "fpr": 0.0088,
+          "pr_auc": 0.9927,
+          "roc_auc": 0.9986,
+          "recall_at_fpr_1pct": 0.9792,
+          "recall_at_fpr_0_1pct": 0.875
+        }
+      },
+      "trained": {
+        "version": "text_v2",
+        "sha256": "88458aeb4316b80e23da924595ec35ac1945b37dd87f86e6059a0aba5c07abcb",
+        "validation": {
+          "n": 774,
+          "positives": 96,
+          "confusion_matrix": {
+            "tn": 672,
+            "fp": 6,
+            "fn": 3,
+            "tp": 93
+          },
+          "precision": 0.9394,
+          "recall": 0.9688,
+          "f1": 0.9538,
+          "fpr": 0.0088,
+          "pr_auc": 0.9935,
+          "roc_auc": 0.9989,
+          "recall_at_fpr_1pct": 0.9688,
+          "recall_at_fpr_0_1pct": 0.9062
+        },
+        "threshold": -0.22684853482729084
+      },
+      "config": {
+        "approach": "char_svm",
+        "params": {
+          "C": 0.1
+        }
+      },
+      "augmentation": {
+        "original": 3612,
+        "added": 3612,
+        "added_phishing": 450,
+        "added_legitimate": 3162,
+        "skipped": 0,
+        "by_recipe": {
+          "pad_words": 1281,
+          "leet_symbols": 1150,
+          "split_dashes": 1181
+        }
+      }
+    }
+  }
+}
