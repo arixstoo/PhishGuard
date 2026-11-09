@@ -5,11 +5,12 @@
 # d'un mot latin s'afficherait du mauvais côté.
 
 language: ar
-version: 1
+version: 2
 
 reasons:
   hard_rule.blocklist: "هذا الموقع موجود في قائمتك السوداء الشخصية."
   hard_rule.google_safe_browsing: "تصنّف خدمة Google Safe Browsing هذه الصفحة على أنها خطيرة."
+  hard_rule.lookalike_host: "يستبدل هذا العنوان حروفًا لاتينية بحروف من أبجدية أخرى تشبهها: إنه تقليد لموقع آخر."
   hard_rule.allowlist: "هذا الموقع موجود في قائمتك البيضاء الشخصية."
 
   model: "يشبه شكل هذا العنوان روابط تصيّد احتيالي معروفة."

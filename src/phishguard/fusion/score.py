@@ -6,12 +6,17 @@ aucune horloge. Ses paramètres (poids, seuils, règles) viennent d'un fichier v
 
 **1. Règles dures**, dans cet ordre :
 
-- liste noire personnelle, ou correspondance Google Safe Browsing : ``phishing`` (100) ;
+- liste noire personnelle, correspondance Google Safe Browsing, ou hôte qui imite des
+  lettres latines (``lookalike_host``, étape 3.12) : ``phishing`` (100) ;
 - liste blanche personnelle : ``sûr`` (0).
 
 Safe Browsing passe **avant** la liste blanche : une page confirmée comme dangereuse par
 Google reste signalée, même si l'utilisateur a mis son domaine en liste blanche (domaine
-légitime compromis, ou liste blanche obtenue par manipulation).
+légitime compromis, ou liste blanche obtenue par manipulation). L'alerte d'hôte de
+l'étape 3.8 aussi : ``аpple.com`` n'est pas ``apple.com``, et une liste blanche obtenue
+par confusion ne doit pas l'innocenter. Elle est calculée localement
+(:func:`lookalike_host_signal`) et mesurée dans ``docs/robustness-report.md`` : sur le
+test, elle signale 99,4 % des homographes et aucune URL légitime.
 
 **2. Combinaison des signaux** : un « OU probabiliste » pondéré ::
 
@@ -54,6 +59,8 @@ from phishguard.enrichers.base import Signal, SignalStatus
 
 Verdict = Literal["safe", "suspicious", "phishing"]
 MODEL = "model"
+# Règle dure locale de l'étape 3.12 : hôte qui imite des lettres latines (étape 3.8).
+LOOKALIKE_HOST = "lookalike_host"
 _MAX_EFFECT = 1 - 1e-9  # borne pour le calcul des contributions (log de 0)
 
 
@@ -270,3 +277,17 @@ def _contributions(
         for (source, risk, weight), log in zip(effects, logs, strict=True)
     ]
     return tuple(sorted(contributions, key=lambda c: c.points, reverse=True))
+
+
+def lookalike_host_signal(alert: str | None) -> Signal | None:
+    """Signal local de la règle dure ``lookalike_host`` pour une alerte d'hôte.
+
+    ``alert`` est le résultat de
+    :func:`phishguard.security.normalize.host_script_alert`. Sans alerte, aucun signal :
+    l'absence d'imitation n'est pas un indice de sûreté.
+    """
+    if alert is None:
+        return None
+    return Signal(
+        source=LOOKALIKE_HOST, status=SignalStatus.OK, risk=1.0, evidence={"alert": alert}
+    )

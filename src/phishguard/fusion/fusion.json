@@ -1,11 +1,14 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "thresholds": {
     "suspicious": 30,
     "phishing": 70
   },
   "hard_rules": {
-    "phishing_sources": ["google_safe_browsing"]
+    "phishing_sources": [
+      "google_safe_browsing",
+      "lookalike_host"
+    ]
   },
   "weights": {
     "model": 1.0,
@@ -21,6 +24,7 @@
     "urlscan": "Verdict d'un navigateur isolé sur la page réelle, mais un seul juge et parfois un scan ancien.",
     "rdap": "Un domaine de quelques jours est un signal fort, mais des services légitimes en créent aussi : il ne suffit pas seul.",
     "dns": "Signaux faibles (DNS gratuit, fast flux), déjà plafonnés à 0,5 par la source.",
-    "certificate_transparency": "Un premier certificat récent recoupe l'âge RDAP ; un domaine ancien peut obtenir son premier certificat tard."
+    "certificate_transparency": "Un premier certificat récent recoupe l'âge RDAP ; un domaine ancien peut obtenir son premier certificat tard.",
+    "lookalike_host": "Règle dure locale (étape 3.12) : un hôte qui imite des lettres latines avec une autre écriture (аpple.com) est une imitation. Mesurée à l'étape 3.8 : 99,4 % des homographes du test signalés, aucune URL légitime."
   }
 }

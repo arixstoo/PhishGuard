@@ -10,12 +10,13 @@
 # variables : un test le vérifie.
 
 language: fr
-version: 1
+version: 2
 
 reasons:
   # Règles dures de la fusion (étape 2.10) : seule raison citée quand elles s'appliquent.
   hard_rule.blocklist: "Ce site figure dans votre liste noire personnelle."
   hard_rule.google_safe_browsing: "Google Safe Browsing signale cette page comme dangereuse."
+  hard_rule.lookalike_host: "L'adresse remplace des lettres latines par des lettres d'un autre alphabet qui leur ressemblent : c'est une imitation."
   hard_rule.allowlist: "Ce site figure dans votre liste blanche personnelle."
 
   # Modèle URL, quand aucune raison plus précise n'est compréhensible.

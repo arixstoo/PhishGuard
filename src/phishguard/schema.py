@@ -12,12 +12,15 @@ Le schéma JSON correspondant est versionné dans ``docs/schema/analysis-respons
 (``make schema`` le régénère, un test vérifie qu'il est à jour). La description complète
 des champs est dans ``docs/response-schema.md``.
 
-Les réponses sont construites par :meth:`AnalysisResponse.from_url_analysis` (URL) et
-:meth:`AnalysisResponse.from_text_analysis` (SMS, messageries, étape 3.3) ; l'analyse
-d'email remplira le même contrat au module 4.
+Les réponses sont construites par :meth:`AnalysisResponse.from_url_analysis` (URL),
+:meth:`AnalysisResponse.from_text_analysis` (SMS, messageries, étape 3.3) et
+:meth:`AnalysisResponse.from_email_analysis` (email, étape 3.12).
 
 Historique :
 
+- ``1.3.0`` (étape 3.12) : ``analyst.normalization``, facultatif (ce que la
+  normalisation de l'étape 3.8 a changé, en comptes, et l'alerte d'hôte) ; réponses
+  du canal ``email`` ;
 - ``1.2.0`` (étape 3.4) : vue analyste ``analyst``, facultative (modèle, explication,
   fusion, versions) ;
 - ``1.1.0`` (étape 3.2) : raisons en langage simple, au plus trois, avec leurs variables
@@ -47,11 +50,12 @@ from phishguard.fusion.mitre import Channel
 from phishguard.fusion.score import FusionResult, Thresholds, Verdict
 
 if TYPE_CHECKING:
-    from phishguard.analysis import TextAnalysis, UrlAnalysis
+    from phishguard.analysis import EmailAnalysis, TextAnalysis, UrlAnalysis
     from phishguard.explain.shap_url import UrlExplanation
     from phishguard.explain.text import TextExplanation
+    from phishguard.security.normalize import NormalizationReport
 
-SCHEMA_VERSION = "1.2.0"
+SCHEMA_VERSION = "1.3.0"
 Confidence = Literal["low", "medium", "high"]
 Enrichment = Literal["used", "skipped"]
 
@@ -175,6 +179,27 @@ class FusionOut(_Strict):
     ignored: list[str] = Field(default_factory=list, description="Sources non utilisables")
 
 
+HostAlertOut = Literal["mixed_script_label", "lookalike_label"]
+
+
+class NormalizationOut(_Strict):
+    """Ce que la normalisation de l'étape 3.8 a changé dans l'entrée : des comptes.
+
+    Une entrée modifiée est en soi un indice (caractères invisibles, homoglyphes) ; le
+    contenu, lui, n'est jamais recopié.
+    """
+
+    changed: bool
+    nfkc: bool = Field(description="NFKC a modifié l'entrée (pleine chasse, ligatures…)")
+    format_chars: int = Field(ge=0, description="Caractères de format retirés (largeur nulle…)")
+    control_chars: int = Field(ge=0, description="Caractères de contrôle retirés")
+    confusables: int = Field(ge=0, description="Homoglyphes repliés vers le latin (texte)")
+    host_alert: HostAlertOut | None = Field(
+        default=None, description="Hôte qui imite des lettres latines (règle lookalike_host)"
+    )
+    version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+
+
 class AnalystView(_Strict):
     """Ce que voit un analyste, ou l'utilisateur qui déplie « Détails techniques ».
 
@@ -185,6 +210,9 @@ class AnalystView(_Strict):
     model: ModelOut
     explanation: ExplanationOut | None = None
     fusion: FusionOut
+    normalization: NormalizationOut | None = Field(
+        default=None, description="Ce que la normalisation a changé (étape 3.12)"
+    )
     versions: dict[str, str] = Field(
         description="Versions du schéma, du modèle, de la fusion, des gabarits, de l'explication"
     )
@@ -285,6 +313,7 @@ class AnalysisResponse(_Strict):
                 fusion=fusion,
                 language=explanation.language,
                 explanation=url_explanation_out(analysis.explanation),
+                normalization=normalization_out(analysis.normalization, analysis.host_alert),
             )
             if analyst
             else None,
@@ -332,6 +361,55 @@ class AnalysisResponse(_Strict):
                 fusion=fusion,
                 language=explanation.language,
                 explanation=text_explanation_out(analysis.explanation),
+                normalization=normalization_out(analysis.normalization),
+            )
+            if analyst
+            else None,
+        )
+
+    @classmethod
+    def from_email_analysis(
+        cls,
+        analysis: EmailAnalysis,
+        *,
+        model_version: str | None = None,
+        language: str = DEFAULT_LANGUAGE,
+        analyst: bool = True,
+    ) -> AnalysisResponse:
+        """Réponse d'une analyse d'email (étape 3.12). Le score vient des règles de
+        l'étape 1.11, chacune avec sa raison ; une règle dure (hôte qui imite le latin)
+        devient l'unique raison. L'analyse est locale : enrichissement ``skipped``."""
+        fusion = analysis.fusion
+        version = model_version or analysis.model_version
+        builder = ReasonBuilder(language)
+        if fusion.hard_rule is not None:
+            explanation = builder.for_fusion(fusion, channel="email")
+        else:
+            explanation = builder.email_rules(analysis.triggered, fusion.verdict)
+        return cls(
+            channel="email",
+            verdict=analysis.verdict,
+            score=analysis.score,
+            confidence=confidence(fusion, Thresholds(**fusion.thresholds)),
+            reasons=reasons(explanation),
+            signals={},
+            mitre=[TechniqueOut(**t.to_dict()) for t in analysis.mitre],
+            model_version=version,
+            fusion_version=fusion.config_version,
+            enrichment="skipped",
+            latency_ms=analysis.latency_ms,
+            language=explanation.language,
+            advice=explanation.advice,
+            analyst=analyst_view(
+                version=version,
+                raw_score=float(analysis.rule_score),
+                probability=analysis.rule_score / 100,
+                calibrated=False,
+                thresholds={},
+                fusion=fusion,
+                language=explanation.language,
+                explanation=None,
+                normalization=normalization_out(analysis.normalization, analysis.host_alert),
             )
             if analyst
             else None,
@@ -416,6 +494,25 @@ def text_explanation_out(explanation: TextExplanation | None) -> ExplanationOut 
     )
 
 
+def normalization_out(
+    report: NormalizationReport | None, host_alert: str | None = None
+) -> NormalizationOut | None:
+    """Comptes de la normalisation et alerte d'hôte, pour la vue analyste."""
+    from phishguard.security.normalize import NORMALIZATION_VERSION
+
+    if report is None:
+        return None
+    return NormalizationOut(
+        changed=report.changed,
+        nfkc=report.nfkc,
+        format_chars=report.format_chars,
+        control_chars=report.control_chars,
+        confusables=report.confusables,
+        host_alert=host_alert,
+        version=NORMALIZATION_VERSION,
+    )
+
+
 def analyst_view(
     *,
     version: str,
@@ -426,9 +523,11 @@ def analyst_view(
     fusion: FusionResult,
     language: str,
     explanation: ExplanationOut | None,
+    normalization: NormalizationOut | None = None,
 ) -> AnalystView:
     """Vue analyste d'une analyse, quel que soit le canal."""
     return AnalystView(
+        normalization=normalization,
         model=ModelOut(
             version=version,
             raw_score=raw_score,

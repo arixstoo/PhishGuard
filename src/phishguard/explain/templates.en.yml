@@ -4,11 +4,12 @@
 # one short sentence, plain words, a verifiable observation rather than an accusation.
 
 language: en
-version: 1
+version: 2
 
 reasons:
   hard_rule.blocklist: "This site is on your personal blocklist."
   hard_rule.google_safe_browsing: "Google Safe Browsing reports this page as dangerous."
+  hard_rule.lookalike_host: "The address replaces Latin letters with look-alike letters from another alphabet: it is an imitation."
   hard_rule.allowlist: "This site is on your personal allowlist."
 
   model: "The shape of this address looks like known phishing links."

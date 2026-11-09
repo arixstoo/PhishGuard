@@ -48,6 +48,16 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
   Conclusion : face à des messages bien écrits, le texte seul ne distingue plus un leurre d'un vrai courrier ; les signaux d'infrastructure et d'authentification deviennent l'essentiel (étape 3.10).
 - Rapport de robustesse final ([docs/robustness-report.md](docs/robustness-report.md)) : résumé « en bref », puis modèle de menace, méthodologie, jeux de données, résultats avant défenses, défenses, résultats après défenses, phishing rédigé par un LLM, limites et pistes futures ; tableaux détaillés par passage en annexe. Graphique du rappel et du FPR par technique, un passage par couleur (`scripts/plot_robustness.py`, `make plot-robustness`, palette catégorielle validée pour les daltonismes). Les limites qualifient les chiffres de borne optimiste, faute d'attaque automatisée ou combinée (étape 3.11).
 
+### Intégration
+
+- Normalisation et explications dans le pipeline principal, pour les trois canaux (étape 3.12, [docs/analysis.md](docs/analysis.md)) :
+  - règle dure **`lookalike_host`** dans la fusion (configuration **1.1.0**) : un hôte qui imite des lettres latines, dans l'URL analysée ou dans un lien d'un email, donne le verdict phishing, avant la liste blanche comme Safe Browsing. Sa raison est traduite en trois langues (gabarits version 2), et l'imitation est un constat ATT&CK (T1583.001) ;
+  - `analysis.normalization` (URL, message, email) : ce que la normalisation a changé, en comptes seulement, journalisé et exposé dans la vue analyste ;
+  - **`EmailAnalyzer`** : email brut (`.eml`) → règles de l'étape 1.11 avec la règle `url_model` → fusion → raisons et techniques ATT&CK, entièrement local, résumé sans contenu.
+- Schéma de réponse **1.3.0** : `analyst.normalization` (facultatif), réponses du canal `email` (`AnalysisResponse.from_email_analysis`), raison `hard_rule.lookalike_host`.
+- Modèles déployés (`phishguard.deployment`, `load_analyzers`) : `url_v2` et `text_v2`, issus de l'entraînement adversarial, et les règles email. Le choix de `url_v2` est un compromis assumé et documenté : −10,3 points de rappel sur un test biaisé, contre la fin d'une évasion gratuite par sous-domaines et de 49 % de faux positifs sous long paramètre de suivi. Calibrations et évaluation de test de `url_v2` et `text_v2` dans `docs/metrics/`.
+- 29 tests de bout en bout (`tests/test_pipeline_e2e.py`) : homographe d'hôte, liste blanche, IDN légitime, caractères invisibles dans une URL et dans un message, les 13 emails de test, chargement des modèles déployés.
+
 ## [0.2.0] : module 2, Threat Intelligence et fusion des signaux
 
 Le moteur enrichit maintenant un indicateur comme le ferait un analyste avant de conclure : six sources de Threat Intelligence interrogées en parallèle, fusionnées avec le modèle local calibré en un score, un verdict, ses raisons et ses techniques MITRE ATT&CK, dans un schéma de réponse figé. L'enrichissement reste **désactivé par défaut** : sans opt-in, rien ne quitte la machine, et une URL interne n'est jamais envoyée. Vérifié contre les vraies API (Safe Browsing, VirusTotal, urlscan.io, RDAP, DNS) et, pour l'âge des domaines, contre les registres eux-mêmes. Rien n'est encore exposé à l'utilisateur : l'API arrive au module 4.

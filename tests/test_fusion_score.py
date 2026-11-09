@@ -260,10 +260,11 @@ def test_score_rounding_and_verdicts():
 
 def test_default_config_is_valid_and_justified():
     config = default_config()
-    assert config.version == "1.0.0"
+    assert config.version == "1.1.0"
     assert config.weights["model"] == 1.0
-    assert set(config.rationale) == set(config.weights)
-    assert config.hard_rules.phishing_sources == ("google_safe_browsing",)
+    # Chaque poids et chaque règle dure locale est justifié.
+    assert set(config.rationale) == set(config.weights) | {"lookalike_host"}
+    assert config.hard_rules.phishing_sources == ("google_safe_browsing", "lookalike_host")
 
 
 def _config(**overrides):

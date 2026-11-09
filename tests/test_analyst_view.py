@@ -107,7 +107,7 @@ def test_versions_are_listed(url_model):
         "schema": SCHEMA_VERSION,
         "model": "url_test",
         "fusion": response.fusion_version,
-        "templates": "en-1",
+        "templates": "en-2",
         "explanation": "tree_shap",
     }
 

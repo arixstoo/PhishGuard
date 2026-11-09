@@ -62,9 +62,10 @@ Appliquées avant tout calcul, dans cet ordre :
 | --- | --- | --- |
 | Liste noire personnelle | phishing (100) | Choix explicite de l'utilisateur |
 | Correspondance **Google Safe Browsing** | phishing (100) | Page confirmée par Google : aucun autre signal ne doit l'adoucir |
+| Hôte qui imite des lettres latines (**`lookalike_host`**, étape 3.12) | phishing (100) | `аpple.com` n'est pas `apple.com`. Règle locale, mesurée à l'étape 3.8 : 99,4 % des homographes du test signalés, aucune URL légitime ([robustness-report.md](robustness-report.md)) |
 | Liste blanche personnelle | sûr (0) | Choix explicite de l'utilisateur |
 
-Safe Browsing passe **avant** la liste blanche : une page confirmée dangereuse reste signalée même si son domaine a été mis en liste blanche, par exemple un domaine légitime compromis, ou une liste blanche obtenue par manipulation (« ajoutez notre site à vos exceptions »). Une erreur ou une absence de réponse de Safe Browsing ne déclenche jamais la règle.
+Safe Browsing passe **avant** la liste blanche : une page confirmée dangereuse reste signalée même si son domaine a été mis en liste blanche, par exemple un domaine légitime compromis, ou une liste blanche obtenue par manipulation (« ajoutez notre site à vos exceptions »). Une erreur ou une absence de réponse de Safe Browsing ne déclenche jamais la règle. La règle `lookalike_host` passe aussi avant la liste blanche : une liste blanche obtenue par confusion entre deux hôtes identiques à l'œil ne doit pas innocenter l'imitation. Elle entre dans la fusion comme un signal local (`lookalike_host_signal`), jamais comme une source interrogée. Elle a fait passer la configuration en version **1.1.0**.
 
 ## 3. Combinaison des signaux
 

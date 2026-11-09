@@ -2,6 +2,8 @@
 
 Fiche d'identité du modèle de détection de spam et de smishing dans les SMS. Les chiffres sont générés depuis `docs/metrics/` par `make cards`. Détails : [`text-models.md`](text-models.md), [`datasets/README.md`](../datasets/README.md).
 
+> **Déploiement (étape 3.12).** Le modèle déployé est `text_v2` : la même configuration que `text_v1`, réentraînée par entraînement adversarial (étape 3.9). Les chiffres de cette fiche décrivent `text_v1`. Ceux de `text_v2`, et l'écart entre les deux, sont dans [robustness-report.md](robustness-report.md#6-résultats-après-défenses). Raison du choix : [analysis.md](analysis.md#les-modèles-déployés-étape-312).
+
 ## En bref
 
 | | |
