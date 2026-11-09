@@ -21,7 +21,7 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install lint format test \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	explain-url calibrate-text cards schema
+	explain-url calibrate-text cards schema robustness
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -116,6 +116,16 @@ $(EMAIL_CORPORA):
 
 train-email: $(EMAIL_CORPORA) $(EMAIL_SAMPLES) ## Compare règles et modèles du score email, enregistre le modèle (étape 1.11)
 	$(PYTHON) scripts/train_email.py
+
+# --------------------------------------------------------------------------- #
+# Robustesse adversariale (étapes 3.6 à 3.9)
+# --------------------------------------------------------------------------- #
+
+ROBUSTNESS_LABEL ?= baseline
+ROBUSTNESS_DESCRIPTION ?= modèles d'origine, avant toute défense
+
+robustness: $(SPLIT) $(URL_MODEL) ## Banc d'essai : rappel et FPR sous chaque perturbation (étape 3.7)
+	$(PYTHON) scripts/robustness_benchmark.py --label $(ROBUSTNESS_LABEL) 		--description "$(ROBUSTNESS_DESCRIPTION)"
 
 # --------------------------------------------------------------------------- #
 # Documentation (étape 1.12)

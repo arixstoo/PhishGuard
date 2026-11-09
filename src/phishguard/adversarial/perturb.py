@@ -392,6 +392,31 @@ PERTURBATIONS: dict[str, Perturbation] = {
             "20 mots de messages personnels ajoutés à la fin",
             lambda s, seed: pad_benign(s, BENIGN_WORDS, n=20),
         ),
+        # Variantes à intensité maximale (étape 3.7) : le premier passage du banc a
+        # montré que les n-grammes de caractères résistent aux réglages modérés. Un
+        # attaquant n'a aucune raison de s'arrêter là, le lecteur ne voit pas la
+        # différence.
+        Perturbation(
+            "homoglyphs_full",
+            "text",
+            "TXT-01",
+            "toutes les lettres remplaçables par leur homoglyphe cyrillique",
+            lambda s, seed: swap_homoglyphs(s, rate=1.0, seed=seed),
+        ),
+        Perturbation(
+            "zero_width_dense",
+            "text",
+            "TXT-02",
+            "U+200B entre toutes les lettres d'un mot",
+            lambda s, seed: insert_zero_width(s, every=1),
+        ),
+        Perturbation(
+            "pad_benign_long",
+            "text",
+            "TXT-05",
+            "50 mots de messages personnels ajoutés à la fin",
+            lambda s, seed: pad_benign(s, BENIGN_WORDS, n=50),
+        ),
         # --- URL ----------------------------------------------------------------- #
         Perturbation(
             "url_subdomains",

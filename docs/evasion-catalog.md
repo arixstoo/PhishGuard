@@ -88,6 +88,8 @@ Dix techniques sont reproduites par `src/phishguard/adversarial/perturb.py` (ét
 | TXT-04 | `leetspeak` | 50 % des lettres a, e, i, l, o, s, t remplacées par un chiffre |
 | TXT-05 | `pad_benign` | 20 mots de messages personnels ajoutés à la fin |
 
+Trois variantes à intensité maximale ont été ajoutées à l'étape 3.7, après le premier passage du banc d'essai : `homoglyphs_full` (toutes les lettres remplaçables), `zero_width_dense` (U+200B entre toutes les lettres d'un mot) et `pad_benign_long` (50 mots). Les réglages modérés ci-dessus avaient été fixés avant toute mesure ; les variantes montrent ce que gagne un attaquant qui ne s'arrête pas là ([robustness-report.md](robustness-report.md)).
+
 ---
 
 ## URL
