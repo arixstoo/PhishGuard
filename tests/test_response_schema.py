@@ -41,8 +41,8 @@ SPEC_FIELDS = {
     "latency_ms",
 }
 PROJECT_FIELDS = {"schema_version", "channel", "fusion_version"}
-# Ajoutés par la version 1.1.0 (étape 3.2).
-EXPLANATION_FIELDS = {"language", "advice"}
+# Ajoutés par la version 1.1.0 (étape 3.2), puis 1.2.0 (étape 3.4).
+EXPLANATION_FIELDS = {"language", "advice", "analyst"}
 
 
 class FixedModel:

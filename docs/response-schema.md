@@ -1,6 +1,6 @@
 # Schéma de la réponse d'analyse
 
-*Étape 2.11 bis du cahier des charges, version 1.1.0 depuis l'étape 3.2. Code : `src/phishguard/schema.py`. Schéma JSON : [`docs/schema/analysis-response.v1.json`](schema/analysis-response.v1.json). Tests : `tests/test_response_schema.py`.*
+*Étape 2.11 bis du cahier des charges, version 1.2.0 depuis l'étape 3.4. Code : `src/phishguard/schema.py`. Schéma JSON : [`docs/schema/analysis-response.v1.json`](schema/analysis-response.v1.json). Tests : `tests/test_response_schema.py`, `tests/test_analyst_view.py`.*
 
 C'est le **contrat** entre le moteur d'analyse et ses clients : l'API (module 4), l'extension et le bot (module 5) en dépendent. Il est strict : un champ inconnu, un type faux ou une réponse incohérente sont refusés à la construction, avant de partir vers un client.
 
@@ -17,7 +17,7 @@ Analyse de `https://login.example.com/verify` : modèle à 0,2, domaine de 3 jou
 
 ```json
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "channel": "url",
   "verdict": "phishing",
   "score": 97,
@@ -53,13 +53,14 @@ Analyse de `https://login.example.com/verify` : modèle à 0,2, domaine de 3 jou
   "enrichment": "used",
   "latency_ms": 812,
   "language": "fr",
-  "advice": "N'entrez aucun mot de passe ni aucune information bancaire. Ouvrez le site en tapant vous-même son adresse."
+  "advice": "N'entrez aucun mot de passe ni aucune information bancaire. Ouvrez le site en tapant vous-même son adresse.",
+  "analyst": {"model": {"…": "…"}, "explanation": null, "fusion": {"…": "…"}, "versions": {"…": "…"}}
 }
 ```
 
 ## Les champs
 
-Les neuf premiers sont ceux du cahier des charges. Les trois suivants ont été ajoutés pour que le contrat serve aux trois canaux et puisse évoluer sans casser les clients ; les deux derniers, par la version 1.1.0 (étape 3.2).
+Les neuf premiers sont ceux du cahier des charges. Les trois suivants ont été ajoutés pour que le contrat serve aux trois canaux et puisse évoluer sans casser les clients ; `language` et `advice` par la version 1.1.0 (étape 3.2), `analyst` par la 1.2.0 (étape 3.4).
 
 | Champ | Type | Sens |
 | --- | --- | --- |
@@ -72,11 +73,12 @@ Les neuf premiers sont ceux du cahier des charges. Les trois suivants ont été 
 | `model_version` | texte | Modèle utilisé (`url_v1`) |
 | `enrichment` | `used` ou `skipped` | Les sources tierces ont-elles été interrogées ? |
 | `latency_ms` | entier | Durée totale de l'analyse |
-| `schema_version` | `1.1.0` | Version de ce contrat |
+| `schema_version` | `1.2.0` | Version de ce contrat |
 | `channel` | `url`, `email`, `sms` ou `messaging` | Canal analysé : les trois endpoints du module 4 renvoient ce même schéma. Une analyse de message (`TextAnalyzer`, étape 3.3) est toujours locale : `enrichment` vaut `skipped` et `signals` est vide |
 | `fusion_version` | `x.y.z` | Version de la configuration de fusion (`fusion.json`) qui a produit le score |
 | `language` | `fr`, `en` ou `ar` | Langue des messages et du conseil |
 | `advice` | texte | Conseil d'action, **toujours présent**, selon le canal et le verdict |
+| `analyst` | objet ou `null` | Détails techniques, à n'afficher qu'à la demande (voir plus bas) |
 
 ### Les raisons
 
@@ -96,6 +98,52 @@ Depuis la version 1.1.0, les raisons sont écrites pour l'utilisateur (étape 3.
 | `signal.domain_age`, `signal.virustotal_engines`, `signal.urlscan`… | Part du score due à une source de Threat Intelligence |
 
 Leur somme vaut au plus le score : la part du modèle due à des features que l'utilisateur ne peut pas vérifier (la longueur du chemin, par exemple) n'est citée nulle part, et une contribution de moins d'un demi-point non plus. Un constat net qui n'a pas fait monter le score (un raccourcisseur) peut être cité avec `points: 0`. Une source en panne apparaît dans `signals`, mais jamais dans `reasons`.
+
+### La vue analyste
+
+Depuis la version 1.2.0 (étape 3.4), la réponse a **deux niveaux** :
+
+- `reasons` et `advice`, pour l'utilisateur : trois phrases au plus et un conseil ;
+- `analyst`, pour l'analyste ou l'utilisateur curieux : le modèle, son explication, la fusion et les versions.
+
+**Règle d'affichage pour les clients** : l'extension et la page web (module 5) n'affichent `analyst` que si l'utilisateur déplie « Détails techniques », fermé par défaut. Le bot Telegram ne l'affiche pas ; il peut le demander absent (`to_response(analyst=False)`, `analyst: null`). Comme les messages, tout le texte de la vue analyste s'insère comme texte, jamais comme HTML.
+
+Exemple réel, `url_v1` calibré, pour `hxxp://paypa1-secure-login[.]xyz/verify/account` (features tronquées) :
+
+```json
+"analyst": {
+  "model": {"version": "url_v1", "raw_score": 0.9987, "probability": 1.0, "calibrated": true,
+            "thresholds": {"fpr_1pct": 0.696, "fpr_0_5pct": 0.8263}},
+  "explanation": {
+    "method": "tree_shap", "space": "log_odds", "base_value": -2.870721, "output": 6.676963,
+    "features": [
+      {"name": "path_len", "value": 15.0, "contribution": 2.422586},
+      {"name": "host_len", "value": 23.0, "contribution": 1.701414},
+      {"name": "host_kw_hits", "value": 2.0, "contribution": 1.47338},
+      {"name": "path_kw_hits", "value": 2.0, "contribution": 1.127559}
+    ],
+    "terms_phishing": [], "terms_safe": []
+  },
+  "fusion": {"probability": 1.0, "thresholds": {"suspicious": 30, "phishing": 70}, "hard_rule": null,
+             "contributions": [{"source": "model", "risk": 1.0, "weight": 1.0, "points": 100.0}],
+             "ignored": []},
+  "versions": {"schema": "1.2.0", "model": "url_v1", "fusion": "1.0.0", "templates": "fr-1",
+               "explanation": "tree_shap"}
+}
+```
+
+On y lit ce que les phrases taisent : les deux premières contributions sont `path_len` et `host_len`, les features exposées aux biais de chemin et de popularité ([`explain-url.md`](explain-url.md#lecture)). L'utilisateur, lui, lit « L'adresse contient des mots comme « connexion »… » et « L'adresse ressemble à celle de paypal… » ([`reasons.md`](reasons.md)).
+
+| Champ | Contenu |
+| --- | --- |
+| `model` | `version`, `raw_score` (probabilité du modèle URL, marge du SVM pour le texte), `probability` après calibration, `calibrated`, `thresholds` du modèle seul sur son score brut (seuils `fpr_*` de l'URL, seuil de décision du texte) |
+| `explanation` | `null` si le modèle ne s'explique pas. Sinon `method` (`tree_shap` pour l'URL, `linear` pour le texte), `space` (`log_odds`, `probability` ou `margin`), `base_value` et `output` : `output = base_value + somme des contributions`. URL : `features`, **toutes**, de la plus forte en valeur absolue à la plus faible. Texte : `terms_phishing` et `terms_safe`, les dix mots les plus influents dans chaque sens, nettoyés comme les raisons |
+| `fusion` | `probability`, `thresholds` (30 et 70), `hard_rule` (ou `null`), `contributions` (`source`, `risk`, `weight`, `points`), `ignored` (sources en panne ou hors délai) |
+| `versions` | `schema`, `model`, `fusion`, `templates` (langue et version des gabarits) et `explanation` (méthode, ou `none`) : tout ce qu'il faut pour reproduire la réponse |
+
+Les **signaux bruts** des sources restent dans `signals` (contrat 1.0.0) : les déplacer dans `analyst` casserait les clients existants.
+
+**Vie privée** : pour un message, `terms_phishing` et `terms_safe` contiennent des mots du message de l'utilisateur. La réponse ne va qu'à lui ; elle ne doit pas être journalisée telle quelle par l'API (étape 4.6).
 
 ### La confiance
 
@@ -117,6 +165,7 @@ Une réponse qui les enfreint n'est pas construite (`ValidationError`), au lieu 
 - un verdict `safe` n'en cite aucune ;
 - avec `enrichment: "skipped"`, `signals` est vide : aucune source n'a été interrogée ;
 - au plus trois raisons, et un conseil d'action non vide ;
+- la vue analyste décrit le modèle et la fusion de la réponse (`analyst.model.version` = `model_version`, `analyst.versions.fusion` = `fusion_version`) ;
 - aucun champ inconnu, bornes vérifiées (`score`, `risk`, identifiants `T1234.001`).
 
 ## Versions du schéma
@@ -130,9 +179,10 @@ Historique :
 
 | Version | Étape | Changement |
 | --- | --- | --- |
+| `1.2.0` | 3.4 | Vue analyste `analyst`, facultative : modèle, explication (SHAP ou linéaire), fusion, versions |
 | `1.1.0` | 3.2 | Raisons en langage simple, au plus trois, avec `params` ; nouveaux codes (`url.*`, `signal.domain_age`, `signal.virustotal_engines`) ; champs `language` et `advice` |
 | `1.0.0` | 2.11 bis | Contrat initial |
 
-Les champs `language` et `advice` sont toujours présents dans une réponse 1.1.0 ; un client écrit pour la 1.0.0 les ignore sans rien changer.
+Les champs `language` et `advice` sont toujours présents depuis la 1.1.0, `analyst` est présent par défaut depuis la 1.2.0 (ou `null`) ; un client écrit pour une version antérieure les ignore sans rien changer, et une réponse sans `analyst` reste valide.
 
 Le fichier JSON est généré depuis le code (`make schema`). `tests/test_response_schema.py` échoue s'il n'est plus à jour : le contrat ne peut pas changer par accident.

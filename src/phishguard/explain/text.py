@@ -49,6 +49,8 @@ if TYPE_CHECKING:
     from phishguard.text.models import TextModel
 
 Category = Literal["urgency", "money", "link", "code", "account"]
+# Espace du score : log-odds (régression logistique) ou marge (SVM linéaire).
+Space = Literal["log_odds", "margin"]
 CATEGORIES: tuple[Category, ...] = ("urgency", "money", "link", "code", "account")
 Direction = Literal["phishing", "safe"]
 DEFAULT_TOP = 5
@@ -103,6 +105,7 @@ class TextExplanation:
     categories: tuple[Category, ...] = ()
     category_terms: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     analyzer: str = "char_wb"
+    space: Space = "margin"
 
     @property
     def decision(self) -> float:
@@ -127,6 +130,7 @@ class TextExplanation:
         """Vue analyste : constante, score, mots les plus influents dans chaque sens."""
         return {
             "analyzer": self.analyzer,
+            "space": self.space,
             "intercept": round(self.intercept, 6),
             "decision": round(self.decision, 6),
             "top_phishing": [t.to_dict() for t in self.top(top)],
@@ -307,6 +311,7 @@ class TextExplainer:
         self.analyzer: str = vectorizer.analyzer
         self.coef = np.asarray(coef, dtype=float).ravel()
         self.intercept = float(np.asarray(classifier.intercept_, dtype=float).ravel()[0])
+        self.space: Space = "log_odds" if hasattr(classifier, "predict_proba") else "margin"
         self.vocabulary = vectorizer.get_feature_names_out()
         self._preprocess = vectorizer.build_preprocessor()
         self._tokenize = vectorizer.build_tokenizer()
@@ -344,6 +349,7 @@ class TextExplainer:
             categories=categories,
             category_terms={c: tuple(words) for c, words in by_category.items()},
             analyzer=self.analyzer,
+            space=self.space,
         )
 
     def explain_many(self, texts: Iterable[str]) -> list[TextExplanation]:
