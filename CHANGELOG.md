@@ -2,6 +2,14 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié] : module 4, API et backend sécurisés
+
+Le moteur devient un service HTTP : squelette FastAPI, modèles chargés une seule fois au démarrage ([docs/api.md](docs/api.md)).
+
+### API
+
+- Squelette FastAPI (`phishguard.api`) : `create_app()`, routeurs séparés (`analyze`, `feedback`, `meta`), configuration `pydantic-settings` préfixée `PHISHGUARD_API_` aux valeurs par défaut sûres (Threat Intelligence désactivée) ; une valeur invalide empêche le démarrage. Les modèles déployés sont chargés **une seule fois**, au démarrage (`lifespan`, hors de la boucle) ; un modèle manquant fait échouer le démarrage. `GET /v1/health` et documentation interactive `/docs`, désactivable. `python -m phishguard.api` (`make api`) lance uvicorn sur `127.0.0.1`, sans réécriture de l'IP par uvicorn ni en-tête `Server` (étape 4.1).
+
 ## [0.3.0] : module 3, explicabilité et robustesse adversariale
 
 Le moteur explique maintenant chaque verdict, en trois phrases pour l'utilisateur et en valeurs SHAP pour l'analyste, et il a été attaqué méthodiquement : dix techniques d'évasion mesurées sur les vrais jeux de test, deux défenses (normalisation, entraînement adversarial) mesurées avant et après, et un test sur du phishing rédigé par un LLM qui montre honnêtement où le texte seul ne suffit plus. Les modèles robustes (`url_v2`, `text_v2`) sont déployés, et les trois canaux (URL, message, email) passent par le même pipeline et le même contrat de réponse. Rien n'est encore exposé à l'utilisateur : l'API arrive au module 4.
