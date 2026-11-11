@@ -5,7 +5,7 @@ contiendra aucune logique d'analyse propre : elle validera, authentifiera, limit
 débit, puis déléguera à une couche service. Les analyses renverront le contrat figé de
 l'étape 2.11 bis ([response-schema.md](response-schema.md)).
 
-Étape couverte ici : 4.1 (squelette). Les entrées (4.2), les routes d'analyse (4.3),
+Étapes couvertes ici : 4.1 (squelette) et 4.2 (entrées). Les routes d'analyse (4.3),
 l'authentification et les limites de débit (4.4) suivent.
 
 ## Lancement
@@ -36,6 +36,8 @@ invalide empêche le démarrage.
 |---|---|---|
 | `PHISHGUARD_API_MODELS_DIR` | `models` | dossier des modèles déployés |
 | `PHISHGUARD_API_DOCS_ENABLED` | `true` | `/docs`, `/redoc`, `/openapi.json` |
+| `PHISHGUARD_API_MAX_EMAIL_BYTES` | 1 Mio | taille maximale d'un email |
+| `PHISHGUARD_API_MAX_JSON_BYTES` | 64 Kio | taille maximale d'un corps JSON |
 | `PHISHGUARD_API_THREAT_INTEL_ENABLED` | `false` | autoriser l'enrichissement à la demande du client |
 
 ## Routes
@@ -44,13 +46,49 @@ invalide empêche le démarrage.
 |---|---|---|
 | GET | `/v1/health` | `{"status": "ok"}` |
 
+## Entrées (étape 4.2)
+
+Toute entrée est hostile ; les bornes sont dans les schémas (`phishguard.api.schemas`),
+avant toute analyse.
+
+| Entrée | Contraintes |
+|---|---|
+| URL | 4 à 2 048 caractères ; aucun caractère de contrôle (C0, DEL, C1) |
+| Texte | 1 à 5 000 caractères, pas seulement des espaces ; tabulation et fins de ligne admises |
+| Email | 1 Mio au plus, appliqué au corps de la requête et au parseur |
+| Domaine (retour) | nom de domaine seulement, ramené en ASCII (IDNA) ; ni URL, ni IP |
+| Corps JSON | 64 Kio au plus, `Content-Type: application/json` obligatoire |
+
+- **Mode strict** : `"true"` n'est pas un booléen, `123` n'est pas une chaîne.
+- **Aucun champ inconnu** : `use_threat_intell` (faute de frappe) est une erreur, pas une
+  option silencieusement ignorée.
+- **Demi-codets UTF-16 isolés refusés** (`"\ud800"`) : JSON valide, mais impossible à
+  encoder en UTF-8 ; ils feraient échouer plus loin le journal ou le hachage.
+- **Caractères invisibles de format admis** (largeur nulle, U+202E) : ce sont des
+  évasions que la normalisation (étape 3.8) retire et compte, et un indice en soi.
+- **Taille avant lecture** : un `Content-Length` trop grand est refusé (413) sans lire le
+  corps ; sans `Content-Length` (envoi par morceaux), la lecture est coupée à la limite.
+- **`application/json` exigé** : sans ce contrôle, un autre site pourrait envoyer depuis
+  le navigateur d'un visiteur une requête `text/plain` contenant du JSON, sans
+  pré-vérification CORS.
+
 ## Erreurs
 
 Une seule enveloppe, un `code` stable :
 
 ```json
-{"error": {"code": "not_found", "message": "Not Found"}}
+{"error": {"code": "validation_error", "message": "…", "details": [{"loc": ["body", "url"], "type": "string_too_long", "msg": "…"}]}}
 ```
 
-Une erreur interne renvoie 500, code `internal_error`, sans aucun détail : la trace reste
-dans le journal du serveur.
+| Statut | `code` | Cas |
+|---|---|---|
+| 404 / 405 | `not_found` / `method_not_allowed` | route ou méthode inconnue |
+| 413 | `payload_too_large` | corps trop gros |
+| 415 | `unsupported_media_type` | corps non JSON |
+| 422 | `validation_error` | entrée hors schéma (taille, type, caractère, JSON malformé) |
+| 500 | `internal_error` | défaut du serveur, sans aucun détail |
+
+**L'entrée n'est jamais renvoyée** : FastAPI recopie par défaut la valeur fautive
+(`input`) dans ses erreurs de validation, ce qui réfléchirait une URL de 100 000
+caractères ou un jeton contenu dans une URL. Seuls l'emplacement, le type et le message
+de chaque erreur sont gardés.
