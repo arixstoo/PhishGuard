@@ -75,18 +75,18 @@ Les mots-clés sont cherchés après normalisation (minuscules, accents latins e
 ## Résultats
 
 <!-- generated:train-text:start -->
-*Généré par `scripts/train_text.py` le 2026-10-27 (corpus `7d039a24a608`, 5 160 messages après dédoublonnage ; test : 774 messages dont 96 spams). Seuil de chaque approche : 1 % de faux positifs sur la validation. Chiffres complets : [`metrics/text_v1.json`](metrics/text_v1.json).*
+*Généré par `scripts/train_text.py` le 2026-11-09 (corpus `7d039a24a608`, 5 160 messages après dédoublonnage ; test : 774 messages dont 96 spams). Seuil de chaque approche : 1 % de faux positifs sur la validation. Chiffres complets : [`metrics/text_v1.json`](metrics/text_v1.json).*
 
 ### Test (UCI, anglais)
 
 | Approche | Réglage | Précision | Rappel | F1 | FPR | PR-AUC | R@1%FPR | Taille | Latence p50 |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Mots + régression logistique | `C=10.0` | 0,898 | 0,917 | 0,907 | 1,47 % | 0,964 | 0,896 | 136 Kio | 0,42 ms |
-| Mots + SVM linéaire | `C=0.1` | 0,889 | 0,917 | 0,903 | 1,62 % | 0,957 | 0,885 | 135 Kio | 0,43 ms |
-| Caractères + régression logistique | `C=1.0` | 0,902 | 0,958 | 0,929 | 1,47 % | 0,975 | 0,938 | 387 Kio | 0,53 ms |
-| Caractères + SVM linéaire **(retenu)** | `C=0.1` | 0,901 | 0,948 | 0,924 | 1,47 % | 0,975 | 0,938 | 386 Kio | 0,53 ms |
-| Features smishing + régression logistique | `C=1.0` | 0,827 | 0,896 | 0,860 | 2,65 % | 0,905 | 0,833 | 1 Kio | 0,74 ms |
-| Caractères + features smishing + régression logistique | `C=10.0` | 0,846 | 0,969 | 0,903 | 2,51 % | 0,943 | 0,927 | 388 Kio | 1,68 ms |
+| Mots + régression logistique | `C=10.0` | 0,898 | 0,917 | 0,907 | 1,47 % | 0,964 | 0,896 | 136 Kio | 1,08 ms |
+| Mots + SVM linéaire | `C=0.1` | 0,889 | 0,917 | 0,903 | 1,62 % | 0,957 | 0,885 | 135 Kio | 1,13 ms |
+| Caractères + régression logistique | `C=1.0` | 0,902 | 0,958 | 0,929 | 1,47 % | 0,975 | 0,938 | 387 Kio | 1,43 ms |
+| Caractères + SVM linéaire **(retenu)** | `C=0.1` | 0,901 | 0,948 | 0,924 | 1,47 % | 0,975 | 0,938 | 386 Kio | 1,25 ms |
+| Features smishing + régression logistique | `C=1.0` | 0,827 | 0,896 | 0,860 | 2,65 % | 0,905 | 0,833 | 1 Kio | 1,96 ms |
+| Caractères + features smishing + régression logistique | `C=10.0` | 0,846 | 0,969 | 0,903 | 2,51 % | 0,939 | 0,927 | 387 Kio | 4,37 ms |
 
 ### Hors distribution : jeu français / arabe
 
@@ -94,14 +94,14 @@ Les mots-clés sont cherchés après normalisation (minuscules, accents latins e
 
 | Approche | Rappel français | FPR français | PR-AUC français | Rappel arabe | FPR arabe | PR-AUC arabe |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Mots + régression logistique | 0,167 | 7 % | 0,595 | 0,150 | 10 % | 0,559 |
-| Mots + SVM linéaire | 0,167 | 3 % | 0,596 | 0,100 | 10 % | 0,549 |
+| Mots + régression logistique | 0,167 | 7 % | 0,596 | 0,150 | 10 % | 0,559 |
+| Mots + SVM linéaire | 0,167 | 3 % | 0,597 | 0,100 | 10 % | 0,549 |
 | Caractères + régression logistique | 0,700 | 47 % | 0,779 | 0,650 | 35 % | 0,732 |
 | Caractères + SVM linéaire | 0,733 | 43 % | 0,769 | 0,650 | 40 % | 0,731 |
 | Features smishing + régression logistique | 0,933 | 33 % | 0,901 | 0,900 | 30 % | 0,876 |
 | Caractères + features smishing + régression logistique | 0,933 | 37 % | 0,940 | 0,950 | 30 % | 0,927 |
 
-**Approche retenue** (meilleure PR-AUC de validation) : Caractères + SVM linéaire (`C=0.1`), seuil -0,2538.
+**Approche retenue** (meilleure PR-AUC de validation) : Caractères + SVM linéaire (`C=0.1`), seuil -0,2532.
 <!-- generated:train-text:end -->
 
 ## Lecture

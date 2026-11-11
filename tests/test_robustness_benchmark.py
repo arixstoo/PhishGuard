@@ -183,3 +183,29 @@ def test_every_perturbation_has_a_catalog_entry():
     catalog = (ROOT / "docs/evasion-catalog.md").read_text(encoding="utf-8")
     for name in P.PERTURBATIONS:
         assert f"`{name}`" in catalog
+
+
+def test_host_rule_flags_lookalike_hosts_only():
+    class Model:
+        def score(self, urls):
+            return np.zeros(len(urls))
+
+    score = script.with_host_rule(Model())
+    scores = score(["https://аpple.com/", "https://apple.com/", "https://пример.рф/"])
+    assert scores.tolist() == [1.0, 0.0, 0.0]
+
+
+def test_lookalike_footnote_and_host_rule_note():
+    result = B.evaluate_perturbations(
+        lambda urls: np.zeros(len(urls)),
+        ["https://paypal.com/a", "https://bank-site.com/b"],
+        [1, 0],
+        0.5,
+        ["url_homoglyphs"],
+    )
+    assert result["perturbations"][0]["creates_lookalike"] is True
+    result.update(threshold_name="fpr_0_5pct", model={"version": "url_test", "sha256": "0" * 64})
+    result["host_rule"] = True
+    text = script.render_block("url", result)
+    assert " ¹ |" in text and "¹ La perturbation fabrique une imitation" in text
+    assert "Règle d'alerte de l'étape 3.8 appliquée" in text

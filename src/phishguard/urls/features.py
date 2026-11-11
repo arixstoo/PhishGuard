@@ -24,7 +24,9 @@ Règles de conception, issues de l'audit des biais (``docs/data-bias.md``) :
   imbriquées ; les longueurs restent celles du texte brut.
 
 L'URL est d'abord normalisée par :func:`phishguard.data.urls.normalize_url`, comme à la
-construction du jeu : entraînement et production lisent l'URL de la même façon.
+construction du jeu, après NFKC et retrait des caractères invisibles
+(:func:`phishguard.security.normalize.normalize_url_text`, étape 3.8) : entraînement et
+production lisent l'URL de la même façon.
 """
 
 from __future__ import annotations
@@ -43,6 +45,7 @@ import pandas as pd
 import tldextract
 
 from phishguard.data.urls import make_domain_extractor, normalize_url
+from phishguard.security.normalize import normalize_url_text
 from phishguard.urls.brands import BrandIndex, load_brands, load_shorteners, max_typo_edits
 from phishguard.urls.idn import is_mixed_script, skeleton, to_ascii, to_unicode
 from phishguard.urls.tld import TldRiskTable, top_level_domain
@@ -313,8 +316,14 @@ def parse_host(host: str, extractor: tldextract.TLDExtract | None = None) -> Par
 
 
 def parse_url(url: str, extractor: tldextract.TLDExtract | None = None) -> ParsedUrl:
-    """Normalise et découpe une URL ; lève :class:`InvalidUrlError` si elle est invalide."""
-    normalized = normalize_url(url)
+    """Normalise et découpe une URL ; lève :class:`InvalidUrlError` si elle est invalide.
+
+    Le texte brut passe d'abord par :func:`~phishguard.security.normalize.normalize_url_text`
+    (NFKC, caractères invisibles retirés, étape 3.8), à l'entraînement comme à
+    l'inférence. Les homographes de l'hôte ne sont pas repliés : les features doivent les
+    voir.
+    """
+    normalized = normalize_url(normalize_url_text(url).text)
     if normalized is None:
         raise InvalidUrlError(f"URL invalide : {url[:200]!r}")
     url, host = normalized

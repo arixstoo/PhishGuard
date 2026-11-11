@@ -28,6 +28,7 @@ import json
 import logging
 import re
 import sys
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -46,7 +47,9 @@ from phishguard.reporting import (
     markdown_table,
     update_generated_block,
 )
+from phishguard.security.normalize import host_script_alert
 from phishguard.text.models import TextModel
+from phishguard.urls.features import parse_url
 from phishguard.urls.model import UrlModel
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,6 +96,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--skip", nargs="*", default=[], choices=list(BLOCK_LABELS), help="blocs à ne pas évaluer"
     )
+    p.add_argument(
+        "--url-host-rule",
+        action="store_true",
+        help="règle d'alerte de l'étape 3.8 : un hôte qui imite des lettres latines est signalé",
+    )
     args = p.parse_args(argv)
     if not re.fullmatch(r"[a-z0-9][a-z0-9_]*", args.label):
         p.error("--label : minuscules, chiffres et « _ » seulement")
@@ -115,13 +123,24 @@ def url_threshold_name(path: Path) -> str:
         return DEFAULT_URL_THRESHOLD
 
 
+def with_host_rule(model: UrlModel) -> Callable[[list[str]], np.ndarray]:
+    """Score du modèle, porté à 1 quand l'hôte imite des lettres latines (étape 3.8)."""
+
+    def score(urls: list[str]) -> np.ndarray:
+        scores = np.asarray(model.score(urls), dtype=float)
+        alerts = np.array([host_script_alert(parse_url(u).host) is not None for u in urls])
+        return np.where(alerts, 1.0, scores)
+
+    return score
+
+
 def url_block(args: argparse.Namespace) -> dict[str, Any]:
     model = UrlModel.load(args.url_model)
     name = url_threshold_name(args.url_evaluation)
     test = read_split_blocks(args.url_dataset, ("test",), ["url", "label"])["test"]
     logger.info("URL : %d échantillons de test, seuil %s", len(test), name)
     result = evaluate_perturbations(
-        lambda urls: model.score(urls),
+        with_host_rule(model) if args.url_host_rule else (lambda urls: model.score(urls)),
         test["url"].tolist(),
         test["label"].to_numpy(),
         model.thresholds[name],
@@ -134,6 +153,7 @@ def url_block(args: argparse.Namespace) -> dict[str, Any]:
         "sha256": sha256_file(args.url_model),
         "normalization": model.metadata.get("normalization"),
     }
+    result["host_rule"] = bool(args.url_host_rule)
     result["dataset_sha256"] = sha256_file(args.url_dataset)
     return result
 
@@ -225,7 +245,7 @@ def render_block(name: str, result: dict[str, Any]) -> str:
                 fr_percent(r["changed"]["phishing"]["rate"], 0),
                 _ci(r["recall"]),
                 f"**{_signed_points(r['delta_recall'])}**",
-                _ci(r["fpr"], 2),
+                _ci(r["fpr"], 2) + (" ¹" if r.get("creates_lookalike") else ""),
                 _signed_points(r["delta_fpr"], 2),
                 fr_int(r["evaded"]),
             ]
@@ -256,6 +276,23 @@ def render_block(name: str, result: dict[str, Any]) -> str:
             ["left", "left", "right", "right", "right", "right", "right", "right"],
         ),
     ]
+    if any(r.get("creates_lookalike") for r in result["perturbations"]):
+        lines += [
+            "",
+            (
+                "¹ La perturbation fabrique une imitation : une URL légitime réécrite en "
+                "homoglyphes désigne un autre domaine, et la signaler est juste. Ce FPR ne "
+                "mesure pas de fausses alertes."
+            ),
+        ]
+    if result.get("host_rule"):
+        lines += [
+            "",
+            (
+                "Règle d'alerte de l'étape 3.8 appliquée : un hôte qui imite des lettres "
+                "latines est signalé quel que soit le score du modèle."
+            ),
+        ]
     worst = worst_perturbation(result)
     if worst is not None and worst["delta_recall"] < 0:
         lines += [

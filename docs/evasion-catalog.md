@@ -43,12 +43,12 @@ ATT&CK décrit des comportements d'attaquant, pas des attaques contre un modèle
 
 ## Vue d'ensemble
 
-Statut de la contre-mesure à la date de l'étape 3.5 : **en place** (le code la contient et des tests la vérifient), **partielle** (elle existe mais ne couvre pas toutes les variantes), **prévue** (une étape du plan la traite), **non couverte** (aucune étape ne la traite encore).
+Statut de la contre-mesure, établi à l'étape 3.5 et mis à jour à chaque défense (dernière mise à jour : étape 3.8) : **en place** (le code la contient et des tests la vérifient), **partielle** (elle existe mais ne couvre pas toutes les variantes), **prévue** (une étape du plan la traite), **non couverte** (aucune étape ne la traite encore).
 
 | Id | Technique | Vecteur | Contre-mesure | Statut |
 | --- | --- | --- | --- | --- |
 | [URL-01](#url-01--typosquatting) | Typosquatting | URL | `is_typosquat`, `brand_min_distance` | partielle |
-| [URL-02](#url-02--homographes-idn) | Homographes IDN | URL | `host_mixed_script`, `homograph_brand` ; règle d'écritures mêlées (3.8) | partielle |
+| [URL-02](#url-02--homographes-idn) | Homographes IDN | URL | `host_mixed_script`, `homograph_brand`, règle d'alerte des hôtes (3.8) | en place |
 | [URL-03](#url-03--sous-domaines-trompeurs) | Sous-domaines trompeurs | URL | `brand_in_host`, `host_n_subdomains` | partielle |
 | [URL-04](#url-04--chemins-et-paramètres-bénins) | Chemins et paramètres bénins | URL | entraînement adversarial (3.9) | prévue |
 | [URL-05](#url-05--domaine-de-confiance-détourné) | Domaine de confiance détourné | URL | Threat Intelligence (module 2) | partielle |
@@ -56,8 +56,8 @@ Statut de la contre-mesure à la date de l'étape 3.5 : **en place** (le code la
 | [URL-07](#url-07--casse-mêlée) | Casse mêlée | URL | normalisation de l'hôte, mots-clés sans casse | en place |
 | [URL-08](#url-08--raccourcisseurs-et-redirections) | Raccourcisseurs et redirections | URL | `is_shortener`, `path_has_embedded_url` | partielle |
 | [URL-09](#url-09--identifiants-avant-lhôte) | Identifiants avant l'hôte | URL | `has_userinfo` | en place |
-| [TXT-01](#txt-01--homoglyphes) | Homoglyphes | texte | repli des confusables (3.8) | prévue |
-| [TXT-02](#txt-02--caractères-de-largeur-nulle) | Caractères de largeur nulle | texte | catégorie Cf retirée des mots-clés ; aussi du modèle (3.8) | partielle |
+| [TXT-01](#txt-01--homoglyphes) | Homoglyphes | texte | repli des confusables (3.8) | en place |
+| [TXT-02](#txt-02--caractères-de-largeur-nulle) | Caractères de largeur nulle | texte | catégories Cf et Cc retirées, mots-clés et modèle (3.8) | en place |
 | [TXT-03](#txt-03--mots-coupés-par-des-symboles) | Mots coupés par des symboles | texte | entraînement adversarial (3.9) | prévue |
 | [TXT-04](#txt-04--leetspeak) | Leetspeak | texte | n-grammes de caractères ; entraînement adversarial (3.9) | partielle |
 | [TXT-05](#txt-05--dilution-par-du-texte-légitime) | Dilution par du texte légitime | texte | catégories de leurre ; entraînement adversarial (3.9) | prévue |
@@ -109,7 +109,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Description** : remplacer une lettre latine par une lettre identique d'une autre écriture : `аpple.example`, dont le « а » est cyrillique. Le navigateur transmet `xn--pple-43d.example`, l'utilisateur lit `apple`.
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : pour un modèle de caractères, `а` (U+0430) et `a` (U+0061) n'ont rien en commun ; pour une liste de marques, `аpple` n'est pas `apple`. La forme Punycode ajoute en plus des chiffres et des tirets sans rapport avec ce que lit l'utilisateur.
-- **Contre-mesure** : `host_mixed_script` (écritures non admises ensemble dans un label, profil *Highly Restrictive* d'UTS #39) et `homograph_brand` (le squelette visuel de l'hôte contient une marque absente de sa forme réelle). **Limites** : la table des confusables de `urls/idn.py` est volontairement courte (cyrillique, grec, quelques lettres latines) ; un hôte **entièrement** cyrillique (`раураl`) n'est pas mixte. Prévu à l'étape 3.8 : signal d'alerte fort pour tout hôte qui mélange des écritures, et squelette selon UTS #39.
+- **Contre-mesure** : `host_mixed_script` (écritures non admises ensemble dans un label, profil *Highly Restrictive* d'UTS #39) et `homograph_brand` (le squelette visuel de l'hôte contient une marque absente de sa forme réelle). **Limites** : la table des confusables de `urls/idn.py` est volontairement courte (cyrillique, grec, quelques lettres latines) ; un hôte **entièrement** cyrillique (`раураl`) n'est pas mixte. Depuis l'étape 3.8, `host_script_alert` donne une alerte forte à tout hôte qui imite des lettres latines, y compris un label entièrement cyrillique (`раура.com`) : sous `url_homoglyphs`, le rappel passe de 75,1 % à 99,4 % ([normalization.md](normalization.md)).
 - **Perturbation** : `url_homoglyphs` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1583.001, T1036.
 
@@ -184,7 +184,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Description** : remplacer des lettres latines par des lettres cyrilliques ou grecques identiques : `Vоtre cоmpte` avec des « о » cyrilliques.
 - **Vecteur** : texte (aussi : objet et corps d'un email).
 - **Pourquoi ça trompe un modèle** : chaque lettre remplacée fait disparaître tous les n-grammes qui la contiennent, jusqu'à cinq par lettre. Le modèle voit des n-grammes jamais vus à l'entraînement, de poids nul : le score tombe vers la constante du SVM. Le lecteur, lui, ne voit aucune différence.
-- **Contre-mesure** : aucune pour le modèle à l'étape 3.5 (les mots-clés des catégories ne replient pas non plus les confusables). Prévu à l'étape 3.8 : repli des caractères confusables vers leur squelette (UTS #39), à l'entraînement comme à l'inférence, et journalisation quand l'entrée a été modifiée.
+- **Contre-mesure** : depuis l'étape 3.8, repli des confusables vers leur squelette latin, à l'entraînement comme à l'inférence, pour le modèle et pour les mots-clés des catégories, et journalisation quand l'entrée a été modifiée ([normalization.md](normalization.md)). Sous `homoglyphs_full`, le rappel SMS revient à celui du texte propre. **Limite** : la table ne couvre que le cyrillique, le grec et quelques lettres latines.
 - **Perturbation** : `homoglyphs` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027 (technique la plus proche).
 
@@ -193,7 +193,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Description** : glisser des caractères invisibles (U+200B *zero width space*, U+200C, U+200D, U+2060, U+FEFF) au milieu des mots : `blo​qué`.
 - **Vecteur** : texte, email.
 - **Pourquoi ça trompe un modèle** : invisibles à l'écran, ils coupent les n-grammes comme une lettre étrangère. Un filtre par mots-clés ne retrouve plus « bloqué ».
-- **Contre-mesure** : **partielle**. La normalisation des mots-clés smishing (`text/smishing.normalize`) retire déjà la catégorie Unicode Cf, donc les catégories de leurre résistent ; le score email compte les caractères de largeur nulle (`zero_width_chars`). Mais le TF-IDF du modèle les voit encore. Prévu à l'étape 3.8 : suppression des caractères Cf et de contrôle avant le modèle.
+- **Contre-mesure** : la normalisation des mots-clés smishing (`text/smishing.normalize`) retirait déjà la catégorie Unicode Cf, et le score email compte les caractères de largeur nulle (`zero_width_chars`). Depuis l'étape 3.8, le modèle lui-même lit le texte sans caractères de format ni de contrôle : sous `zero_width_dense`, le rappel SMS remonte de 78,1 % à 94,8 %, celui du texte propre.
 - **Perturbation** : `zero_width` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027.
 
