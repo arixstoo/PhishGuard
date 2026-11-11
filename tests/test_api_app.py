@@ -26,7 +26,14 @@ def test_interactive_documentation_lists_the_routes(api_models_dir, tmp_path):
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
         assert client.get("/docs").status_code == 200
         paths = client.get("/openapi.json").json()["paths"]
-    assert "/v1/health" in paths
+    assert {
+        "/v1/health",
+        "/v1/model",
+        "/v1/feedback",
+        "/v1/analyze/url",
+        "/v1/analyze/text",
+        "/v1/analyze/email",
+    } <= set(paths)
 
 
 def test_documentation_can_be_disabled(api_models_dir, tmp_path):
@@ -48,7 +55,7 @@ def test_models_are_loaded_once_at_startup(api_models_dir, tmp_path):
     with TestClient(app) as client:
         for _ in range(3):
             assert client.get("/v1/health").status_code == 200
-        analyzers = client.app.state.phishguard.analyzers
+        analyzers = client.app.state.phishguard.service.analyzers
         assert analyzers.url.model_version == "url_v2"
         assert analyzers.text.model_version == "text_v2"
     assert calls == [None]  # une seule fois, sans Threat Intelligence par défaut

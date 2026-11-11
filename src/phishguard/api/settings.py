@@ -31,8 +31,10 @@ class ApiSettings(BaseSettings):
         env_ignore_empty=True,
     )
 
-    # --- Modèles ------------------------------------------------------------ #
+    # --- Modèles et données ------------------------------------------------- #
     models_dir: Path = Path("models")
+    # Base SQLite des retours en quarantaine (jamais versionnée).
+    database_path: Path = Path("data/api/phishguard.sqlite3")
 
     # --- Documentation interactive ----------------------------------------- #
     # /docs, /redoc et /openapi.json. L'étape 4.5 les désactive en production.
