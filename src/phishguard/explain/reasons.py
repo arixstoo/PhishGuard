@@ -49,6 +49,7 @@ import yaml
 
 from phishguard.enrichers.base import Signal, SignalStatus
 from phishguard.explain.shap_url import UrlExplanation
+from phishguard.explain.text import TextExplanation
 from phishguard.fusion.mitre import Channel
 from phishguard.fusion.score import MODEL, FusionResult, Verdict
 from phishguard.urls.brands import BrandIndex, load_brands
@@ -62,7 +63,7 @@ DEFAULT_LANGUAGE: Language = "fr"
 MAX_REASONS = 3
 # Une contribution plus petite (en points de score) n'est pas citée comme raison.
 MIN_REASON_POINTS = 0.5
-FRAGMENT_MAX_LENGTH = 40
+FRAGMENT_MAX_LENGTH = 60
 
 # Seuils au-delà desquels une feature numérique devient un indice lisible. Ils sont
 # choisis pour être rares dans le légitime (voir docs/url-features.md) : la moyenne des
@@ -91,6 +92,7 @@ _DROPPED_CATEGORIES = frozenset({"Cc", "Cf", "Cs", "Co", "Cn", "Zl", "Zp"})
 _MARKUP = str.maketrans("", "", "<>&\"'`\\{}[]")
 _SPACES_RE = re.compile(r"\s+")
 _SCHEME_RE = re.compile(r"(?i)\b(h)tt(ps?)\b")
+ELLIPSIS = "…"
 
 
 def safe_fragment(text: object, max_length: int = FRAGMENT_MAX_LENGTH) -> str:
@@ -107,7 +109,9 @@ def safe_fragment(text: object, max_length: int = FRAGMENT_MAX_LENGTH) -> str:
     """
     if max_length < 1:
         raise ValueError("max_length doit être au moins 1")
-    value = unicodedata.normalize("NFKC", str(text))
+    # NFKC écrit « … » en trois points, que le désarmement transformerait en « [.][.][.] » :
+    # l'ellipse d'une coupure précédente est préservée.
+    value = ELLIPSIS.join(unicodedata.normalize("NFKC", part) for part in str(text).split(ELLIPSIS))
     value = "".join(
         " " if c.isspace() else c
         for c in value
@@ -115,7 +119,7 @@ def safe_fragment(text: object, max_length: int = FRAGMENT_MAX_LENGTH) -> str:
     )
     value = _SPACES_RE.sub(" ", value.translate(_MARKUP)).strip()
     if len(value) > max_length:
-        value = value[: max_length - 1].rstrip() + "…"
+        value = value[: max_length - 1].rstrip() + ELLIPSIS
     value = _SCHEME_RE.sub(r"\1xx\2", value)
     return value.replace(".", "[.]").replace("@", "[@]")
 
@@ -541,6 +545,146 @@ def feature_candidates(
     return found
 
 
+# --------------------------------------------------------------------------- #
+# Raisons tirées du modèle de texte (étape 3.3)
+# --------------------------------------------------------------------------- #
+
+TEXT_TERMS = 3  # mots cités dans la raison ``text.terms``
+TERM_MAX_LENGTH = 16  # trois mots et leurs séparateurs tiennent dans un fragment
+TERM_MIN_LENGTH = 3
+_TERM_STRIP = string.punctuation + "«»“”‘’…؟،؛ "
+# Mots-outils : le modèle de caractères leur donne parfois du poids, mais « votre » ou
+# « est » n'expliquent rien à un utilisateur. Ils restent dans la vue analyste.
+DISPLAY_STOP_WORDS = frozenset(
+    [
+        "les",
+        "des",
+        "une",
+        "est",
+        "son",
+        "ses",
+        "sur",
+        "aux",
+        "par",
+        "pour",
+        "avec",
+        "dans",
+        "vos",
+        "votre",
+        "nos",
+        "notre",
+        "vous",
+        "nous",
+        "leur",
+        "leurs",
+        "qui",
+        "que",
+        "quoi",
+        "elle",
+        "ils",
+        "pas",
+        "plus",
+        "tout",
+        "tous",
+        "mais",
+        "car",
+        "donc",
+        "cette",
+        "ces",
+        "the",
+        "and",
+        "for",
+        "you",
+        "your",
+        "are",
+        "was",
+        "this",
+        "that",
+        "with",
+        "from",
+        "have",
+        "has",
+        "not",
+        "our",
+        "can",
+        "will",
+    ]
+) | frozenset({"على", "إلى", "التي", "الذي", "هذا", "هذه", "عبر", "بعد", "قبل"})
+
+
+def display_term(term: str) -> str | None:
+    """Forme affichable d'un mot du message, ou ``None`` s'il ne doit pas être cité.
+
+    Ne sont jamais recopiés : un lien (il serait cliquable dans certaines messageries),
+    un mot sans lettre (un code reçu ou un numéro de téléphone peuvent être personnels),
+    un mot-outil ou un mot de moins de trois caractères.
+    """
+    from phishguard.text.smishing import find_urls
+
+    if find_urls(term):
+        return None
+    cleaned = term.strip(_TERM_STRIP)
+    if len(cleaned) < TERM_MIN_LENGTH or cleaned.casefold() in DISPLAY_STOP_WORDS:
+        return None
+    if not any(c.isalpha() for c in cleaned):
+        return None  # nombre, code reçu, numéro : rien à expliquer, peut-être personnel
+    return safe_fragment(cleaned, TERM_MAX_LENGTH)
+
+
+def text_candidates(
+    explanation: TextExplanation, model_points: float, *, alarming: bool = False
+) -> list[_Candidate]:
+    """Raisons lisibles du modèle de texte, avec leur part des points du modèle.
+
+    1. **Catégories** de leurre (urgence, argent, lien, code, compte) : le poids d'une
+       catégorie est la somme des contributions positives des mots qui l'évoquent.
+    2. **Mots** : pour un verdict suspect ou phishing (``alarming``) seulement, les
+       trois mots restants qui ont le plus poussé vers « phishing », en une seule raison,
+       après les catégories (niveau « forme »). Pour un message jugé sûr, dire que ses
+       mots « reviennent dans les messages frauduleux » serait trompeur.
+    3. Pour un verdict suspect ou phishing, une catégorie présente sans effet sur le
+       score est citée à 0 point (« le message parle d'un code » reste utile).
+
+    Les parts suivent la règle des URL : ``model_points × poids / somme des
+    contributions positives``.
+    """
+    positive_total = math.fsum(max(0.0, t.contribution) for t in explanation.terms)
+    share = (model_points / positive_total) if positive_total > 0 else 0.0
+    positive = {t.term: t.contribution for t in explanation.terms if t.contribution > 0}
+
+    found: list[_Candidate] = []
+    cited_words: set[str] = set()
+    for category in explanation.categories:
+        words = explanation.category_terms.get(category, ())
+        weight = math.fsum(positive.get(w, 0.0) for w in set(words))
+        points = weight * share
+        if points >= MIN_REASON_POINTS:
+            found.append(_Candidate(f"text.{category}", MODEL, points, {}, TIER_CUE))
+            cited_words.update(words)
+        elif alarming:
+            found.append(_Candidate(f"text.{category}", MODEL, 0.0, {}, TIER_OBSERVATION))
+
+    if not alarming:
+        return found
+    shown: list[str] = []
+    weight = 0.0
+    for term in explanation.top(len(explanation.terms)):
+        if term.term in cited_words:
+            continue
+        display = display_term(term.term)
+        if display is None or display in shown:
+            continue
+        shown.append(display)
+        weight += term.contribution
+        if len(shown) == TEXT_TERMS:
+            break
+    if shown and weight * share >= MIN_REASON_POINTS:
+        found.append(
+            _Candidate("text.terms", MODEL, weight * share, {"terms": ", ".join(shown)}, TIER_SHAPE)
+        )
+    return found
+
+
 class ReasonBuilder:
     """Construit l'explication destinée à l'utilisateur, dans une langue."""
 
@@ -566,16 +710,16 @@ class ReasonBuilder:
         signals: Iterable[Signal] = (),
         url: str | None = None,
         explanation: UrlExplanation | None = None,
+        text_explanation: TextExplanation | None = None,
         model_code: str = MODEL,
-        model_candidates: Sequence[_Candidate] | None = None,
     ) -> Explanation:
         """Explication d'un résultat de fusion.
 
         - règle dure : c'est l'unique raison ;
         - sinon, sources qui ont fait monter le score, et raisons du modèle : celles des
-          features URL (``url`` et ``explanation``), ou ``model_candidates`` fournies par
-          un autre canal ; à défaut, et seulement pour un verdict suspect ou phishing,
-          une raison générale ``model_code``.
+          features URL (``url`` et ``explanation``) ou du message (``text_explanation``,
+          étape 3.3) ; à défaut, et seulement pour un verdict suspect ou phishing, une
+          raison générale ``model_code``.
         """
         advice = self.templates.advice_for(channel, fusion.verdict)
         if fusion.hard_rule is not None:
@@ -597,8 +741,10 @@ class ReasonBuilder:
                 candidates.append(_signal_candidate(c.source, c.points, by_source.get(c.source)))
                 continue
             alarming = fusion.verdict != "safe"
-            from_model: Sequence[_Candidate] = model_candidates or ()
-            if explanation is not None and url is not None and not model_candidates:
+            from_model: Sequence[_Candidate] = ()
+            if text_explanation is not None:
+                from_model = text_candidates(text_explanation, c.points, alarming=alarming)
+            elif explanation is not None and url is not None:
                 facts = url_facts(url, self.brands)
                 from_model = feature_candidates(explanation, facts, c.points, observations=alarming)
             candidates.extend(from_model)

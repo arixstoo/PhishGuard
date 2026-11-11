@@ -21,7 +21,7 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install lint format test \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	explain-url cards schema
+	explain-url calibrate-text cards schema
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -76,7 +76,7 @@ $(DATASET):
 # Modèles (étapes 1.6 à 1.11)
 # --------------------------------------------------------------------------- #
 
-train: train-url evaluate-url errors-url calibrate-url explain-url train-text train-email cards ## Entraîne et évalue tous les modèles
+train: train-url evaluate-url errors-url calibrate-url explain-url train-text calibrate-text train-email cards ## Entraîne et évalue tous les modèles
 
 train-url: $(SPLIT) ## Entraîne et compare les modèles URL, enregistre le meilleur (étape 1.6)
 	$(PYTHON) scripts/train_url.py
@@ -98,6 +98,9 @@ $(URL_MODEL): $(SPLIT)
 
 train-text: ## Compare les modèles SMS (UCI + jeu FR/AR) et enregistre le meilleur (étape 1.9)
 	$(PYTHON) scripts/train_text.py
+
+calibrate-text: ## Calibre le score du modèle SMS (marge → probabilité) sur la validation (étape 3.3)
+	$(PYTHON) scripts/calibrate_text.py
 
 email-samples: ## Télécharge des emails de phishing réels (Phishing Pot, non versionnés) (étape 1.10)
 	$(PYTHON) scripts/fetch_email_samples.py --count $(EMAIL_SAMPLE_COUNT)

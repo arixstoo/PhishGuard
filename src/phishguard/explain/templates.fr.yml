@@ -49,6 +49,15 @@ reasons:
   signal.certificate_transparency: "Le certificat de sécurité du site est très récent."
   signal.other: "La source {source} signale un risque."
 
+  # Modèle de texte (étape 3.3) : catégories de leurre, puis mots les plus influents.
+  text.model: "Le style de ce message ressemble à celui de messages frauduleux connus."
+  text.terms: "Des mots comme « {terms} » reviennent souvent dans les messages frauduleux."
+  text.urgency: "Le message vous presse d'agir vite ou vous menace d'une sanction."
+  text.money: "Le message parle d'argent : un paiement, un gain ou un remboursement."
+  text.link: "Le message vous pousse à ouvrir un lien."
+  text.code: "Le message parle d'un code ou d'un mot de passe : ne le communiquez jamais."
+  text.account: "Le message parle de votre compte, de votre carte ou d'un colis."
+
   # Règles du score email (étapes 1.11 et 2.13), une par règle.
   email.dmarc_fail: "Le domaine de l'expéditeur n'a pas autorisé cet envoi."
   email.spf_fail: "Le serveur qui a envoyé cet email n'est pas autorisé par le domaine de l'expéditeur."

@@ -1,4 +1,5 @@
-"""Analyse complète d'une URL : modèle local, Threat Intelligence, fusion, ATT&CK.
+"""Analyse complète d'une URL ou d'un message : modèle local, Threat Intelligence,
+fusion, ATT&CK, explication.
 
 Point d'entrée unique que l'API (module 4), l'extension et le bot (module 5)
 appelleront. Il assemble les briques du module 2 :
@@ -44,8 +45,15 @@ import tldextract
 from phishguard.data.urls import make_domain_extractor
 from phishguard.enrichers.orchestrator import EnrichmentResult, Orchestrator
 from phishguard.explain.shap_url import UnsupportedModelError, UrlExplainer, UrlExplanation
+from phishguard.explain.text import TextExplainer, TextExplanation, message_categories
 from phishguard.fusion.calibration import ScoreCalibrator
-from phishguard.fusion.mitre import Observations, Technique, domain_observations, map_techniques
+from phishguard.fusion.mitre import (
+    Channel,
+    Observations,
+    Technique,
+    domain_observations,
+    map_techniques,
+)
 from phishguard.fusion.score import FusionConfig, FusionResult, Verdict, fuse
 from phishguard.security.netguard import NetGuardError, is_public_ip, parse_ip_literal
 from phishguard.urls.features import ParsedUrl, UrlFeatureExtractor, parse_url
@@ -278,4 +286,172 @@ def _explainer_for(model: UrlScorer) -> UrlExplainer | None:
         return UrlExplainer(model)
     except UnsupportedModelError as exc:
         logger.info("modèle URL sans explication SHAP : %s", exc)
+        return None
+
+
+# --------------------------------------------------------------------------- #
+# Messages (SMS, messageries) : étape 3.3
+# --------------------------------------------------------------------------- #
+
+TextChannel = Literal["sms", "messaging"]
+TEXT_CHANNELS: tuple[TextChannel, ...] = ("sms", "messaging")
+# Au-delà, ce n'est plus un SMS : l'API du module 4 bornera aussi l'entrée.
+MAX_TEXT_CHARS = 5_000
+
+
+class TextScorer(Protocol):
+    """Ce que l'analyse attend du modèle texte (:class:`~phishguard.text.models.TextModel`)."""
+
+    def score(self, texts: Iterable[str]) -> np.ndarray: ...
+
+
+@dataclass(frozen=True)
+class TextAnalysis:
+    """Résultat de l'analyse d'un message. **Le texte lui-même n'est pas conservé.**
+
+    ``explanation`` contient des mots du message : elle ne doit jamais être journalisée.
+    """
+
+    channel: Channel
+    verdict: Verdict
+    score: int
+    model_score: float  # marge du SVM ou probabilité, selon le modèle
+    model_probability: float
+    calibrated: bool
+    fusion: FusionResult
+    mitre: tuple[Technique, ...]
+    categories: tuple[str, ...]
+    text_length: int
+    latency_ms: int
+    model_version: str = "unknown"
+    explanation: TextExplanation | None = None
+
+    def to_response(self, language: str = "fr") -> AnalysisResponse:
+        """Réponse au format de l'étape 2.11 bis, raisons rédigées dans ``language``."""
+        from phishguard.schema import AnalysisResponse
+
+        return AnalysisResponse.from_text_analysis(self, language=language)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Résumé sans le texte ni ses mots (journalisable)."""
+        return {
+            "channel": self.channel,
+            "verdict": self.verdict,
+            "score": self.score,
+            "model": {
+                "score": self.model_score,
+                "probability": self.model_probability,
+                "calibrated": self.calibrated,
+            },
+            "fusion": self.fusion.to_dict(),
+            "mitre": [t.to_dict() for t in self.mitre],
+            "categories": list(self.categories),
+            "text_length": self.text_length,
+            "latency_ms": self.latency_ms,
+        }
+
+
+class TextAnalyzer:
+    """Analyse locale d'un SMS ou d'un message : aucun appel réseau, jamais.
+
+    Le score du modèle passe par ``calibrator`` s'il est fourni (``make calibrate-text``).
+    Sinon, un modèle qui renvoie déjà une probabilité (régression logistique) est
+    utilisé tel quel ; une marge de SVM est ramenée à une probabilité par une sigmoïde
+    centrée sur le seuil de décision du modèle, approximation signalée dans le journal.
+    """
+
+    def __init__(
+        self,
+        model: TextScorer,
+        *,
+        calibrator: ScoreCalibrator | None = None,
+        config: FusionConfig | None = None,
+        explain: bool = True,
+    ) -> None:
+        self.model = model
+        self.calibrator = calibrator
+        self.config = config
+        metadata = getattr(model, "metadata", None)
+        self.model_version = str(
+            (metadata.get("model_version") if isinstance(metadata, Mapping) else None) or "unknown"
+        )
+        estimator = getattr(model, "estimator", None)
+        self._outputs_probability = hasattr(estimator, "predict_proba")
+        self._threshold = float(getattr(model, "threshold", 0.0))
+        if calibrator is None and not self._outputs_probability:
+            logger.warning("modèle texte non calibré : marge ramenée par une sigmoïde au seuil")
+        self.explainer = _text_explainer_for(model) if explain else None
+
+    @classmethod
+    def from_files(cls, model_path: Path, calibration_path: Path | None = None) -> TextAnalyzer:
+        """Modèle (**pickle** : fichier de confiance seulement) et calibration (JSON)."""
+        from phishguard.text.models import TextModel
+
+        calibrator = ScoreCalibrator.load(calibration_path) if calibration_path else None
+        return cls(TextModel.load(model_path), calibrator=calibrator)
+
+    def _probability(self, raw: float) -> float:
+        if self.calibrator is not None:
+            return self.calibrator(raw)
+        if self._outputs_probability:
+            return min(1.0, max(0.0, raw))
+        return 1.0 / (1.0 + math.exp(-min(500.0, max(-500.0, raw - self._threshold))))
+
+    def analyze(self, text: str, *, channel: TextChannel = "sms") -> TextAnalysis:
+        """Analyse ``text`` reçu par ``channel`` (``sms`` ou ``messaging``)."""
+        start = time.perf_counter()
+        if not isinstance(text, str):
+            raise TypeError("le message doit être une chaîne")
+        if not text.strip():
+            raise ValueError("message vide")
+        if len(text) > MAX_TEXT_CHARS:
+            raise ValueError(f"message trop long : plus de {MAX_TEXT_CHARS} caractères")
+        if channel not in TEXT_CHANNELS:
+            raise ValueError(f"canal {channel!r} : {TEXT_CHANNELS} attendus")
+
+        raw = float(self.model.score([text])[0])
+        if not math.isfinite(raw):
+            raise ValueError(f"score du modèle non fini : {raw!r}")
+        probability = self._probability(raw)
+        fusion = fuse(probability, (), config=self.config)
+
+        explanation: TextExplanation | None = None
+        if self.explainer is not None:
+            try:
+                explanation = self.explainer.explain(text)
+            except Exception:  # l'explication est un plus, jamais une cause d'échec
+                logger.exception("explication du message impossible : analyse sans explication")
+        categories = explanation.categories if explanation is not None else message_categories(text)
+        observations = Observations(
+            channel=channel,
+            has_link="link" in categories,
+            requests_information=bool({"code", "account"} & set(categories)),
+        )
+        return TextAnalysis(
+            channel=channel,
+            verdict=fusion.verdict,
+            score=fusion.score,
+            model_score=raw,
+            model_probability=probability,
+            calibrated=self.calibrator is not None,
+            fusion=fusion,
+            mitre=map_techniques(fusion.verdict, observations),
+            categories=tuple(categories),
+            text_length=len(text),
+            latency_ms=round((time.perf_counter() - start) * 1000),
+            model_version=self.model_version,
+            explanation=explanation,
+        )
+
+
+def _text_explainer_for(model: TextScorer) -> TextExplainer | None:
+    """Explicateur du modèle texte, ou ``None`` s'il ne s'y prête pas."""
+    from phishguard.text.models import TextModel
+
+    if not isinstance(model, TextModel):
+        return None
+    try:
+        return TextExplainer(model)
+    except UnsupportedModelError as exc:
+        logger.info("modèle texte sans explication par mots : %s", exc)
         return None

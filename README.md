@@ -92,6 +92,7 @@ python -m phishguard.config             # which Threat Intel sources are enabled
 make calibrate-url                      # calibrate the URL model probabilities on validation (docs/fusion.md)
 make schema                             # regenerate the analysis response JSON Schema (docs/response-schema.md)
 make explain-url                        # SHAP explanations of the URL model: global plot and 10 explained URLs (docs/explain-url.md)
+make calibrate-text                     # calibrate the SMS model margin into a probability, on validation (docs/explain-text.md)
 python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
 ```
 
@@ -143,6 +144,7 @@ data/, models/    generated locally, never committed
 - [MITRE ATT&CK mapping](docs/mitre-attack.md): the ATT&CK techniques each detection illustrates, verified against MITRE's official data (French)
 - [End-to-end URL analysis](docs/analysis.md): local model, opt-in enrichment, fusion and ATT&CK in one call, with privacy and degradation guarantees (French)
 - [URL model explanations](docs/explain-url.md): exact SHAP contributions of each URL feature, computed by LightGBM itself, with 10 explained phishing URLs and the dataset biases they reveal (French)
+- [SMS model explanations](docs/explain-text.md): exact word contributions of the linear text model, lure categories (urgency, money, link, code, account) and the calibrated score (French)
 - [User-facing reasons](docs/reasons.md): up to three plain-language reasons per verdict plus an action advice, in French, English and Arabic, ranked by SHAP weight and safe against injection (French)
 - [Analysis response schema](docs/response-schema.md): the frozen JSON contract (verdict, score, confidence, reasons, advice, signals, ATT&CK techniques) that the API, extension and bot rely on, with its [JSON Schema](docs/schema/analysis-response.v1.json) (French)
 - [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)

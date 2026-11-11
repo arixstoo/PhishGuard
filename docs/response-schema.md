@@ -73,7 +73,7 @@ Les neuf premiers sont ceux du cahier des charges. Les trois suivants ont été 
 | `enrichment` | `used` ou `skipped` | Les sources tierces ont-elles été interrogées ? |
 | `latency_ms` | entier | Durée totale de l'analyse |
 | `schema_version` | `1.1.0` | Version de ce contrat |
-| `channel` | `url`, `email`, `sms` ou `messaging` | Canal analysé : les trois endpoints du module 4 renvoient ce même schéma |
+| `channel` | `url`, `email`, `sms` ou `messaging` | Canal analysé : les trois endpoints du module 4 renvoient ce même schéma. Une analyse de message (`TextAnalyzer`, étape 3.3) est toujours locale : `enrichment` vaut `skipped` et `signals` est vide |
 | `fusion_version` | `x.y.z` | Version de la configuration de fusion (`fusion.json`) qui a produit le score |
 | `language` | `fr`, `en` ou `ar` | Langue des messages et du conseil |
 | `advice` | texte | Conseil d'action, **toujours présent**, selon le canal et le verdict |
@@ -91,7 +91,8 @@ Depuis la version 1.1.0, les raisons sont écrites pour l'utilisateur (étape 3.
 | --- | --- |
 | `hard_rule.blocklist`, `hard_rule.google_safe_browsing`, `hard_rule.allowlist` | Une règle dure a décidé : c'est alors l'unique raison |
 | `url.brand_lookalike`, `url.brand_in_host`, `url.risky_tld`, `url.ip_host`… | Une feature compréhensible du modèle URL a fait monter le score ; la part du modèle est répartie selon les valeurs SHAP (étape 3.1). Liste complète dans [`reasons.md`](reasons.md) |
-| `model` | Part du modèle local, quand aucune feature compréhensible ne l'explique (verdict suspect ou phishing seulement) |
+| `text.urgency`, `text.money`, `text.link`, `text.code`, `text.account`, `text.terms` | Catégorie de leurre ou mots du message qui ont fait monter le score (SMS et messageries, étape 3.3, [`explain-text.md`](explain-text.md)) |
+| `model`, `text.model` | Part du modèle local (URL ou texte), quand aucune raison plus précise ne l'explique (verdict suspect ou phishing seulement) |
 | `signal.domain_age`, `signal.virustotal_engines`, `signal.urlscan`… | Part du score due à une source de Threat Intelligence |
 
 Leur somme vaut au plus le score : la part du modèle due à des features que l'utilisateur ne peut pas vérifier (la longueur du chemin, par exemple) n'est citée nulle part, et une contribution de moins d'un demi-point non plus. Un constat net qui n'a pas fait monter le score (un raccourcisseur) peut être cité avec `points: 0`. Une source en panne apparaît dans `signals`, mais jamais dans `reasons`.

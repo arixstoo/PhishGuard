@@ -12,8 +12,9 @@ Le schéma JSON correspondant est versionné dans ``docs/schema/analysis-respons
 (``make schema`` le régénère, un test vérifie qu'il est à jour). La description complète
 des champs est dans ``docs/response-schema.md``.
 
-Les réponses sont construites par :meth:`AnalysisResponse.from_url_analysis` (URL) ; les
-analyses de SMS et d'emails rempliront le même contrat au module 4.
+Les réponses sont construites par :meth:`AnalysisResponse.from_url_analysis` (URL) et
+:meth:`AnalysisResponse.from_text_analysis` (SMS, messageries, étape 3.3) ; l'analyse
+d'email remplira le même contrat au module 4.
 
 Historique :
 
@@ -41,7 +42,7 @@ from phishguard.fusion.mitre import Channel
 from phishguard.fusion.score import FusionResult, Thresholds, Verdict
 
 if TYPE_CHECKING:
-    from phishguard.analysis import UrlAnalysis
+    from phishguard.analysis import TextAnalysis, UrlAnalysis
 
 SCHEMA_VERSION = "1.1.0"
 Confidence = Literal["low", "medium", "high"]
@@ -165,6 +166,39 @@ class AnalysisResponse(_Strict):
             model_version=model_version or analysis.model_version,
             fusion_version=fusion.config_version,
             enrichment=analysis.enrichment.enrichment,
+            latency_ms=analysis.latency_ms,
+            language=explanation.language,
+            advice=explanation.advice,
+        )
+
+    @classmethod
+    def from_text_analysis(
+        cls,
+        analysis: TextAnalysis,
+        *,
+        model_version: str | None = None,
+        language: str = DEFAULT_LANGUAGE,
+    ) -> AnalysisResponse:
+        """Réponse d'une analyse de message (étape 3.3). L'analyse est locale : aucun
+        signal, enrichissement ``skipped``."""
+        fusion = analysis.fusion
+        explanation = ReasonBuilder(language).for_fusion(
+            fusion,
+            channel=analysis.channel,
+            text_explanation=analysis.explanation,
+            model_code="text.model",
+        )
+        return cls(
+            channel=analysis.channel,
+            verdict=analysis.verdict,
+            score=analysis.score,
+            confidence=confidence(fusion, Thresholds(**fusion.thresholds)),
+            reasons=reasons(explanation),
+            signals={},
+            mitre=[TechniqueOut(**t.to_dict()) for t in analysis.mitre],
+            model_version=model_version or analysis.model_version,
+            fusion_version=fusion.config_version,
+            enrichment="skipped",
             latency_ms=analysis.latency_ms,
             language=explanation.language,
             advice=explanation.advice,
