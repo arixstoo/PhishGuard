@@ -1,0 +1,369 @@
+{
+  "metadata": {
+    "report_version": "1.0.0",
+    "generated_at": "2026-11-08T23:10:20+00:00",
+    "model_version": "url_v1",
+    "model_sha256": "9aa07df2ec23eb0ff02c224cf01b013bcf97ad9554bd53f41ac2ff08f201bc94",
+    "dataset_sha256": "0310e419432c749350f01ce8e8841313f89d66ee82ef52082ff8e195c1a2a66f",
+    "split": "validation",
+    "sample_rows": 2000,
+    "seed": 0,
+    "backend": "lightgbm",
+    "decision": {
+      "name": "fpr_0_5pct",
+      "threshold": 0.826343039217525
+    }
+  },
+  "space": "log_odds",
+  "base_value": -2.870721,
+  "global_importance": [
+    {
+      "feature": "host_len",
+      "mean_abs_shap": 1.597824,
+      "description": "caractères de l'hôte (forme Unicode)"
+    },
+    {
+      "feature": "tld_phish_rate",
+      "mean_abs_shap": 1.020883,
+      "description": "part de phishing du TLD à l'entraînement, lissée (voir phishguard.urls.tld)"
+    },
+    {
+      "feature": "path_len",
+      "mean_abs_shap": 0.583684,
+      "description": "caractères du chemin brut"
+    },
+    {
+      "feature": "host_n_hyphens",
+      "mean_abs_shap": 0.252194,
+      "description": "tirets dans l'hôte (forme Unicode)"
+    },
+    {
+      "feature": "host_n_digits",
+      "mean_abs_shap": 0.213822,
+      "description": "chiffres dans l'hôte (forme Unicode)"
+    },
+    {
+      "feature": "host_entropy",
+      "mean_abs_shap": 0.204292,
+      "description": "entropie de Shannon des caractères de l'hôte (bits)"
+    },
+    {
+      "feature": "host_n_subdomains",
+      "mean_abs_shap": 0.195503,
+      "description": "labels avant le domaine enregistré, sans un « www » initial"
+    },
+    {
+      "feature": "path_n_digits",
+      "mean_abs_shap": 0.075283,
+      "description": "chiffres dans le chemin et la requête décodés"
+    },
+    {
+      "feature": "path_depth",
+      "mean_abs_shap": 0.057129,
+      "description": "segments non vides du chemin"
+    },
+    {
+      "feature": "query_n_params",
+      "mean_abs_shap": 0.048677,
+      "description": "paramètres non vides de la requête"
+    },
+    {
+      "feature": "query_len",
+      "mean_abs_shap": 0.025977,
+      "description": "caractères de la requête brute"
+    },
+    {
+      "feature": "brand_in_host",
+      "mean_abs_shap": 0.018486,
+      "description": "1 si un label de l'hôte (hors suffixe) contient une marque dont ce n'est pas le domaine officiel"
+    },
+    {
+      "feature": "host_kw_hits",
+      "mean_abs_shap": 0.01605,
+      "description": "mots-clés de KEYWORDS présents dans l'hôte"
+    },
+    {
+      "feature": "path_kw_hits",
+      "mean_abs_shap": 0.016016,
+      "description": "mots-clés présents dans le chemin et la requête décodés"
+    },
+    {
+      "feature": "brand_in_path",
+      "mean_abs_shap": 0.012863,
+      "description": "1 si le chemin ou la requête décodés contiennent une marque dont l'hôte n'est pas le domaine officiel"
+    },
+    {
+      "feature": "path_has_embedded_url",
+      "mean_abs_shap": 0.003678,
+      "description": "1 si le chemin ou la requête décodés contiennent « http: », « https: » ou « www. »"
+    },
+    {
+      "feature": "brand_min_distance",
+      "mean_abs_shap": 0.002438,
+      "description": "distance de Levenshtein entre le label du domaine et la marque la plus proche dont ce n'est pas le domaine officiel, plafonnée à BRAND_DISTANCE_CAP"
+    },
+    {
+      "feature": "is_typosquat",
+      "mean_abs_shap": 0.001413,
+      "description": "1 si le label du domaine est à 1 modification d'une marque (2 pour un nom d'au moins 9 caractères), sans être la marque elle-même"
+    },
+    {
+      "feature": "host_is_ip",
+      "mean_abs_shap": 0.000258,
+      "description": "1 si l'hôte est une adresse IPv6 ou se termine par un nombre (IPv4, y compris décimal ou hexadécimal, règle WHATWG)"
+    },
+    {
+      "feature": "has_port",
+      "mean_abs_shap": 0.000217,
+      "description": "1 si un port différent du port par défaut est indiqué"
+    },
+    {
+      "feature": "host_is_idn",
+      "mean_abs_shap": 5.3e-05,
+      "description": "1 si l'hôte contient un label internationalisé"
+    },
+    {
+      "feature": "is_shortener",
+      "mean_abs_shap": 2.1e-05,
+      "description": "1 si l'hôte ou son domaine enregistré est un raccourcisseur connu"
+    },
+    {
+      "feature": "has_userinfo",
+      "mean_abs_shap": 0.0,
+      "description": "1 si l'URL contient des identifiants avant l'hôte (@)"
+    },
+    {
+      "feature": "homograph_brand",
+      "mean_abs_shap": 0.0,
+      "description": "1 si l'hôte est internationalisé et que son squelette visuel contient une marque absente de sa forme réelle"
+    },
+    {
+      "feature": "host_mixed_script",
+      "mean_abs_shap": 0.0,
+      "description": "1 si un label mêle des écritures non admises ensemble (UTS #39, Highly Restrictive)"
+    }
+  ],
+  "candidates": 3213,
+  "examples": [
+    {
+      "url": "hxxps://c1ientebrada[.]blob[.]core[.]windows[.]net/dir/index.html",
+      "source": "phishtank",
+      "score": 0.9833,
+      "top": [
+        {
+          "feature": "host_len",
+          "value": 34.0,
+          "shap": 4.5885
+        },
+        {
+          "feature": "path_len",
+          "value": 15.0,
+          "shap": 2.6647
+        },
+        {
+          "feature": "host_n_subdomains",
+          "value": 0.0,
+          "shap": 0.6269
+        }
+      ]
+    },
+    {
+      "url": "hxxps://fatturapagamento[.]click/.submit/unpaid.php",
+      "source": "phishtank",
+      "score": 0.9985,
+      "top": [
+        {
+          "feature": "tld_phish_rate",
+          "value": 0.7777739821108638,
+          "shap": 3.5275
+        },
+        {
+          "feature": "path_len",
+          "value": 19.0,
+          "shap": 2.2842
+        },
+        {
+          "feature": "host_len",
+          "value": 22.0,
+          "shap": 1.6396
+        }
+      ]
+    },
+    {
+      "url": "hxxps://vigilance89[.]github[.]io/vigilane8viewdocument/",
+      "source": "phishtank",
+      "score": 0.9951,
+      "top": [
+        {
+          "feature": "path_len",
+          "value": 23.0,
+          "shap": 2.1291
+        },
+        {
+          "feature": "host_len",
+          "value": 21.0,
+          "shap": 1.7076
+        },
+        {
+          "feature": "tld_phish_rate",
+          "value": 0.29659728369760624,
+          "shap": 1.3621
+        }
+      ]
+    },
+    {
+      "url": "hxxps://allegro[.]3299g88g2909[.]pl/",
+      "source": "phishtank",
+      "score": 0.9226,
+      "top": [
+        {
+          "feature": "host_n_subdomains",
+          "value": 1.0,
+          "shap": 3.0584
+        },
+        {
+          "feature": "host_len",
+          "value": 23.0,
+          "shap": 2.2969
+        },
+        {
+          "feature": "host_n_digits",
+          "value": 10.0,
+          "shap": 1.7811
+        }
+      ]
+    },
+    {
+      "url": "hxxps://suitetrezorio[.]com/?…",
+      "source": "phishtank",
+      "score": 0.8499,
+      "top": [
+        {
+          "feature": "query_n_params",
+          "value": 2.0,
+          "shap": 3.8325
+        },
+        {
+          "feature": "path_n_digits",
+          "value": 45.0,
+          "shap": 1.943
+        },
+        {
+          "feature": "brand_in_host",
+          "value": 1.0,
+          "shap": 0.6791
+        }
+      ]
+    },
+    {
+      "url": "hxxps://allegro[.]102988g8g8g[.]pl/lokalnie/?…",
+      "source": "phishtank",
+      "score": 0.9211,
+      "top": [
+        {
+          "feature": "host_n_digits",
+          "value": 8.0,
+          "shap": 2.1399
+        },
+        {
+          "feature": "query_n_params",
+          "value": 1.0,
+          "shap": 1.1201
+        },
+        {
+          "feature": "host_len",
+          "value": 22.0,
+          "shap": 1.0615
+        }
+      ]
+    },
+    {
+      "url": "hxxps://url6131[.]picsello[.]com/ls/click?…",
+      "source": "phishtank",
+      "score": 0.9775,
+      "top": [
+        {
+          "feature": "path_n_digits",
+          "value": 94.0,
+          "shap": 2.7908
+        },
+        {
+          "feature": "path_len",
+          "value": 9.0,
+          "shap": 1.5094
+        },
+        {
+          "feature": "query_n_params",
+          "value": 1.0,
+          "shap": 1.2676
+        }
+      ]
+    },
+    {
+      "url": "hxxps://bradesco[.]habilitanetempresabr[.]pro/",
+      "source": "phishtank",
+      "score": 0.9986,
+      "top": [
+        {
+          "feature": "host_len",
+          "value": 33.0,
+          "shap": 4.3038
+        },
+        {
+          "feature": "tld_phish_rate",
+          "value": 0.6095412821624822,
+          "shap": 2.469
+        },
+        {
+          "feature": "host_n_subdomains",
+          "value": 1.0,
+          "shap": 1.8356
+        }
+      ]
+    },
+    {
+      "url": "hxxps://luciana[.]acces2675277[.]pro/as.php",
+      "source": "phishtank",
+      "score": 0.9982,
+      "top": [
+        {
+          "feature": "tld_phish_rate",
+          "value": 0.6095412821624822,
+          "shap": 2.4417
+        },
+        {
+          "feature": "host_n_digits",
+          "value": 7.0,
+          "shap": 1.9946
+        },
+        {
+          "feature": "host_len",
+          "value": 24.0,
+          "shap": 1.8355
+        }
+      ]
+    },
+    {
+      "url": "hxxps://techbazaronline[.]co[.]uk/des",
+      "source": "phishtank",
+      "score": 0.8326,
+      "top": [
+        {
+          "feature": "path_len",
+          "value": 4.0,
+          "shap": 3.7676
+        },
+        {
+          "feature": "host_n_subdomains",
+          "value": 0.0,
+          "shap": 0.8993
+        },
+        {
+          "feature": "host_len",
+          "value": 21.0,
+          "shap": 0.8623
+        }
+      ]
+    }
+  ]
+}

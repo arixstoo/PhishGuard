@@ -91,6 +91,7 @@ make email-corpora && make train-email  # email score: transparent rules vs lear
 python -m phishguard.config             # which Threat Intel sources are enabled (optional keys in .env, docs/secrets.md)
 make calibrate-url                      # calibrate the URL model probabilities on validation (docs/fusion.md)
 make schema                             # regenerate the analysis response JSON Schema (docs/response-schema.md)
+make explain-url                        # SHAP explanations of the URL model: global plot and 10 explained URLs (docs/explain-url.md)
 python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
 ```
 
@@ -105,7 +106,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | M0 Foundations | Repo structure, CI, community files, SMS baseline, phishing 101 | ✅ done |
 | M1 Detection | URL / text / email detectors, temporal split, model cards | ✅ done (`v0.1.0`) |
 | M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping, response schema, attachment content | ✅ done (`v0.2.0`) |
-| M3 XAI & adversarial | SHAP explanations, evasion catalogue, robustness report | ⏳ planned |
+| M3 XAI & adversarial | SHAP explanations, evasion catalogue, robustness report | 🚧 in progress |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image | ⏳ planned |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, user tests | ⏳ planned |
 | M6 Launch | Deployment, Chrome Web Store, docs site, v1.0 | ⏳ planned |
@@ -141,6 +142,7 @@ data/, models/    generated locally, never committed
 - [Score fusion](docs/fusion.md): calibrated model probability, hard rules and weighted Threat Intelligence signals, with a documented truth table (French)
 - [MITRE ATT&CK mapping](docs/mitre-attack.md): the ATT&CK techniques each detection illustrates, verified against MITRE's official data (French)
 - [End-to-end URL analysis](docs/analysis.md): local model, opt-in enrichment, fusion and ATT&CK in one call, with privacy and degradation guarantees (French)
+- [URL model explanations](docs/explain-url.md): exact SHAP contributions of each URL feature, computed by LightGBM itself, with 10 explained phishing URLs and the dataset biases they reveal (French)
 - [Analysis response schema](docs/response-schema.md): the frozen JSON contract (verdict, score, confidence, reasons, signals, ATT&CK techniques) that the API, extension and bot rely on, with its [JSON Schema](docs/schema/analysis-response.v1.json) (French)
 - [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
