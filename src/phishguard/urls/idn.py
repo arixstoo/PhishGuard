@@ -11,9 +11,11 @@ lettres confusables écrite à la main.
 
 from __future__ import annotations
 
+import hashlib
 import unicodedata
 
 _ACE_PREFIX = "xn--"
+_MAX_LABEL_LENGTH = 63  # RFC 1035, § 2.3.4
 
 # Combinaisons d'écritures admises dans un même label : profil « Highly Restrictive »
 # d'Unicode UTS #39, § 5.2 (le japonais, le chinois et le coréen mêlent légitimement
@@ -54,12 +56,21 @@ def label_to_ascii(label: str) -> str:
     folded = unicodedata.normalize("NFKC", label).lower()
     if folded.isascii():
         return folded
+    if len(folded) > _MAX_LABEL_LENGTH:
+        # Un tel label ne peut pas exister en DNS, et l'encodeur Punycode de CPython est
+        # quadratique (déni de service). On ne rejette pas l'URL pour autant : cela
+        # cacherait le lien aux règles de détection. Une forme ASCII courte et stable
+        # le garde comparable (il ne ressemblera jamais à « paypal.com »).
+        digest = hashlib.sha256(folded.encode("utf-8", "surrogatepass")).hexdigest()[:32]
+        return f"{_ACE_PREFIX}oversized-{digest}"
     return _ACE_PREFIX + folded.encode("punycode").decode("ascii")
 
 
 def label_to_unicode(label: str) -> str:
     """Forme Unicode d'un label ``xn--`` ; un label mal encodé est rendu tel quel."""
-    if not label.startswith(_ACE_PREFIX):
+    # Au-delà de 63 caractères, le label est mal encodé par définition, et le décodeur
+    # Punycode de CPython est quadratique.
+    if not label.startswith(_ACE_PREFIX) or len(label) > _MAX_LABEL_LENGTH:
         return label
     try:
         return label[len(_ACE_PREFIX) :].encode("ascii").decode("punycode")

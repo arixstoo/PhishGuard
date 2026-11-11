@@ -2,6 +2,18 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié]
+
+### Sécurité
+
+Correctifs issus d'un audit de sécurité du dépôt (9 failles, 7 moyennes et 2 basses). Un email, une URL ou un SMS piégé ne peut plus faire échouer l'analyse ni la ralentir, et un artefact de PR ne peut plus empoisonner les données d'entraînement.
+
+- Email : un charset piégé (`undefined`, `idna`) ou une couleur `rgb()` de milliers de chiffres ne coupe plus l'analyse du corps ; chaque partie MIME est isolée (`part_failed:…`), le message n'est plus jugé sur ses seuls en-têtes.
+- Email : `Authentication-Results` lu selon la RFC 8601 (une valeur entre guillemets ne peut ni masquer ni inventer de résultat) ; un `Received-SPF` en échec placé en tête prime sur un SPF plus bas, sans jamais l'améliorer. `load_analyzers` accepte `trusted_authserv_ids`.
+- URL : un label de plus de 63 caractères ne passe plus par le codec Punycode de CPython, quadratique (déni de service) ; le lien n'est pas rejeté pour autant, il reste comparé et scoré.
+- SMS : la détection des montants (`amount_numbers`) est linéaire, avec les mêmes résultats (ReDoS).
+- `scripts/sync_feed_archives.py` : n'accepte que les archives produites par `fetch-feeds.yml` sur la branche par défaut (planifié ou manuel) ; une archive illisible est ignorée sans bloquer les suivantes ; réponses de l'API lues en UTF-8.
+
 ## [0.3.0] : module 3, explicabilité et robustesse adversariale
 
 Le moteur explique maintenant chaque verdict, en trois phrases pour l'utilisateur et en valeurs SHAP pour l'analyste, et il a été attaqué méthodiquement : dix techniques d'évasion mesurées sur les vrais jeux de test, deux défenses (normalisation, entraînement adversarial) mesurées avant et après, et un test sur du phishing rédigé par un LLM qui montre honnêtement où le texte seul ne suffit plus. Les modèles robustes (`url_v2`, `text_v2`) sont déployés, et les trois canaux (URL, message, email) passent par le même pipeline et le même contrat de réponse. Rien n'est encore exposé à l'utilisateur : l'API arrive au module 4.

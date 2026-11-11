@@ -300,7 +300,9 @@ def _decoded_text(part: Message, defects: list[str]) -> str:
     charset = part.get_content_charset() or "utf-8"
     try:
         return payload.decode(charset, errors="replace")
-    except LookupError:
+    # Jeu de caractères choisi par l'expéditeur : inconnu (LookupError) ou codec qui
+    # refuse errors="replace" (« undefined », « idna » : UnicodeError).
+    except (LookupError, UnicodeError, ValueError, TypeError):
         return payload.decode("utf-8", errors="replace")
 
 
@@ -485,10 +487,13 @@ def _read_headers(msg: Message, result: ParsedEmail) -> None:
 
 
 def _read_auth(msg: Message, result: ParsedEmail, trusted: list[str] | None) -> None:
+    auth_headers = ("authentication-results", "received-spf")
+    topmost = next((k.lower() for k in msg if k.lower() in auth_headers), None)
     result.auth = read_auth_results(
         [str(v) for v in msg.get_all("Authentication-Results") or []],
         [str(v) for v in msg.get_all("Received-SPF") or []],
         trusted,
+        received_spf_on_top=topmost == "received-spf",
     )
 
 
@@ -497,50 +502,56 @@ def _read_body(msg: Message, result: ParsedEmail, limits: EmailLimits) -> None:
     html_texts: list[str] = []
     tags_left = limits.max_html_tags
     for part in _walk(msg, limits, result.defects):
-        result.parts += 1
-        result.defects.extend(
-            type(d).__name__ for d in getattr(part, "defects", []) if part is not msg
-        )
-        if part.is_multipart():
-            continue
-        filename = _filename(part, result.defects)
-        if _is_attachment(part, filename):
-            if len(result.attachments) >= limits.max_attachments:
-                defect = f"attachments_truncated:{limits.max_attachments}"
-                if defect not in result.defects:
-                    result.defects.append(defect)
-                continue
-            result.attachments.append(
-                make_attachment(part, filename, inspect=limits.inspect_attachments)
+        # Une partie piégée est notée et sautée : elle ne doit pas faire perdre les
+        # suivantes (liens, formulaires, pièces jointes).
+        try:
+            result.parts += 1
+            result.defects.extend(
+                type(d).__name__ for d in getattr(part, "defects", []) if part is not msg
             )
-            continue
-        content_type = part.get_content_type()
-        if content_type == "text/plain":
-            plain_parts.append(_decoded_text(part, result.defects))
-        elif content_type == "text/html":
-            html = _decoded_text(part, result.defects)
-            if len(html) > limits.max_html_chars:
-                result.defects.append(f"html_truncated:{limits.max_html_chars}")
-                html = html[: limits.max_html_chars]
-            # Budget de balises commun à toutes les parties HTML du message.
-            cut = _tag_limit_offset(html, tags_left)
-            if cut is not None:
-                defect = f"html_tags_truncated:{limits.max_html_tags}"
-                if defect not in result.defects:
-                    result.defects.append(defect)
-                html = html[:cut]
-            tags_left -= html.count("<")
-            result.has_html = True
-            remaining = max(0, limits.max_links - len(result.links))
-            analysis = analyze_html(html, max_links=remaining)
-            if analysis.truncated_links:
-                result.defects.append(f"links_truncated:{limits.max_links}")
-            result.links.extend(analysis.links)
-            result.forms += analysis.forms
-            result.hidden_text.elements += analysis.hidden.elements
-            result.hidden_text.chars += analysis.hidden.chars
-            result.hidden_text.reasons.update(analysis.hidden.reasons)
-            html_texts.append(analysis.text)
+            if part.is_multipart():
+                continue
+            filename = _filename(part, result.defects)
+            if _is_attachment(part, filename):
+                if len(result.attachments) >= limits.max_attachments:
+                    defect = f"attachments_truncated:{limits.max_attachments}"
+                    if defect not in result.defects:
+                        result.defects.append(defect)
+                    continue
+                result.attachments.append(
+                    make_attachment(part, filename, inspect=limits.inspect_attachments)
+                )
+                continue
+            content_type = part.get_content_type()
+            if content_type == "text/plain":
+                plain_parts.append(_decoded_text(part, result.defects))
+            elif content_type == "text/html":
+                html = _decoded_text(part, result.defects)
+                if len(html) > limits.max_html_chars:
+                    result.defects.append(f"html_truncated:{limits.max_html_chars}")
+                    html = html[: limits.max_html_chars]
+                # Budget de balises commun à toutes les parties HTML du message.
+                cut = _tag_limit_offset(html, tags_left)
+                if cut is not None:
+                    defect = f"html_tags_truncated:{limits.max_html_tags}"
+                    if defect not in result.defects:
+                        result.defects.append(defect)
+                    html = html[:cut]
+                tags_left -= html.count("<")
+                result.has_html = True
+                remaining = max(0, limits.max_links - len(result.links))
+                analysis = analyze_html(html, max_links=remaining)
+                if analysis.truncated_links:
+                    result.defects.append(f"links_truncated:{limits.max_links}")
+                result.links.extend(analysis.links)
+                result.forms += analysis.forms
+                result.hidden_text.elements += analysis.hidden.elements
+                result.hidden_text.chars += analysis.hidden.chars
+                result.hidden_text.reasons.update(analysis.hidden.reasons)
+                html_texts.append(analysis.text)
+        # Entrée hostile : même garantie que _step, à l'échelle d'une partie.
+        except Exception as exc:  # noqa: BLE001
+            result.defects.append(f"part_failed:{type(exc).__name__}")
 
     # Texte de référence : la partie texte brut si elle existe, sinon le HTML visible.
     text = "\n".join(plain_parts) if any(p.strip() for p in plain_parts) else "\n".join(html_texts)

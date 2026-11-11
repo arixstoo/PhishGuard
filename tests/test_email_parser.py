@@ -256,6 +256,59 @@ def test_empty_and_garbage_inputs():
         assert not [d for d in result.defects if "_failed:" in d]
 
 
+# Une partie texte brut en tête, puis le HTML piégé et la pièce jointe à analyser.
+_TRAPPED_CHARSET_EMAIL = (
+    "From: Support <support@evil.example>\r\n"
+    "Subject: Votre compte\r\n"
+    "MIME-Version: 1.0\r\n"
+    'Content-Type: multipart/mixed; boundary="B"\r\n\r\n'
+    "--B\r\n"
+    'Content-Type: text/plain; charset="{charset}"\r\n\r\n'
+    "Bonjour\r\n"
+    "--B\r\n"
+    "Content-Type: text/html; charset=utf-8\r\n\r\n"
+    '<a href="https://login.example.net/">https://www.paypal.com</a>'
+    '<form action="https://login.example.net/post"><input name="pw"></form>\r\n'
+    "--B\r\n"
+    'Content-Type: application/octet-stream; name="Facture.pdf.exe"\r\n'
+    'Content-Disposition: attachment; filename="Facture.pdf.exe"\r\n'
+    "Content-Transfer-Encoding: base64\r\n\r\n"
+    "TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAA=\r\n"
+    "--B--\r\n"
+)
+
+
+@pytest.mark.parametrize("charset", ["undefined", "idna"])
+def test_charset_that_rejects_replace_does_not_hide_the_body(charset):
+    # Ces codecs lèvent UnicodeError avec errors="replace" : toute l'analyse du corps
+    # s'arrêtait (« body_failed »), liens, formulaire et pièce jointe compris.
+    r = parse_eml(_TRAPPED_CHARSET_EMAIL.format(charset=charset).encode())
+    assert not [d for d in r.defects if "_failed:" in d]
+    assert r.text.strip() == "Bonjour"
+    assert r.has_html and r.forms == 1
+    (link,) = r.mismatched_links
+    assert link.text_domain == "paypal.com" and link.href_domain == "example.net"
+    (attachment,) = r.attachments
+    assert attachment.risk == "executable" and attachment.double_extension
+
+
+def test_a_failing_part_does_not_drop_the_following_ones(monkeypatch):
+    from phishguard.email import parser as P
+
+    decoded = P._decoded_text
+
+    def fail_on_plain_text(part, defects):
+        if part.get_content_type() == "text/plain":
+            raise RuntimeError("partie piégée")
+        return decoded(part, defects)
+
+    monkeypatch.setattr(P, "_decoded_text", fail_on_plain_text)
+    r = parse_eml(_TRAPPED_CHARSET_EMAIL.format(charset="utf-8").encode())
+    assert "part_failed:RuntimeError" in r.defects
+    assert not [d for d in r.defects if d.startswith("body_failed")]
+    assert r.forms == 1 and len(r.mismatched_links) == 1 and len(r.attachments) == 1
+
+
 @settings(max_examples=200, deadline=None, suppress_health_check=[HealthCheck.too_slow])
 @given(st.binary(max_size=2000))
 def test_random_bytes_never_crash_the_parser(raw):
@@ -331,6 +384,63 @@ def test_received_spf_and_fallbacks():
     assert A.read_auth_results([]) == A.AuthResults()
 
 
+def test_quoted_mailfrom_cannot_hide_or_inject_results():
+    hidden = 'mx; spf=pass smtp.mailfrom="x("@evil.example; dkim=none; dmarc=fail'
+    assert A.parse_authentication_results(hidden)[1] == {
+        "spf": "pass",
+        "dkim": "none",
+        "dmarc": "fail",
+    }
+    injected = 'mx; spf=pass smtp.mailfrom="x;dmarc=pass"@evil.example; dmarc=fail'
+    assert A.parse_authentication_results(injected)[1]["dmarc"] == "fail"
+    # Guillemet jamais refermé : même découpage qu'avant, rien n'est masqué.
+    unbalanced = 'mx; spf=pass smtp.mailfrom=x"@evil.example; dmarc=fail'
+    assert A.parse_authentication_results(unbalanced)[1]["dmarc"] == "fail"
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "mx; spf=pass smtp.mailfrom=x\\; dmarc=fail",  # « \ » hors guillemets
+        'mx; spf=pass smtp.mailfrom="a; dmarc=fail; dkim=fail header.s=(x") "',
+        "mx; spf=pass smtp.mailfrom=x\\(; dmarc=fail",
+        "mx; spf=pass (commentaire; ignoré) ; dmarc=fail",
+    ],
+)
+def test_unquoted_inputs_parse_exactly_as_before(header):
+    legacy = [p.strip() for p in A.strip_comments(header).split(";")]
+    expected = {}
+    for part in legacy[1:]:
+        match = A._RESULT_RE.match(part)
+        if match and match.group(1).lower() in A.METHODS:
+            expected.setdefault(match.group(1).lower(), match.group(2).lower())
+    assert A.parse_authentication_results(header)[1] == expected
+
+
+def test_received_spf_above_a_forged_authentication_results_wins():
+    forged = "mx.victim.example; spf=pass; dkim=pass; dmarc=pass"
+    assert A.read_auth_results([forged], ["Fail (mx)"], received_spf_on_top=True).spf == "fail"
+    assert A.read_auth_results([forged], ["Fail (mx)"]).spf == "pass"  # AR au-dessus
+    trusted = A.read_auth_results(
+        [forged], ["Fail (mx)"], ["mx.victim.example"], received_spf_on_top=True
+    )
+    assert trusted.spf == "pass"  # serveur de confiance configuré : son AR fait foi
+    raw = (
+        "Received-SPF: Fail (mx.victim.example: domain does not designate)\n"
+        f"Authentication-Results: {forged}\n"
+        "From: a@paypal.com\n\nhello"
+    )
+    assert parse_eml(raw.encode()).auth.spf == "fail"
+
+
+def test_received_spf_pass_on_top_never_erases_an_spf_failure():
+    # Message transféré : le relais écrit « Pass » pour sa propre IP, l'échec d'origine
+    # reste dans l'Authentication-Results du premier serveur.
+    upstream = "mx.first-hop.example; spf=fail smtp.mailfrom=paypal.com; dmarc=fail"
+    result = A.read_auth_results([upstream], ["Pass (forwarder)"], received_spf_on_top=True)
+    assert result.spf == "fail"
+
+
 # --------------------------------------------------------------------------- #
 # HTML et adresses
 # --------------------------------------------------------------------------- #
@@ -381,6 +491,30 @@ def test_scripts_and_styles_are_ignored():
 )
 def test_normalize_color(value, expected):
     assert H.normalize_color(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("rgb(300,0,1000)", "#ff00ff"),
+        ("rgb(٠٠٠٠١,0,0)", "#010000"),  # zéros arabes
+        pytest.param(f"rgb({'9' * 5000},0,0)", "#ff0000", id="huge-nines"),
+        pytest.param(f"rgb({'0' * 5000}17,0,0)", "#110000", id="huge-leading-zeros"),
+        pytest.param(f"rgb({'0' * 5000}300,0,0)", "#ff0000", id="huge-padding-over-255"),
+        pytest.param(f"rgb({'٠' * 5000}١,0,0)", "#010000", id="huge-arabic-zeros"),
+    ],
+)
+def test_normalize_color_clamps_huge_channels_without_raising(value, expected):
+    assert H.normalize_color(value) == expected
+
+
+def test_huge_rgb_style_does_not_abort_html_analysis():
+    html = (
+        f'<p style="background-color: rgb({"9" * 5000},0,0)">x</p>'
+        '<a href="https://evil.example.net/login">https://paypal.com</a>'
+    )
+    analysis = H.analyze_html(html, max_links=10)
+    assert [link.href for link in analysis.links] == ["https://evil.example.net/login"]
 
 
 @pytest.mark.parametrize(

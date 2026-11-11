@@ -361,6 +361,27 @@ def test_broken_punycode_never_raises(label):
     assert f(f"http://{label}.com/")["host_len"] > 0
 
 
+def test_oversized_labels_skip_the_quadratic_punycode_codec():
+    import time
+
+    distinct = "".join(chr(0x4E00 + i) for i in range(20_000))
+    start = time.perf_counter()
+    ascii_label = idn.label_to_ascii(distinct * 5)
+    ace = "xn--" + "a" * 1_000_000
+    assert idn.label_to_unicode(ace) is ace
+    assert time.perf_counter() - start < 2
+    assert ascii_label.isascii() and ascii_label.startswith("xn--oversized-")
+    assert len(ascii_label) <= 63
+    # Un label normal garde son encodage Punycode habituel.
+    assert idn.label_to_ascii("münchen") == "xn--mnchen-3ya"
+
+
+def test_padded_link_is_still_parsed_and_compared():
+    # Trait d'union conditionnel (ignoré par les navigateurs) répété pour dépasser 63.
+    url = "http://ev" + "­" * 70 + "il.com/login"
+    assert f(url)["host_len"] > 0  # pas d'InvalidUrlError : le lien reste analysé
+
+
 # --------------------------------------------------------------------------- #
 # Raccourcisseurs
 # --------------------------------------------------------------------------- #
