@@ -32,6 +32,7 @@ dependencies = [
     # API HTTP (module 4)
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.20",  # téléversement des .eml ; < 0.0.18 : CVE-2024-53981
 ]
 
 [project.optional-dependencies]

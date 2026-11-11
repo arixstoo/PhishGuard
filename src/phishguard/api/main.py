@@ -14,9 +14,14 @@ Organisation :
 
 - ``settings.py``   configuration (``pydantic-settings``, préfixe ``PHISHGUARD_API_``) ;
 - ``schemas.py``    schémas d'entrée stricts (étape 4.2) ;
+- ``service.py``    logique d'analyse, sans HTTP (étape 4.3) ;
 - ``routers/``      ``analyze.py``, ``feedback.py``, ``meta.py`` ;
+- ``storage.py``    base SQLite : retours en quarantaine ;
 - ``errors.py``     enveloppe d'erreur commune, sans trace ni recopie de l'entrée ;
 - ``middleware.py`` limite de taille des corps de requête.
+
+Ordre des couches, de l'extérieur vers l'intérieur : limite de taille du corps, routage,
+validation, service.
 """
 
 from __future__ import annotations
@@ -32,7 +37,9 @@ from phishguard.api.dependencies import AppState
 from phishguard.api.errors import install_error_handlers
 from phishguard.api.middleware import MULTIPART_OVERHEAD, BodySizeLimitMiddleware
 from phishguard.api.routers import analyze, feedback, meta
+from phishguard.api.service import AnalysisService, describe_models
 from phishguard.api.settings import ApiSettings, get_api_settings
+from phishguard.api.storage import Database
 from phishguard.api.version import api_version
 from phishguard.deployment import Analyzers, load_analyzers
 from phishguard.email.parser import EmailLimits
@@ -61,7 +68,7 @@ def create_app(
     analyzers_factory: AnalyzersFactory | None = None,
 ) -> FastAPI:
     """Construit l'application. ``analyzers_factory`` remplace le chargement des modèles
-    déployés (tests)."""
+    déployés (tests) ; les empreintes de ``GET /v1/model`` ne sont alors pas calculées."""
     settings = settings or get_api_settings()
     factory = analyzers_factory or _deployed_analyzers
 
@@ -75,11 +82,20 @@ def create_app(
                 logger.info("Threat Intelligence active : %s", ", ".join(orchestrator.sources))
             # Chargement (pickle, plusieurs secondes) hors de la boucle asynchrone.
             analyzers = await run_in_threadpool(factory, settings, orchestrator)
-            app.state.phishguard = AppState(settings=settings, analyzers=analyzers)
+            models = await run_in_threadpool(
+                describe_models,
+                analyzers,
+                settings.models_dir if analyzers_factory is None else None,
+            )
+            app.state.phishguard = AppState(
+                settings=settings,
+                database=Database(settings.database_path),
+                service=AnalysisService(analyzers),
+                models=models,
+            )
             logger.info(
-                "API prête : url=%s, text=%s",
-                analyzers.url.model_version,
-                analyzers.text.model_version,
+                "API prête : %s",
+                ", ".join(f"{kind}={m.version}" for kind, m in models.models.items()),
             )
             yield
 
@@ -95,6 +111,7 @@ def create_app(
 
     install_error_handlers(app)
 
+    # add_middleware empile : le dernier ajouté est le plus extérieur.
     app.add_middleware(
         BodySizeLimitMiddleware,
         default_limit=settings.max_json_bytes,
@@ -107,6 +124,7 @@ def create_app(
     v1.include_router(meta.router)
     app.include_router(meta.health_router, prefix=API_PREFIX)
     app.include_router(v1)
+
     return app
 
 

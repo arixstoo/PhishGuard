@@ -7,8 +7,10 @@ from dataclasses import dataclass
 from fastapi import Request
 
 from phishguard.api.errors import ApiError
+from phishguard.api.schemas import ModelsInfo
+from phishguard.api.service import AnalysisService
 from phishguard.api.settings import ApiSettings
-from phishguard.deployment import Analyzers
+from phishguard.api.storage import Database
 
 
 @dataclass(frozen=True)
@@ -16,11 +18,17 @@ class AppState:
     """Ce que le démarrage (``lifespan``) prépare une fois pour toutes les requêtes."""
 
     settings: ApiSettings
-    analyzers: Analyzers
+    database: Database
+    service: AnalysisService
+    models: ModelsInfo
 
 
 def app_state(request: Request) -> AppState:
     return request.app.state.phishguard
+
+
+def analysis_service(request: Request) -> AnalysisService:
+    return app_state(request).service
 
 
 async def require_json(request: Request) -> None:

@@ -73,8 +73,12 @@ def train_models(split_dataset_path: Path, models_dir: Path) -> Path:
 
 
 def settings_for(models_dir: Path, tmp_path: Path, **overrides: object) -> ApiSettings:
-    """Configuration de test : modèles dans un dossier temporaire, aucun .env."""
-    values: dict[str, object] = {"models_dir": models_dir, **overrides}
+    """Configuration de test : modèles et base dans des dossiers temporaires, aucun .env."""
+    values: dict[str, object] = {
+        "models_dir": models_dir,
+        "database_path": tmp_path / "api.sqlite3",
+        **overrides,
+    }
     return ApiSettings(_env_file=None, **values)
 
 

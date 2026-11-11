@@ -4,12 +4,13 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 ## [Non publié] : module 4, API et backend sécurisés
 
-Le moteur devient un service HTTP : squelette FastAPI et entrées bornées dès le schéma ([docs/api.md](docs/api.md)).
+Le moteur devient un service HTTP : trois routes d'analyse au contrat figé et des entrées bornées dès le schéma ([docs/api.md](docs/api.md)).
 
 ### API
 
 - Squelette FastAPI (`phishguard.api`) : `create_app()`, routeurs séparés (`analyze`, `feedback`, `meta`), configuration `pydantic-settings` préfixée `PHISHGUARD_API_` aux valeurs par défaut sûres (Threat Intelligence désactivée) ; une valeur invalide empêche le démarrage. Les modèles déployés sont chargés **une seule fois**, au démarrage (`lifespan`, hors de la boucle) ; un modèle manquant fait échouer le démarrage. `GET /v1/health` et documentation interactive `/docs`, désactivable. `python -m phishguard.api` (`make api`) lance uvicorn sur `127.0.0.1`, sans réécriture de l'IP par uvicorn ni en-tête `Server` (étape 4.1).
-- Schémas d'entrée stricts (`phishguard.api.schemas`) : URL de 4 à 2 048 caractères, texte de 1 à 5 000, email d'1 Mio au plus (corps et parseur) ; mode strict, aucun champ inconnu, caractères de contrôle C0/C1 et demi-codets UTF-16 isolés refusés, caractères invisibles de format admis (évasions comptées par la normalisation). Taille du corps bornée avant lecture, y compris sans `Content-Length` ; `application/json` exigé (pas de requête inter-sites `text/plain` sans pré-vérification CORS). Une enveloppe d'erreur unique, **sans jamais recopier l'entrée** (FastAPI renvoie par défaut la valeur fautive) ni trace de pile (étape 4.2).
+- Schémas d'entrée stricts (`phishguard.api.schemas`) : URL de 4 à 2 048 caractères, texte de 1 à 5 000, email d'1 Mio au plus et de type attendu ; mode strict, aucun champ inconnu, caractères de contrôle C0/C1 et demi-codets UTF-16 isolés refusés, caractères invisibles de format admis (évasions comptées par la normalisation). Taille du corps bornée avant lecture, y compris sans `Content-Length` ; `application/json` exigé (pas de requête inter-sites `text/plain` sans pré-vérification CORS). Une enveloppe d'erreur unique, **sans jamais recopier l'entrée** (FastAPI renvoie par défaut la valeur fautive) ni trace de pile (étape 4.2).
+- Couche service (`phishguard.api.service`) et endpoints `POST /v1/analyze/url`, `/text`, `/email` (téléversement `.eml`), `GET /v1/model` (version, date d'entraînement, SHA-256 des fichiers chargés), `POST /v1/feedback` (domaine seulement, horodaté par le serveur, rangé en quarantaine, sans effet sur le modèle). Le calcul ML tourne dans le pool de threads ; `UrlAnalyzer.analyze(run_sync=...)` sépare le calcul local de l'enrichissement, qui reste sur la boucle. Une URL inanalysable donne 400 avec un message fixe : celui de l'analyseur recopiait l'URL (étape 4.3).
 
 ## [0.3.0] : module 3, explicabilité et robustesse adversariale
 
