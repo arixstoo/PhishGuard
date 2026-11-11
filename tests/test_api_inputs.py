@@ -17,7 +17,9 @@ SECRET = "MARQUEUR-ENTREE-A-NE-PAS-RENVOYER"  # ne doit jamais revenir dans une 
 
 @pytest.fixture(scope="module")
 def client(api_models_dir, tmp_path_factory):
-    settings = settings_for(api_models_dir, tmp_path_factory.mktemp("api"))
+    settings = settings_for(
+        api_models_dir, tmp_path_factory.mktemp("api"), rate_limit_enabled=False
+    )
     with api_client(settings) as client:
         yield client
 
