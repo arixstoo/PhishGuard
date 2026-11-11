@@ -98,6 +98,8 @@ make train-adversarial robustness-adversarial  # adversarial training (url_v2, t
 make llm-phishing                       # SMS models on a local, LLM-written test set (docs/llm-phishing.md)
 make plot-robustness                    # recall and false-positive chart of the robustness report (needs .[explain])
 python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
+make api                                # serve the HTTP API on 127.0.0.1:8000, interactive docs on /docs (docs/api.md)
+make api-key NAME=extension-dev         # create an API key, shown once; only its SHA-256 is stored (docs/api.md)
 ```
 
 Run `make help` to list the available commands.

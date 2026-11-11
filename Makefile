@@ -21,7 +21,7 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install lint format test \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness
+	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness 	api api-key
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -152,3 +152,14 @@ cards: ## Met à jour les chiffres des model cards et du README depuis docs/metr
 
 schema: ## Régénère le schéma JSON de la réponse d'analyse (étape 2.11 bis)
 	$(PYTHON) scripts/export_schema.py
+
+# --------------------------------------------------------------------------- #
+# API (module 4)
+# --------------------------------------------------------------------------- #
+
+api: ## Lance l'API sur 127.0.0.1:8000, documentation sur /docs (étape 4.1)
+	$(PYTHON) -m phishguard.api
+
+api-key: ## Crée une clé d'API, affichée une seule fois : make api-key NAME=extension-dev (étape 4.4)
+	@test -n "$(NAME)" || (echo "usage : make api-key NAME=<usage de la clé>" && exit 1)
+	$(PYTHON) -m phishguard.api.keys create --name "$(NAME)"

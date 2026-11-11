@@ -33,10 +33,14 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from phishguard.analysis import EmailAnalyzer, TextAnalyzer, UrlAnalyzer
 from phishguard.enrichers.orchestrator import Orchestrator
 from phishguard.fusion.calibration import ScoreCalibrator
+
+if TYPE_CHECKING:
+    from phishguard.email.parser import EmailLimits
 
 logger = logging.getLogger(__name__)
 
@@ -81,12 +85,16 @@ def _calibrator(files: ModelFiles) -> ScoreCalibrator | None:
 
 
 def load_analyzers(
-    models_dir: Path = DEFAULT_MODELS_DIR, *, orchestrator: Orchestrator | None = None
+    models_dir: Path = DEFAULT_MODELS_DIR,
+    *,
+    orchestrator: Orchestrator | None = None,
+    email_limits: EmailLimits | None = None,
 ) -> Analyzers:
     """Les trois analyseurs, sur les modèles déployés.
 
     ``orchestrator`` : Threat Intelligence pour les URLs, utilisée seulement si
-    l'utilisateur l'active pour une analyse. Lève ``FileNotFoundError`` si un modèle
+    l'utilisateur l'active pour une analyse. ``email_limits`` : bornes du parseur
+    d'email (l'API les resserre, étape 4.2). Lève ``FileNotFoundError`` si un modèle
     déployé manque, avec la commande qui le produit.
     """
     from phishguard.text.models import TextModel
@@ -111,5 +119,5 @@ def load_analyzers(
     return Analyzers(
         url=UrlAnalyzer(url_model, calibrator=_calibrator(files["url"]), orchestrator=orchestrator),
         text=TextAnalyzer(text_model, calibrator=_calibrator(files["text"])),
-        email=EmailAnalyzer(url_model),
+        email=EmailAnalyzer(url_model, limits=email_limits),
     )

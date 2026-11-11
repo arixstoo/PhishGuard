@@ -2,6 +2,22 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié] : module 4, API et backend sécurisés
+
+Le moteur devient un service HTTP : trois routes d'analyse au contrat figé, des entrées bornées dès le schéma, des clés d'API stockées en empreinte seulement et des limites de débit par niveau de client, appliquées avant la lecture du corps ([docs/api.md](docs/api.md)).
+
+### API
+
+- Squelette FastAPI (`phishguard.api`) : `create_app()`, routeurs séparés (`analyze`, `feedback`, `meta`), configuration `pydantic-settings` préfixée `PHISHGUARD_API_` aux valeurs par défaut sûres (aucun proxy cru, Threat Intelligence désactivée, limites actives) ; une valeur invalide empêche le démarrage. Les modèles déployés sont chargés **une seule fois**, au démarrage (`lifespan`, hors de la boucle) ; un modèle manquant fait échouer le démarrage. `GET /v1/health` (sans clé ni limite) et documentation interactive `/docs`, désactivable. `python -m phishguard.api` (`make api`) lance uvicorn sur `127.0.0.1`, sans réécriture de l'IP par uvicorn ni en-tête `Server` (étape 4.1).
+- Schémas d'entrée stricts (`phishguard.api.schemas`) : URL de 4 à 2 048 caractères, texte de 1 à 5 000, email d'1 Mio au plus et de type attendu ; mode strict, aucun champ inconnu, caractères de contrôle C0/C1 et demi-codets UTF-16 isolés refusés, caractères invisibles de format admis (évasions comptées par la normalisation). Taille du corps bornée avant lecture, y compris sans `Content-Length` ; `application/json` exigé (pas de requête inter-sites `text/plain` sans pré-vérification CORS). Une enveloppe d'erreur unique, **sans jamais recopier l'entrée** (FastAPI renvoie par défaut la valeur fautive) ni trace de pile (étape 4.2).
+- Couche service (`phishguard.api.service`) et endpoints `POST /v1/analyze/url`, `/text`, `/email` (téléversement `.eml`), `GET /v1/model` (version, date d'entraînement, SHA-256 des fichiers chargés), `POST /v1/feedback` (domaine seulement, horodaté par le serveur, rangé en quarantaine, sans effet sur le modèle). Le calcul ML tourne dans le pool de threads ; `UrlAnalyzer.analyze(run_sync=...)` sépare le calcul local de l'enrichissement, qui reste sur la boucle. Une URL inanalysable donne 400 avec un message fixe : celui de l'analyseur recopiait l'URL (étape 4.3).
+- Authentification et limites de débit (étape 4.4) :
+  - clé d'API dans `X-API-Key`, secret de 256 bits dont seule l'empreinte SHA-256 est stockée (SQLite, droits `600`) ; `python -m phishguard.api.keys create|list|revoke` (`make api-key`). Une clé invalide ou révoquée est refusée (401), jamais rétrogradée en anonyme ;
+  - trois niveaux : anonyme (30/min par IP), clé (300/min), clé refusée (10/min par IP, contre la recherche de clés). IPv6 regroupée par /64, un compteur par route, fenêtre glissante, `Retry-After` et `X-RateLimit-*`. Le limiteur passe avant la lecture du corps ;
+  - `X-Forwarded-For` lu de droite à gauche et seulement depuis un proxy déclaré (`PHISHGUARD_API_TRUSTED_PROXIES`, vide par défaut) : un en-tête falsifié ne change pas le compteur ;
+  - **`limits` au lieu de `slowapi`** : les limites dynamiques de slowapi 0.1.10 partagent la requête courante entre requêtes concurrentes, et son middleware ne les appliquait pas. Écart au cahier des charges documenté dans [docs/api.md](docs/api.md).
+- 127 tests (`tests/test_api_*.py`) sur de petits modèles chargés par le vrai chemin de démarrage : URL de 100 000 caractères, texte vide, JSON malformé, octet nul, demi-codet, corps envoyé par morceaux, email trop gros ou d'un autre type, contrat de réponse relu par `AnalysisResponse`, exécution dans le pool de threads, 100 requêtes rapides puis 429, clé révoquée, `X-Forwarded-For` falsifié.
+
 ## [0.3.0] : module 3, explicabilité et robustesse adversariale
 
 Le moteur explique maintenant chaque verdict, en trois phrases pour l'utilisateur et en valeurs SHAP pour l'analyste, et il a été attaqué méthodiquement : dix techniques d'évasion mesurées sur les vrais jeux de test, deux défenses (normalisation, entraînement adversarial) mesurées avant et après, et un test sur du phishing rédigé par un LLM qui montre honnêtement où le texte seul ne suffit plus. Les modèles robustes (`url_v2`, `text_v2`) sont déployés, et les trois canaux (URL, message, email) passent par le même pipeline et le même contrat de réponse. Rien n'est encore exposé à l'utilisateur : l'API arrive au module 4.

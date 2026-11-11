@@ -29,6 +29,11 @@ dependencies = [
     "cachetools>=5.3",  # cache à durée de vie des réponses des sources (étape 2.8)
     "olefile>=0.46",  # macros des documents Office 97-2003 joints aux emails (étape 2.13)
     "pyyaml>=6.0",  # gabarits des raisons lisibles, lus avec safe_load (étape 3.2)
+    # API HTTP (module 4)
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.20",  # téléversement des .eml ; < 0.0.18 : CVE-2024-53981
+    "limits>=4.0",  # limites de débit, stockage asynchrone (étape 4.4)
 ]
 
 [project.optional-dependencies]
