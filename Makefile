@@ -21,7 +21,7 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install lint format test \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing
+	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -118,7 +118,7 @@ train-email: $(EMAIL_CORPORA) $(EMAIL_SAMPLES) ## Compare règles et modèles du
 	$(PYTHON) scripts/train_email.py
 
 # --------------------------------------------------------------------------- #
-# Robustesse adversariale (étapes 3.6 à 3.10)
+# Robustesse adversariale (étapes 3.6 à 3.11)
 # --------------------------------------------------------------------------- #
 
 ROBUSTNESS_LABEL ?= baseline
@@ -139,6 +139,9 @@ robustness-adversarial: ## Banc d'essai des modèles url_v2 et text_v2 (étape 3
 
 llm-phishing: ## Phishing rédigé par un LLM : dégradation des modèles SMS (étape 3.10, jeu local)
 	$(PYTHON) scripts/evaluate_llm_phishing.py
+
+plot-robustness: ## Graphique du rapport : rappel et FPR par technique (étape 3.11, matplotlib)
+	$(PYTHON) scripts/plot_robustness.py
 
 # --------------------------------------------------------------------------- #
 # Documentation (étape 1.12)

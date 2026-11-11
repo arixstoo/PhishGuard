@@ -96,6 +96,7 @@ make calibrate-text                     # calibrate the SMS model margin into a 
 make robustness                         # recall and false positives under each evasion perturbation (docs/robustness-report.md)
 make train-adversarial robustness-adversarial  # adversarial training (url_v2, text_v2) and its benchmark pass
 make llm-phishing                       # SMS models on a local, LLM-written test set (docs/llm-phishing.md)
+make plot-robustness                    # recall and false-positive chart of the robustness report (needs .[explain])
 python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
 ```
 
@@ -150,7 +151,7 @@ data/, models/    generated locally, never committed
 - [SMS model explanations](docs/explain-text.md): exact word contributions of the linear text model, lure categories (urgency, money, link, code, account) and the calibrated score (French)
 - [User-facing reasons](docs/reasons.md): up to three plain-language reasons per verdict plus an action advice, in French, English and Arabic, ranked by SHAP weight and safe against injection (French)
 - [Evasion catalog](docs/evasion-catalog.md): 21 evasion techniques against the URL, text and email detectors, with the feature each one bypasses, the planned countermeasure and its MITRE ATLAS / ATT&CK references (French)
-- [Robustness report](docs/robustness-report.md): recall and false-positive rate of the URL and SMS models under each evasion perturbation, on the real test sets, before and after each defence (French)
+- [Robustness report](docs/robustness-report.md): threat model, method, recall and false-positive rate of the URL and SMS models under each evasion perturbation before and after normalisation and adversarial training, LLM-written phishing, limits and future work, with a recall-by-technique chart (French)
 - [LLM-written phishing test set](docs/llm-phishing.md): protocol and safety rules of the local, never-published test set of well-written phishing and business messages (French)
 - [Input normalisation](docs/normalization.md): NFKC, invisible-character removal, homoglyph folding and a strong alert for look-alike hostnames, applied at training and inference time (French)
 - [Analysis response schema](docs/response-schema.md): the frozen JSON contract (verdict, score, confidence, reasons, advice, signals, ATT&CK techniques, and an analyst view with SHAP values, fusion details and versions) that the API, extension and bot rely on, with its [JSON Schema](docs/schema/analysis-response.v1.json) (French)
