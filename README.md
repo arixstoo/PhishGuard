@@ -146,6 +146,7 @@ data/, models/    generated locally, never committed
 - [URL model explanations](docs/explain-url.md): exact SHAP contributions of each URL feature, computed by LightGBM itself, with 10 explained phishing URLs and the dataset biases they reveal (French)
 - [SMS model explanations](docs/explain-text.md): exact word contributions of the linear text model, lure categories (urgency, money, link, code, account) and the calibrated score (French)
 - [User-facing reasons](docs/reasons.md): up to three plain-language reasons per verdict plus an action advice, in French, English and Arabic, ranked by SHAP weight and safe against injection (French)
+- [Evasion catalog](docs/evasion-catalog.md): 21 evasion techniques against the URL, text and email detectors, with the feature each one bypasses, the planned countermeasure and its MITRE ATLAS / ATT&CK references (French)
 - [Analysis response schema](docs/response-schema.md): the frozen JSON contract (verdict, score, confidence, reasons, advice, signals, ATT&CK techniques, and an analyst view with SHAP values, fusion details and versions) that the API, extension and bot rely on, with its [JSON Schema](docs/schema/analysis-response.v1.json) (French)
 - [API keys and secrets](docs/secrets.md): optional Threat Intelligence keys, how they are loaded, and what to do if one leaks (French)
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
