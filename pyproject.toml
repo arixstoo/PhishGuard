@@ -33,6 +33,7 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "python-multipart>=0.0.20",  # téléversement des .eml ; < 0.0.18 : CVE-2024-53981
+    "limits>=4.0",  # limites de débit, stockage asynchrone (étape 4.4)
 ]
 
 [project.optional-dependencies]

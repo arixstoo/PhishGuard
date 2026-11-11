@@ -16,12 +16,14 @@ Organisation :
 - ``schemas.py``    schémas d'entrée stricts (étape 4.2) ;
 - ``service.py``    logique d'analyse, sans HTTP (étape 4.3) ;
 - ``routers/``      ``analyze.py``, ``feedback.py``, ``meta.py`` ;
-- ``storage.py``    base SQLite : retours en quarantaine ;
+- ``security.py``   IP réelle du client et clés d'API (étape 4.4) ;
+- ``ratelimit.py``  limites de débit (étape 4.4) ;
+- ``storage.py``    base SQLite : empreintes des clés, retours en quarantaine ;
 - ``errors.py``     enveloppe d'erreur commune, sans trace ni recopie de l'entrée ;
 - ``middleware.py`` limite de taille des corps de requête.
 
-Ordre des couches, de l'extérieur vers l'intérieur : limite de taille du corps, routage,
-validation, service.
+Ordre des couches, de l'extérieur vers l'intérieur : limite de débit (avant toute lecture
+du corps), limite de taille du corps, routage, authentification, validation, service.
 """
 
 from __future__ import annotations
@@ -30,13 +32,15 @@ import logging
 from collections.abc import AsyncIterator, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from starlette.concurrency import run_in_threadpool
 
 from phishguard.api.dependencies import AppState
 from phishguard.api.errors import install_error_handlers
 from phishguard.api.middleware import MULTIPART_OVERHEAD, BodySizeLimitMiddleware
+from phishguard.api.ratelimit import RateLimiter, RateLimitMiddleware
 from phishguard.api.routers import analyze, feedback, meta
+from phishguard.api.security import authenticated_client
 from phishguard.api.service import AnalysisService, describe_models
 from phishguard.api.settings import ApiSettings, get_api_settings
 from phishguard.api.storage import Database
@@ -49,6 +53,7 @@ logger = logging.getLogger(__name__)
 
 API_PREFIX = "/v1"
 EMAIL_ROUTE = f"{API_PREFIX}/analyze/email"
+HEALTH_ROUTE = f"{API_PREFIX}/health"
 
 # Fabrique des analyseurs : les tests en injectent une qui construit de petits modèles.
 AnalyzersFactory = Callable[[ApiSettings, Orchestrator | None], Analyzers]
@@ -118,13 +123,21 @@ def create_app(
         route_limits={EMAIL_ROUTE: settings.max_email_bytes + MULTIPART_OVERHEAD},
     )
 
-    v1 = APIRouter(prefix=API_PREFIX)
+    v1 = APIRouter(prefix=API_PREFIX, dependencies=[Depends(authenticated_client)])
     v1.include_router(analyze.router)
     v1.include_router(feedback.router)
     v1.include_router(meta.router)
     app.include_router(meta.health_router, prefix=API_PREFIX)
     app.include_router(v1)
 
+    app.add_middleware(
+        RateLimitMiddleware,
+        limiter=RateLimiter(settings),
+        # Modèles des routes, tirés du schéma OpenAPI (API publique, calculé même si
+        # /docs est désactivé) : les routeurs inclus ne sont pas listés dans app.routes.
+        routes=list(app.openapi()["paths"]),
+        exempt_paths=[HEALTH_ROUTE],
+    )
     return app
 
 

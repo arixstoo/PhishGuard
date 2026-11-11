@@ -4,7 +4,7 @@ Un retour signale un faux positif ou un faux négatif sur un **domaine**, jamais
 URL complète. Il est rangé dans une table de quarantaine, relue à la main par lots :
 **aucun réentraînement automatique**, sans quoi n'importe qui pourrait empoisonner le
 modèle en envoyant de faux retours. L'étape 4.10 complète ce circuit (relecture, tests de
-non-influence) ; la route est déjà validée comme les autres.
+non-influence) ; la route est déjà limitée en débit et validée comme les autres.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from starlette.concurrency import run_in_threadpool
 from phishguard.api.dependencies import AppState, app_state, require_json
 from phishguard.api.errors import ERROR_RESPONSES
 from phishguard.api.schemas import FeedbackAccepted, FeedbackRequest
+from phishguard.api.security import Client, authenticated_client
 
 router = APIRouter(tags=["retours"])
 
@@ -32,12 +33,13 @@ router = APIRouter(tags=["retours"])
 async def feedback(
     body: FeedbackRequest,
     state: Annotated[AppState, Depends(app_state)],
+    client: Annotated[Client, Depends(authenticated_client)],
 ) -> FeedbackAccepted:
     received_at = await run_in_threadpool(
         state.database.quarantine_feedback,
         domain=body.domain,
         verdict=body.verdict,
         judgement=body.judgement,
-        key_id=None,  # clé d'API du client à l'étape 4.4 ; jamais l'adresse IP
+        key_id=client.key_id,  # pour écarter un lot abusif ; jamais l'adresse IP
     )
     return FeedbackAccepted(received_at=received_at)

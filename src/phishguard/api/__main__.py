@@ -4,8 +4,8 @@ Préféré à ``uvicorn phishguard.api.main:app`` en production, parce qu'il fix
 options de sécurité d'uvicorn :
 
 - ``proxy_headers=False`` : uvicorn ne réécrit pas l'IP du client d'après
-  ``X-Forwarded-For``, un en-tête que le client peut écrire lui-même. Seule l'API le
-  lira, et seulement depuis un proxy déclaré (étape 4.4) ;
+  ``X-Forwarded-For``. C'est l'API qui le fait, en ne croyant que les proxys déclarés
+  (``PHISHGUARD_API_TRUSTED_PROXIES``, voir ``phishguard.api.security``) ;
 - ``server_header=False`` : pas d'en-tête ``Server: uvicorn`` qui annonce la pile.
 
 Par défaut, l'API n'écoute que sur ``127.0.0.1`` : l'exposer est un choix explicite.
