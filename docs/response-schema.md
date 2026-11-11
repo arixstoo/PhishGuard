@@ -1,6 +1,6 @@
 # Schéma de la réponse d'analyse
 
-*Étape 2.11 bis du cahier des charges, version 1.2.0 depuis l'étape 3.4. Code : `src/phishguard/schema.py`. Schéma JSON : [`docs/schema/analysis-response.v1.json`](schema/analysis-response.v1.json). Tests : `tests/test_response_schema.py`, `tests/test_analyst_view.py`.*
+*Étape 2.11 bis du cahier des charges, version 1.3.0 depuis l'étape 3.12. Code : `src/phishguard/schema.py`. Schéma JSON : [`docs/schema/analysis-response.v1.json`](schema/analysis-response.v1.json). Tests : `tests/test_response_schema.py`, `tests/test_analyst_view.py`.*
 
 C'est le **contrat** entre le moteur d'analyse et ses clients : l'API (module 4), l'extension et le bot (module 5) en dépendent. Il est strict : un champ inconnu, un type faux ou une réponse incohérente sont refusés à la construction, avant de partir vers un client.
 
@@ -17,7 +17,7 @@ Analyse de `https://login.example.com/verify` : modèle à 0,2, domaine de 3 jou
 
 ```json
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "channel": "url",
   "verdict": "phishing",
   "score": 97,
@@ -60,7 +60,7 @@ Analyse de `https://login.example.com/verify` : modèle à 0,2, domaine de 3 jou
 
 ## Les champs
 
-Les neuf premiers sont ceux du cahier des charges. Les trois suivants ont été ajoutés pour que le contrat serve aux trois canaux et puisse évoluer sans casser les clients ; `language` et `advice` par la version 1.1.0 (étape 3.2), `analyst` par la 1.2.0 (étape 3.4).
+Les neuf premiers sont ceux du cahier des charges. Les trois suivants ont été ajoutés pour que le contrat serve aux trois canaux et puisse évoluer sans casser les clients ; `language` et `advice` par la version 1.1.0 (étape 3.2), `analyst` par la 1.2.0 (étape 3.4). Depuis la 1.3.0 (étape 3.12), les réponses du canal `email` remplissent le même contrat.
 
 | Champ | Type | Sens |
 | --- | --- | --- |
@@ -73,7 +73,7 @@ Les neuf premiers sont ceux du cahier des charges. Les trois suivants ont été 
 | `model_version` | texte | Modèle utilisé (`url_v1`) |
 | `enrichment` | `used` ou `skipped` | Les sources tierces ont-elles été interrogées ? |
 | `latency_ms` | entier | Durée totale de l'analyse |
-| `schema_version` | `1.2.0` | Version de ce contrat |
+| `schema_version` | `1.3.0` | Version de ce contrat |
 | `channel` | `url`, `email`, `sms` ou `messaging` | Canal analysé : les trois endpoints du module 4 renvoient ce même schéma. Une analyse de message (`TextAnalyzer`, étape 3.3) est toujours locale : `enrichment` vaut `skipped` et `signals` est vide |
 | `fusion_version` | `x.y.z` | Version de la configuration de fusion (`fusion.json`) qui a produit le score |
 | `language` | `fr`, `en` ou `ar` | Langue des messages et du conseil |
@@ -132,6 +132,15 @@ Exemple réel, `url_v1` calibré, pour `hxxp://paypa1-secure-login[.]xyz/verify/
 }
 ```
 
+Depuis la version 1.3.0 (étape 3.12), la vue analyste dit aussi ce que la normalisation a changé dans l'entrée, en comptes seulement, et si l'hôte imite des lettres latines :
+
+```json
+"normalization": {"changed": true, "nfkc": false, "format_chars": 1, "control_chars": 0,
+                  "confusables": 2, "host_alert": null, "version": "1.0.0"}
+```
+
+`host_alert` vaut `mixed_script_label` (un label mêle des écritures, `аpple.com`) ou `lookalike_label` (un label entièrement dans une autre écriture qui imite le latin). Il accompagne alors la règle dure `lookalike_host` de `analyst.fusion.hard_rule`. Pour un email, `analyst.model` décrit le score des règles (`email_rules_v1`, score brut de 0 à 100) et `explanation` vaut `null` : les règles déclenchées sont déjà les raisons.
+
 On y lit ce que les phrases taisent : les deux premières contributions sont `path_len` et `host_len`, les features exposées aux biais de chemin et de popularité ([`explain-url.md`](explain-url.md#lecture)). L'utilisateur, lui, lit « L'adresse contient des mots comme « connexion »… » et « L'adresse ressemble à celle de paypal… » ([`reasons.md`](reasons.md)).
 
 | Champ | Contenu |
@@ -179,6 +188,7 @@ Historique :
 
 | Version | Étape | Changement |
 | --- | --- | --- |
+| `1.3.0` | 3.12 | `analyst.normalization`, facultatif : ce que la normalisation a changé (comptes) et l'alerte d'hôte ; réponses du canal `email` ; raison `hard_rule.lookalike_host` |
 | `1.2.0` | 3.4 | Vue analyste `analyst`, facultative : modèle, explication (SHAP ou linéaire), fusion, versions |
 | `1.1.0` | 3.2 | Raisons en langage simple, au plus trois, avec `params` ; nouveaux codes (`url.*`, `signal.domain_age`, `signal.virustotal_engines`) ; champs `language` et `advice` |
 | `1.0.0` | 2.11 bis | Contrat initial |

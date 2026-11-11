@@ -283,7 +283,7 @@ Les évasions de forme (sous-domaines, chemin, paramètre, dilution, leetspeak) 
 
 **L'ablation confirme le choix des deux classes.** Même générateur, mêmes réglages, mais seul le phishing est copié (`--classes phishing`), avec des modèles jamais déployés (tableaux en [annexe](#annexe--tableaux-détaillés-par-passage)). Copier le phishing seul fait monter le rappel moyen sous perturbation (84,7 % pour les URLs), mais parce que le modèle signale désormais **toute** forme ajoutée : 94 % des URLs légitimes avec un paramètre de suivi, 40,9 % des SMS légitimes en leetspeak. C'est le contraire d'une défense. Côté SMS, la dilution devient même pire (rappel de 27,1 % sous `pad_benign_long`) : sans copies légitimes, le modèle apprend probablement les mots du générateur d'entraînement comme indices de spam, et ceux du banc, qu'il n'a jamais vus, gardent leur poids légitime.
 
-**Déploiement.** `text_v2` remplace `text_v1` : il fait mieux ou aussi bien partout. Pour les URLs, le choix est un compromis, et il est tranché à l'intégration (étape 3.12) : `url_v2` perd du rappel sur un test biaisé, mais supprime une évasion gratuite et un risque de faux positifs massif en production.
+**Déploiement (étape 3.12).** `text_v2` remplace `text_v1` : il fait mieux ou aussi bien partout. Pour les URLs, le choix est un compromis : `url_v2` perd du rappel sur un test biaisé, mais supprime une évasion gratuite et un risque de faux positifs massif en production. **`url_v2` est déployé** (`src/phishguard/deployment.py`, [analysis.md](analysis.md#les-modèles-déployés-étape-312)). La Threat Intelligence compense une partie du rappel perdu, et le choix se réverse en une ligne si les mesures en production le contredisent.
 
 ## 7. Phishing rédigé par un LLM (étape 3.10)
 
@@ -408,7 +408,7 @@ Règle de leurre fixée avant la mesure : **lien et demande de code ou de compte
 
 ## 9. Pistes futures
 
-1. **Intégrer, mesurer en production** (étape 3.12 et module 4) : la normalisation et l'alerte d'hôte dans le pipeline principal, et le choix de déploiement de `url_v2`, assumé et documenté.
+1. **Mesurer en production** (module 4). Depuis l'étape 3.12, la normalisation, l'alerte d'hôte (règle dure `lookalike_host`) et les modèles robustes sont dans le pipeline principal. Il reste à vérifier sur du trafic réel, sans rien conserver de personnel, que `url_v2` tient ses promesses.
 2. **Des données légitimes d'entreprise pour le modèle texte.** C'est la faiblesse la plus coûteuse mesurée ici (57 à 63 % de FPR sur des courriers professionnels). Les retours des utilisateurs (étape 4.10) en sont la source naturelle, à condition de ne rien conserver de personnel.
 3. **Des signaux de confiance dans la fusion** : expéditeur authentifié (SPF, DKIM, DMARC alignés), domaine ancien et concordant avec la marque annoncée. Ce sont des signaux capables de **baisser** un score, ce que la fusion actuelle ne sait pas faire.
 4. **Une défense dédiée à la dilution** : score par fenêtres glissantes, ou maximum sur les phrases du message plutôt qu'un TF-IDF du message entier. Des mots ajoutés à la fin ne pourraient plus noyer la phrase suspecte.

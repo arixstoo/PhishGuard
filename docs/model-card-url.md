@@ -2,6 +2,8 @@
 
 Fiche d'identité du modèle de détection de phishing par URL, au format des *model cards* (Mitchell et al., 2019). Les chiffres sont générés depuis `docs/metrics/` par `make cards` ; le reste est écrit à la main. Détails : [`url-features.md`](url-features.md), [`url-models.md`](url-models.md), [`evaluation.md`](evaluation.md), [`error-analysis-url.md`](error-analysis-url.md).
 
+> **Déploiement (étape 3.12).** Le modèle déployé est `url_v2` : la même configuration que `url_v1`, réentraînée par entraînement adversarial (étape 3.9). Les chiffres de cette fiche décrivent `url_v1`. Ceux de `url_v2`, et l'écart entre les deux, sont dans [robustness-report.md](robustness-report.md#6-résultats-après-défenses) et [`metrics/url_v2_test.json`](metrics/url_v2_test.json). Raison du choix : [analysis.md](analysis.md#les-modèles-déployés-étape-312).
+
 ## En bref
 
 | | |
