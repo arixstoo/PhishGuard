@@ -1,6 +1,6 @@
 # Rapport de robustesse
 
-*Étapes 3.7 et suivantes du cahier des charges. Code : `src/phishguard/adversarial/perturb.py` (perturbations), `src/phishguard/adversarial/benchmark.py` (mesures), `src/phishguard/adversarial/augment.py` (entraînement adversarial), `scripts/robustness_benchmark.py` (`make robustness`). Tests : `tests/test_adversarial_perturb.py`, `tests/test_robustness_benchmark.py`, `tests/test_adversarial_augment.py`. Techniques mesurées : [evasion-catalog.md](evasion-catalog.md).*
+*Étapes 3.7 et suivantes du cahier des charges. Code : `src/phishguard/adversarial/perturb.py` (perturbations), `src/phishguard/adversarial/benchmark.py` (mesures), `src/phishguard/adversarial/augment.py` (entraînement adversarial), `scripts/robustness_benchmark.py` (`make robustness`), `scripts/evaluate_llm_phishing.py` (`make llm-phishing`). Tests : `tests/test_adversarial_perturb.py`, `tests/test_robustness_benchmark.py`, `tests/test_adversarial_augment.py`, `tests/test_llm_phishing.py`. Techniques mesurées : [evasion-catalog.md](evasion-catalog.md).*
 
 Ce rapport mesure ce que gagne un attaquant qui modifie la forme de ses leurres sans en changer le sens, avant puis après chaque défense. Les chiffres sont ceux des modèles réels, sur les jeux de test réels, **même quand ils sont mauvais** : c'est leur raison d'être.
 
@@ -418,6 +418,118 @@ Un passage par défense : `baseline` (modèles d'origine), `normalization` (déf
 | `zero_width_dense` | 28,0 % | 20,00 % | 70,0 % | 42,00 % | 66,0 % | 36,00 % |
 | `pad_benign_long` | 0,0 % | 0,00 % | 0,0 % | 0,00 % | 0,0 % | 0,00 % |
 <!-- generated:robustness-comparison:end -->
+
+## Phishing rédigé par un LLM (étape 3.10)
+
+Un LLM rédige un leurre sans faute, au ton juste, dans le style d'un vrai service client. Les détecteurs qui comptent sur les fautes, les majuscules ou le vocabulaire du spam y perdent leurs indices. Ce chapitre mesure ce que deviennent les modèles SMS face à ces messages, et face à des courriers professionnels légitimes **aussi bien écrits**.
+
+- **Jeu défensif et local** ([llm-phishing.md](llm-phishing.md)) : 150 messages de phishing et 150 messages légitimes d'entreprise, rédigés par un LLM (Claude), en anglais comme le corpus d'entraînement. Il y a 15 familles par classe et la moitié des messages sont des SMS. Les organisations sont fictives et partagées par les deux classes, les liens ne pointent que vers des domaines réservés (`example.com`, `.test`) et le jeu ne contient aucune coordonnée réelle. Le chargeur refuse tout fichier qui enfreint ces règles. Le jeu n'est pas versionné : il ne sort pas de la machine. Seuls son empreinte et les mesures sont publiés.
+- **Contrôle ajouté après la première mesure** : 40 messages légitimes qui contiennent tous un lien (relevé, confirmation d'adresse, suivi de colis, document partagé). Le premier passage a montré que seuls 5 % des messages légitimes du jeu principal avaient un lien, contre 85 % du phishing : une règle fondée sur les liens y paraissait précise pour une raison de construction. Le jeu principal n'a pas été modifié, et le contrôle est signalé comme tel.
+- **Mesures** au seuil de décision réglé sur la validation SMS, sans aucun réglage sur ce jeu. La règle de leurre (lien **et** demande de code ou de compte) est fixée à l'avance : ce sont les constats que l'analyse relie déjà à ATT&CK T1598.
+
+<!-- generated:llm-phishing:start -->
+*Généré par `scripts/evaluate_llm_phishing.py` le 2026-11-09, jeu `2647d5e6785c` : 150 phishing et 150 légitimes, 30 familles, 151 SMS et 149 emails. Seuil de décision de chaque modèle, intervalles de Wilson à 95 %. Chiffres complets : [`metrics/llm_phishing.json`](metrics/llm_phishing.json).*
+
+#### Dégradation
+
+| Modèle | Rappel SMS (UCI) | Rappel LLM | Δ rappel | FPR SMS (UCI) | FPR LLM | Δ FPR | ROC-AUC SMS → LLM |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `text_v1` | 94,8 % [88,4–97,8 %] | 91,3 % [85,7–94,9 %] | −3,5 pts | 1,47 % [0,80–2,69 %] | 62,67 % [54,70–70,00 %] | **+61,2 pts** | 0,992 → 0,709 |
+| `text_v2` | 94,8 % [88,4–97,8 %] | 90,0 % [84,2–93,8 %] | −4,8 pts | 1,18 % [0,60–2,31 %] | 57,33 % [49,33–64,97 %] | **+56,2 pts** | 0,992 → 0,720 |
+
+#### Par canal
+
+| Modèle | Canal | Rappel | FPR |
+| :--- | :--- | ---: | ---: |
+| `text_v1` | email | 93,3 % [85,3–97,1 %] | 75,68 % [64,79–84,02 %] |
+| `text_v1` | sms | 89,3 % [80,3–94,5 %] | 50,00 % [39,03–60,97 %] |
+| `text_v2` | email | 90,7 % [82,0–95,4 %] | 68,92 % [57,66–78,31 %] |
+| `text_v2` | sms | 89,3 % [80,3–94,5 %] | 46,05 % [35,31–57,18 %] |
+
+#### Par famille
+
+Rappel pour une famille de phishing, FPR pour une famille légitime (10 messages chacune).
+
+| Famille | Classe | `text_v1` | `text_v2` |
+| :--- | :--- | ---: | ---: |
+| `account_suspended` | phishing | 90 % | 80 % |
+| `bank_fraud_alert` | phishing | 100 % | 100 % |
+| `document_share` | phishing | 100 % | 100 % |
+| `gift_card_ceo` | phishing | 30 % | 30 % |
+| `investment` | phishing | 90 % | 90 % |
+| `invoice_payment` | phishing | 100 % | 100 % |
+| `it_mailbox` | phishing | 90 % | 90 % |
+| `job_offer` | phishing | 100 % | 90 % |
+| `mfa_code` | phishing | 90 % | 90 % |
+| `parcel_fee` | phishing | 100 % | 100 % |
+| `password_expiry` | phishing | 100 % | 100 % |
+| `payroll_update` | phishing | 80 % | 80 % |
+| `prize_reward` | phishing | 100 % | 100 % |
+| `subscription_renewal` | phishing | 100 % | 100 % |
+| `tax_refund` | phishing | 100 % | 100 % |
+| `appointment` | légitime | 70 % | 60 % |
+| `colleague_message` | légitime | 20 % | 20 % |
+| `customer_service` | légitime | 60 % | 60 % |
+| `delivery_update` | légitime | 80 % | 80 % |
+| `hr_announcement` | légitime | 40 % | 20 % |
+| `invoice_available` | légitime | 80 % | 80 % |
+| `it_maintenance` | légitime | 50 % | 50 % |
+| `meeting_reminder` | légitime | 60 % | 40 % |
+| `newsletter` | légitime | 70 % | 50 % |
+| `order_confirmation` | légitime | 80 % | 80 % |
+| `otp_code` | légitime | 90 % | 90 % |
+| `password_changed` | légitime | 60 % | 60 % |
+| `payroll_available` | légitime | 70 % | 70 % |
+| `security_notice` | légitime | 50 % | 40 % |
+| `travel` | légitime | 60 % | 60 % |
+
+#### Catégories de leurre
+
+Part des messages où chaque catégorie est repérée (`explain.text.message_categories`).
+
+| Catégorie | Phishing | Légitime | Contrôle (légitime avec lien) |
+| :--- | ---: | ---: | ---: |
+| urgence | 19 % | 1 % | 0 % |
+| argent | 25 % | 16 % | 0 % |
+| lien | 85 % | 5 % | 100 % |
+| code | 16 % | 13 % | 15 % |
+| compte | 63 % | 37 % | 52 % |
+
+#### Ce qui compense
+
+Règle de leurre fixée avant la mesure : **lien et demande de code ou de compte**. Ensemble : signalé par le modèle **ou** par la règle. Verdict : celui de l'analyse complète (`TextAnalyzer`, fusion), suspect ou phishing. Scénario d'infrastructure : signal RDAP « domaine de 3 jours » ajouté aux liens du phishing, le légitime n'étant pas modifié. Contrôle : 40 messages légitimes **avec lien**, ajoutés après la première mesure (voir la lecture).
+
+| Signal | Modèle | Rappel LLM | FPR LLM | FPR SMS (UCI) | FPR contrôle |
+| :--- | :--- | ---: | ---: | ---: | ---: |
+| règle seule |  | 52,7 % [44,7–60,5 %] | 2,00 % [0,68–5,71 %] | 0,00 % [0,00–0,56 %] | 52,5 % [37,5–67,1 %] |
+| modèle seul | `text_v1` | 91,3 % [85,7–94,9 %] | 62,67 % [54,70–70,00 %] | 1,47 % [0,80–2,69 %] | 90,0 % [76,9–96,0 %] |
+| modèle + règle | `text_v1` | 92,0 % [86,5–95,4 %] | 62,67 % [54,70–70,00 %] | 1,47 % [0,80–2,69 %] | 92,5 % [80,1–97,4 %] |
+| verdict de l'analyse | `text_v1` | 76,0 % [68,6–82,1 %] | 43,33 % [35,67–51,33 %] |  | 70,0 % [54,6–81,9 %] |
+| verdict + domaine récent (scénario) | `text_v1` | 92,0 % [86,5–95,4 %] | 43,33 % [35,67–51,33 %] |  | 70,0 % [54,6–81,9 %] |
+| modèle seul | `text_v2` | 90,0 % [84,2–93,8 %] | 57,33 % [49,33–64,97 %] | 1,18 % [0,60–2,31 %] | 87,5 % [73,9–94,5 %] |
+| modèle + règle | `text_v2` | 90,7 % [84,9–94,4 %] | 57,33 % [49,33–64,97 %] | 1,18 % [0,60–2,31 %] | 90,0 % [76,9–96,0 %] |
+| verdict de l'analyse | `text_v2` | 78,7 % [71,4–84,5 %] | 43,33 % [35,67–51,33 %] |  | 82,5 % [68,0–91,3 %] |
+| verdict + domaine récent (scénario) | `text_v2` | 90,7 % [84,9–94,4 %] | 43,33 % [35,67–51,33 %] |  | 82,5 % [68,0–91,3 %] |
+
+85 % du phishing LLM contient un lien. Avec `text_v1`, 12 phishing que l'analyse ne signale pas n'en ont aucun : aucun signal d'infrastructure de lien ne peut les rattraper.
+<!-- generated:llm-phishing:end -->
+
+### Lecture
+
+- **La dégradation n'est pas là où on l'attendait.** Le rappel tient : 90 à 91 % du phishing LLM est signalé, contre 94,8 % du spam UCI. Ce qui s'effondre, ce sont les **faux positifs** : 57 à 63 % des courriers légitimes d'entreprise sont signalés, contre 1,2 à 1,5 % des SMS légitimes du test. La ROC-AUC passe de 0,99 à 0,71. Le modèle ne sépare plus les classes, quel que soit le seuil.
+- **Pourquoi** : le légitime de la SMS Spam Collection est fait de messages personnels (« ok see you at 7 »). Le modèle a appris « ton commercial ou transactionnel = spam ». Un code de connexion, une facture disponible, un avis de livraison : 80 à 90 % sont signalés. Ce n'est pas un détecteur de phishing, c'est un détecteur de message d'entreprise. Une mauvaise orthographe n'a jamais été son indice principal. Le registre l'était, et un LLM l'imite parfaitement dans les deux sens.
+- **Le phishing qu'il manque est celui qui n'a ni lien ni montant** : faux dirigeant et cartes cadeaux (30 % de rappel), demandes de virement « confidentielles ». Ce sont des leurres conversationnels, sans aucun mot de spam.
+- **`text_v2` fait un peu mieux** (FPR de 57 % contre 63 %, ROC-AUC de 0,72 contre 0,71) : l'entraînement adversarial lui a appris que des chiffres et des symboles ne suffisent pas. C'est un écart dans les intervalles de confiance, et il ne change pas la conclusion.
+- **La règle de leurre ne compense pas.** Sur le jeu principal, « lien et demande de code ou de compte » semble excellente : 52,7 % de rappel pour 2 % de FPR. Le contrôle montre que c'était un artefact : elle signale 52,5 % des messages légitimes avec un lien. Un relevé « disponible dans votre compte » et un leurre « vérifiez votre compte » ont les mêmes catégories. L'ensemble modèle + règle n'apporte presque rien (+0,7 point de rappel) et ajoute des faux positifs sur le contrôle. Cette règle **ne sera pas** ajoutée à la fusion (étape 3.12).
+- **Ce qui compense, ce sont les signaux d'infrastructure, et seulement pour le rappel.** Avec un domaine de 3 jours sur le lien, l'analyse signale 92 % du phishing au lieu de 76 % (`text_v1`). C'est un scénario : le jeu n'a que des domaines réservés, et il ne dit pas combien de leurres réels utilisent un domaine récent. Il montre ce que la fusion ferait du signal. Deux limites restent :
+  - le signal ne rattrape pas les 12 phishing sans lien ;
+  - **il ne fait pas baisser les faux positifs** : la fusion du module 2 ne fait qu'ajouter du risque, et un domaine ancien n'innocente pas un message. Avec 43 % de verdicts suspects sur les courriers légitimes, le texte seul n'est pas utilisable sur des messages professionnels.
+- **Conclusion.** Face à des messages bien écrits, le texte seul ne suffit plus, dans les deux sens : il ne distingue plus un leurre d'un vrai courrier. Ce qui reste discriminant ne dépend pas de la rédaction :
+  - la concordance du lien avec l'expéditeur annoncé ;
+  - l'âge et la réputation du domaine (module 2) ;
+  - l'authentification de l'expéditeur pour l'email (SPF, DKIM, DMARC, étape 1.10).
+
+  Le modèle SMS doit aussi être réentraîné sur des messages d'entreprise légitimes. Sans ces données, son verdict sur un message professionnel est à prendre comme un indice faible, et les clients devront le présenter ainsi (module 5).
 
 ## Limites
 

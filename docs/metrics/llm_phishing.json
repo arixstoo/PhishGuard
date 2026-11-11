@@ -1,0 +1,1585 @@
+{
+  "report_version": "1.0.0",
+  "metadata": {
+    "generated_at": "2026-11-09T13:24:36+00:00",
+    "dataset": {
+      "sha256": "2647d5e6785c3ff95a6dabbc6b34e51e086f00a6543c000c582788480d22d4e8",
+      "messages": 300,
+      "phishing": 150,
+      "legitimate": 150,
+      "families": 30,
+      "by_channel": {
+        "sms": 151,
+        "email": 149
+      },
+      "median_chars": {
+        "0": 152.0,
+        "1": 202.0
+      }
+    },
+    "sms_sha256": "7d039a24a6083ed9ef0f806ebad56bbb976e3aeb8de05669173bfdc4996c239d"
+  },
+  "scenario_domain_age_days": 3,
+  "categories": {
+    "urgency": {
+      "phishing": {
+        "n": 150,
+        "flagged": 29,
+        "rate": 0.19333333333333333,
+        "low": 0.13811802293025152,
+        "high": 0.2638642757457893
+      },
+      "legitimate": {
+        "n": 150,
+        "flagged": 2,
+        "rate": 0.013333333333333334,
+        "low": 0.0036640523882232115,
+        "high": 0.047307856380276334
+      }
+    },
+    "money": {
+      "phishing": {
+        "n": 150,
+        "flagged": 38,
+        "rate": 0.25333333333333335,
+        "low": 0.190490201872526,
+        "high": 0.32849556010602865
+      },
+      "legitimate": {
+        "n": 150,
+        "flagged": 24,
+        "rate": 0.16,
+        "low": 0.10993931727556672,
+        "high": 0.22704105734352203
+      }
+    },
+    "link": {
+      "phishing": {
+        "n": 150,
+        "flagged": 128,
+        "rate": 0.8533333333333334,
+        "low": 0.7879140446419707,
+        "high": 0.9011063503617215
+      },
+      "legitimate": {
+        "n": 150,
+        "flagged": 8,
+        "rate": 0.05333333333333334,
+        "low": 0.027269212890132462,
+        "high": 0.1017050047467096
+      }
+    },
+    "code": {
+      "phishing": {
+        "n": 150,
+        "flagged": 24,
+        "rate": 0.16,
+        "low": 0.10993931727556672,
+        "high": 0.22704105734352203
+      },
+      "legitimate": {
+        "n": 150,
+        "flagged": 20,
+        "rate": 0.13333333333333333,
+        "low": 0.08799732892586415,
+        "high": 0.19698150644766288
+      }
+    },
+    "account": {
+      "phishing": {
+        "n": 150,
+        "flagged": 95,
+        "rate": 0.6333333333333333,
+        "low": 0.5537808929385404,
+        "high": 0.706226803289268
+      },
+      "legitimate": {
+        "n": 150,
+        "flagged": 56,
+        "rate": 0.37333333333333335,
+        "low": 0.2999970542949877,
+        "high": 0.45299563428859446
+      }
+    }
+  },
+  "rule": {
+    "definition": "link and (code or account)",
+    "llm": {
+      "recall": {
+        "n": 150,
+        "flagged": 79,
+        "rate": 0.5266666666666666,
+        "low": 0.4470991159595076,
+        "high": 0.6049024232860539
+      },
+      "fpr": {
+        "n": 150,
+        "flagged": 3,
+        "rate": 0.02,
+        "low": 0.006824627715648315,
+        "high": 0.05714766586424165
+      }
+    },
+    "sms_test": {
+      "recall": {
+        "n": 96,
+        "flagged": 4,
+        "rate": 0.041666666666666664,
+        "low": 0.0163204434524125,
+        "high": 0.10228342507533544
+      },
+      "fpr": {
+        "n": 678,
+        "flagged": 0,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.005634153152286396
+      }
+    }
+  },
+  "models": {
+    "text_v1": {
+      "version": "text_v1",
+      "sha256": "0b93f67b536e175c2c155d44c5198480d78d2f50ba78b422b481cd0f699a276e",
+      "threshold": -0.25315151033956534,
+      "calibrated": true,
+      "llm": {
+        "recall": {
+          "n": 150,
+          "flagged": 137,
+          "rate": 0.9133333333333333,
+          "low": 0.8573705468757646,
+          "high": 0.9486533114304412
+        },
+        "fpr": {
+          "n": 150,
+          "flagged": 94,
+          "rate": 0.6266666666666667,
+          "low": 0.5470043657114055,
+          "high": 0.7000029457050124
+        }
+      },
+      "llm_separation": {
+        "pr_auc": 0.6451,
+        "roc_auc": 0.7093
+      },
+      "by_channel": {
+        "email": {
+          "label": 1,
+          "recall": {
+            "n": 75,
+            "flagged": 70,
+            "rate": 0.9333333333333333,
+            "low": 0.8532474983062438,
+            "high": 0.9711903619096828
+          },
+          "fpr": {
+            "n": 74,
+            "flagged": 56,
+            "rate": 0.7567567567567568,
+            "low": 0.6479345618473262,
+            "high": 0.8402362876727247
+          }
+        },
+        "sms": {
+          "label": 1,
+          "recall": {
+            "n": 75,
+            "flagged": 67,
+            "rate": 0.8933333333333333,
+            "low": 0.8033843735268642,
+            "high": 0.9449515303614384
+          },
+          "fpr": {
+            "n": 76,
+            "flagged": 38,
+            "rate": 0.5,
+            "low": 0.3903240360982663,
+            "high": 0.6096759639017337
+          }
+        }
+      },
+      "by_family": {
+        "account_suspended": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "appointment": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 7,
+            "rate": 0.7,
+            "low": 0.39677321997956516,
+            "high": 0.892210712513788
+          }
+        },
+        "bank_fraud_alert": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "colleague_message": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 2,
+            "rate": 0.2,
+            "low": 0.056680947980693314,
+            "high": 0.5098431532792765
+          }
+        },
+        "customer_service": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        },
+        "delivery_update": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          }
+        },
+        "document_share": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "gift_card_ceo": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 3,
+            "rate": 0.3,
+            "low": 0.10778928748621183,
+            "high": 0.6032267800204347
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "hr_announcement": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 4,
+            "rate": 0.4,
+            "low": 0.16817758120350967,
+            "high": 0.6873304525498135
+          }
+        },
+        "investment": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "invoice_available": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          }
+        },
+        "invoice_payment": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "it_mailbox": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "it_maintenance": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 5,
+            "rate": 0.5,
+            "low": 0.23658959361548731,
+            "high": 0.7634104063845126
+          }
+        },
+        "job_offer": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "meeting_reminder": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        },
+        "mfa_code": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "newsletter": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 7,
+            "rate": 0.7,
+            "low": 0.39677321997956516,
+            "high": 0.892210712513788
+          }
+        },
+        "order_confirmation": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          }
+        },
+        "otp_code": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          }
+        },
+        "parcel_fee": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "password_changed": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        },
+        "password_expiry": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "payroll_available": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 7,
+            "rate": 0.7,
+            "low": 0.39677321997956516,
+            "high": 0.892210712513788
+          }
+        },
+        "payroll_update": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "prize_reward": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "security_notice": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 5,
+            "rate": 0.5,
+            "low": 0.23658959361548731,
+            "high": 0.7634104063845126
+          }
+        },
+        "subscription_renewal": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "tax_refund": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "travel": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        }
+      },
+      "ensemble": {
+        "recall": {
+          "n": 150,
+          "flagged": 138,
+          "rate": 0.92,
+          "low": 0.8653774250568131,
+          "high": 0.9536468180607831
+        },
+        "fpr": {
+          "n": 150,
+          "flagged": 94,
+          "rate": 0.6266666666666667,
+          "low": 0.5470043657114055,
+          "high": 0.7000029457050124
+        }
+      },
+      "sms_test": {
+        "recall": {
+          "n": 96,
+          "flagged": 91,
+          "rate": 0.9479166666666666,
+          "low": 0.8838136706327892,
+          "high": 0.97755073057873
+        },
+        "fpr": {
+          "n": 678,
+          "flagged": 10,
+          "rate": 0.014749262536873156,
+          "low": 0.008030801927942064,
+          "high": 0.0269356770900586
+        }
+      },
+      "sms_separation": {
+        "pr_auc": 0.9749,
+        "roc_auc": 0.992
+      },
+      "ensemble_sms_test": {
+        "recall": {
+          "n": 96,
+          "flagged": 91,
+          "rate": 0.9479166666666666,
+          "low": 0.8838136706327892,
+          "high": 0.97755073057873
+        },
+        "fpr": {
+          "n": 678,
+          "flagged": 10,
+          "rate": 0.014749262536873156,
+          "low": 0.008030801927942064,
+          "high": 0.0269356770900586
+        }
+      },
+      "degradation": {
+        "recall": -0.0345833333333333,
+        "fpr": 0.6119174041297936
+      },
+      "scenario": {
+        "domain_age_days": 3,
+        "rdap_risk": 1.0,
+        "verdicts": {
+          "recall": {
+            "n": 150,
+            "flagged": 114,
+            "rate": 0.76,
+            "low": 0.6857071477257108,
+            "high": 0.8213078599185155
+          },
+          "fpr": {
+            "n": 150,
+            "flagged": 65,
+            "rate": 0.43333333333333335,
+            "low": 0.35667455895269157,
+            "high": 0.5133215929334043
+          }
+        },
+        "with_young_domain": {
+          "recall": {
+            "n": 150,
+            "flagged": 138,
+            "rate": 0.92,
+            "low": 0.8653774250568131,
+            "high": 0.9536468180607831
+          },
+          "fpr": {
+            "n": 150,
+            "flagged": 65,
+            "rate": 0.43333333333333335,
+            "low": 0.35667455895269157,
+            "high": 0.5133215929334043
+          }
+        },
+        "phishing_with_link": {
+          "n": 150,
+          "flagged": 128,
+          "rate": 0.8533333333333334,
+          "low": 0.7879140446419707,
+          "high": 0.9011063503617215
+        },
+        "missed_without_link": 12
+      },
+      "control": {
+        "model": {
+          "n": 40,
+          "flagged": 36,
+          "rate": 0.9,
+          "low": 0.7694792561952611,
+          "high": 0.9604211124044252
+        },
+        "ensemble": {
+          "n": 40,
+          "flagged": 37,
+          "rate": 0.925,
+          "low": 0.8013546984090248,
+          "high": 0.9741644432281419
+        },
+        "verdict": {
+          "n": 40,
+          "flagged": 28,
+          "rate": 0.7,
+          "low": 0.545696893456796,
+          "high": 0.8192532908430471
+        }
+      }
+    },
+    "text_v2": {
+      "version": "text_v2",
+      "sha256": "88458aeb4316b80e23da924595ec35ac1945b37dd87f86e6059a0aba5c07abcb",
+      "threshold": -0.22684853482729084,
+      "calibrated": true,
+      "llm": {
+        "recall": {
+          "n": 150,
+          "flagged": 135,
+          "rate": 0.9,
+          "low": 0.8415639255193982,
+          "high": 0.9384591631640268
+        },
+        "fpr": {
+          "n": 150,
+          "flagged": 86,
+          "rate": 0.5733333333333334,
+          "low": 0.49332380166580925,
+          "high": 0.6496804312594855
+        }
+      },
+      "llm_separation": {
+        "pr_auc": 0.6478,
+        "roc_auc": 0.7197
+      },
+      "by_channel": {
+        "email": {
+          "label": 1,
+          "recall": {
+            "n": 75,
+            "flagged": 68,
+            "rate": 0.9066666666666666,
+            "low": 0.819651161993122,
+            "high": 0.9540520606710551
+          },
+          "fpr": {
+            "n": 74,
+            "flagged": 51,
+            "rate": 0.6891891891891891,
+            "low": 0.5766117525232517,
+            "high": 0.7830930839652068
+          }
+        },
+        "sms": {
+          "label": 1,
+          "recall": {
+            "n": 75,
+            "flagged": 67,
+            "rate": 0.8933333333333333,
+            "low": 0.8033843735268642,
+            "high": 0.9449515303614384
+          },
+          "fpr": {
+            "n": 76,
+            "flagged": 35,
+            "rate": 0.4605263157894737,
+            "low": 0.3530754655326989,
+            "high": 0.5717757398539667
+          }
+        }
+      },
+      "by_family": {
+        "account_suspended": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "appointment": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        },
+        "bank_fraud_alert": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "colleague_message": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 2,
+            "rate": 0.2,
+            "low": 0.056680947980693314,
+            "high": 0.5098431532792765
+          }
+        },
+        "customer_service": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        },
+        "delivery_update": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          }
+        },
+        "document_share": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "gift_card_ceo": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 3,
+            "rate": 0.3,
+            "low": 0.10778928748621183,
+            "high": 0.6032267800204347
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "hr_announcement": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 2,
+            "rate": 0.2,
+            "low": 0.056680947980693314,
+            "high": 0.5098431532792765
+          }
+        },
+        "investment": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "invoice_available": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          }
+        },
+        "invoice_payment": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "it_mailbox": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "it_maintenance": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 5,
+            "rate": 0.5,
+            "low": 0.23658959361548731,
+            "high": 0.7634104063845126
+          }
+        },
+        "job_offer": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "meeting_reminder": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 4,
+            "rate": 0.4,
+            "low": 0.16817758120350967,
+            "high": 0.6873304525498135
+          }
+        },
+        "mfa_code": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "newsletter": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 5,
+            "rate": 0.5,
+            "low": 0.23658959361548731,
+            "high": 0.7634104063845126
+          }
+        },
+        "order_confirmation": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          }
+        },
+        "otp_code": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 9,
+            "rate": 0.9,
+            "low": 0.5958436145024278,
+            "high": 0.9821242504842788
+          }
+        },
+        "parcel_fee": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "password_changed": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        },
+        "password_expiry": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "payroll_available": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 7,
+            "rate": 0.7,
+            "low": 0.39677321997956516,
+            "high": 0.892210712513788
+          }
+        },
+        "payroll_update": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 8,
+            "rate": 0.8,
+            "low": 0.49015684672072335,
+            "high": 0.9433190520193067
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "prize_reward": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "security_notice": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 4,
+            "rate": 0.4,
+            "low": 0.16817758120350967,
+            "high": 0.6873304525498135
+          }
+        },
+        "subscription_renewal": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "tax_refund": {
+          "label": 1,
+          "recall": {
+            "n": 10,
+            "flagged": 10,
+            "rate": 1.0,
+            "low": 0.7224598312333834,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "travel": {
+          "label": 0,
+          "recall": {
+            "n": 0,
+            "flagged": 0,
+            "rate": null,
+            "low": null,
+            "high": null
+          },
+          "fpr": {
+            "n": 10,
+            "flagged": 6,
+            "rate": 0.6,
+            "low": 0.3126695474501864,
+            "high": 0.8318224187964902
+          }
+        }
+      },
+      "ensemble": {
+        "recall": {
+          "n": 150,
+          "flagged": 136,
+          "rate": 0.9066666666666666,
+          "low": 0.8494348221544131,
+          "high": 0.9435886513404023
+        },
+        "fpr": {
+          "n": 150,
+          "flagged": 86,
+          "rate": 0.5733333333333334,
+          "low": 0.49332380166580925,
+          "high": 0.6496804312594855
+        }
+      },
+      "sms_test": {
+        "recall": {
+          "n": 96,
+          "flagged": 91,
+          "rate": 0.9479166666666666,
+          "low": 0.8838136706327892,
+          "high": 0.97755073057873
+        },
+        "fpr": {
+          "n": 678,
+          "flagged": 8,
+          "rate": 0.011799410029498525,
+          "low": 0.005990740280983628,
+          "high": 0.023109273563874183
+        }
+      },
+      "sms_separation": {
+        "pr_auc": 0.9741,
+        "roc_auc": 0.9923
+      },
+      "ensemble_sms_test": {
+        "recall": {
+          "n": 96,
+          "flagged": 91,
+          "rate": 0.9479166666666666,
+          "low": 0.8838136706327892,
+          "high": 0.97755073057873
+        },
+        "fpr": {
+          "n": 678,
+          "flagged": 8,
+          "rate": 0.011799410029498525,
+          "low": 0.005990740280983628,
+          "high": 0.023109273563874183
+        }
+      },
+      "degradation": {
+        "recall": -0.04791666666666661,
+        "fpr": 0.5615339233038348
+      },
+      "scenario": {
+        "domain_age_days": 3,
+        "rdap_risk": 1.0,
+        "verdicts": {
+          "recall": {
+            "n": 150,
+            "flagged": 118,
+            "rate": 0.7866666666666666,
+            "low": 0.7143779835916132,
+            "high": 0.8446385632981747
+          },
+          "fpr": {
+            "n": 150,
+            "flagged": 65,
+            "rate": 0.43333333333333335,
+            "low": 0.35667455895269157,
+            "high": 0.5133215929334043
+          }
+        },
+        "with_young_domain": {
+          "recall": {
+            "n": 150,
+            "flagged": 136,
+            "rate": 0.9066666666666666,
+            "low": 0.8494348221544131,
+            "high": 0.9435886513404023
+          },
+          "fpr": {
+            "n": 150,
+            "flagged": 65,
+            "rate": 0.43333333333333335,
+            "low": 0.35667455895269157,
+            "high": 0.5133215929334043
+          }
+        },
+        "phishing_with_link": {
+          "n": 150,
+          "flagged": 128,
+          "rate": 0.8533333333333334,
+          "low": 0.7879140446419707,
+          "high": 0.9011063503617215
+        },
+        "missed_without_link": 14
+      },
+      "control": {
+        "model": {
+          "n": 40,
+          "flagged": 35,
+          "rate": 0.875,
+          "low": 0.7388757932976187,
+          "high": 0.9454058022645873
+        },
+        "ensemble": {
+          "n": 40,
+          "flagged": 36,
+          "rate": 0.9,
+          "low": 0.7694792561952611,
+          "high": 0.9604211124044252
+        },
+        "verdict": {
+          "n": 40,
+          "flagged": 33,
+          "rate": 0.825,
+          "low": 0.6804970794560755,
+          "high": 0.9125469700311694
+        }
+      }
+    }
+  },
+  "control": {
+    "sha256": "5c60160bd1495ea4bd0b85f07f5cb3bbffd9c89818ee42778cb1a99166464a40",
+    "messages": 40,
+    "added_after_first_measurement": true,
+    "rule": {
+      "n": 40,
+      "flagged": 21,
+      "rate": 0.525,
+      "low": 0.37497106853929735,
+      "high": 0.6706477044981831
+    },
+    "categories": {
+      "urgency": {
+        "n": 40,
+        "flagged": 0,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.08762453925039232
+      },
+      "money": {
+        "n": 40,
+        "flagged": 0,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.08762453925039232
+      },
+      "link": {
+        "n": 40,
+        "flagged": 40,
+        "rate": 1.0,
+        "low": 0.9123754607496077,
+        "high": 1.0
+      },
+      "code": {
+        "n": 40,
+        "flagged": 6,
+        "rate": 0.15,
+        "low": 0.07061091708507435,
+        "high": 0.2907262603902003
+      },
+      "account": {
+        "n": 40,
+        "flagged": 21,
+        "rate": 0.525,
+        "low": 0.37497106853929735,
+        "high": 0.6706477044981831
+      }
+    }
+  }
+}
