@@ -7,7 +7,9 @@ appelleront. Il assemble les briques du module 2 :
 2. **calibration** (étape 2.10), si elle est fournie : score → probabilité ;
 3. **enrichissement** (étapes 2.4 à 2.9), **seulement si l'utilisateur l'a activé** ;
 4. **fusion** (étape 2.10) : score de 0 à 100 et verdict ;
-5. **techniques MITRE ATT&CK** (étape 2.11) pour un verdict suspect ou phishing.
+5. **techniques MITRE ATT&CK** (étape 2.11) pour un verdict suspect ou phishing ;
+6. **explication SHAP** du score du modèle (étape 3.1), quand le modèle s'y prête, que
+   la réponse traduit en phrases (étape 3.2).
 
 Garanties, vérifiées par ``tests/test_privacy_and_degradation.py`` (étape 2.12) :
 
@@ -18,7 +20,8 @@ Garanties, vérifiées par ``tests/test_privacy_and_degradation.py`` (étape 2.1
   n'est envoyée à aucune source. Aucun service public ne la connaît, et son nom
   révélerait le réseau de l'utilisateur ;
 - **dégradation** : si toutes les sources sont en panne, l'analyse aboutit quand même,
-  avec le verdict du modèle seul.
+  avec le verdict du modèle seul. Une explication impossible à calculer ne fait pas
+  non plus échouer l'analyse : la réponse cite alors une raison générale.
 
 Une URL invalide lève :class:`~phishguard.urls.features.InvalidUrlError` : c'est une
 erreur de l'entrée, pas d'une source, et l'API la renverra comme telle (400).
@@ -40,6 +43,7 @@ import tldextract
 
 from phishguard.data.urls import make_domain_extractor
 from phishguard.enrichers.orchestrator import EnrichmentResult, Orchestrator
+from phishguard.explain.shap_url import UnsupportedModelError, UrlExplainer, UrlExplanation
 from phishguard.fusion.calibration import ScoreCalibrator
 from phishguard.fusion.mitre import Observations, Technique, domain_observations, map_techniques
 from phishguard.fusion.score import FusionConfig, FusionResult, Verdict, fuse
@@ -103,12 +107,14 @@ class UrlAnalysis:
     latency_ms: int
     enrichment_skipped: SkipReason | None = None  # None : les sources ont été interrogées
     model_version: str = "unknown"  # ``metadata["model_version"]`` du modèle (``url_v1``)
+    explanation: UrlExplanation | None = None  # valeurs SHAP du score brut (étape 3.1)
 
-    def to_response(self) -> AnalysisResponse:
-        """Réponse au format figé de l'étape 2.11 bis (``phishguard.schema``)."""
+    def to_response(self, language: str = "fr") -> AnalysisResponse:
+        """Réponse au format figé de l'étape 2.11 bis (``phishguard.schema``), raisons et
+        conseil rédigés dans ``language`` (``fr``, ``en`` ou ``ar``)."""
         from phishguard.schema import AnalysisResponse
 
-        return AnalysisResponse.from_url_analysis(self)
+        return AnalysisResponse.from_url_analysis(self, language=language)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -129,12 +135,18 @@ class UrlAnalysis:
                 "signals": [s.model_dump(mode="json") for s in self.enrichment.signals],
             },
             "mitre": [t.to_dict() for t in self.mitre],
+            "explanation": None if self.explanation is None else self.explanation.to_dict(),
             "latency_ms": self.latency_ms,
         }
 
 
 class UrlAnalyzer:
-    """Analyse d'URLs. ``orchestrator`` peut être absent : l'analyse reste alors locale."""
+    """Analyse d'URLs. ``orchestrator`` peut être absent : l'analyse reste alors locale.
+
+    ``explain`` : calculer les valeurs SHAP du score (étape 3.1). Elles ne sont
+    disponibles que pour un :class:`~phishguard.urls.model.UrlModel` à base d'arbres ;
+    pour tout autre modèle, l'analyse se fait sans explication.
+    """
 
     def __init__(
         self,
@@ -143,11 +155,13 @@ class UrlAnalyzer:
         calibrator: ScoreCalibrator | None = None,
         orchestrator: Orchestrator | None = None,
         config: FusionConfig | None = None,
+        explain: bool = True,
     ) -> None:
         self.model = model
         self.calibrator = calibrator
         self.orchestrator = orchestrator
         self.config = config
+        self.explainer = _explainer_for(model) if explain else None
         metadata = getattr(model, "metadata", None)
         self.model_version = str(
             (metadata.get("model_version") if isinstance(metadata, Mapping) else None) or "unknown"
@@ -182,7 +196,7 @@ class UrlAnalyzer:
         start = time.perf_counter()
         parsed = parse_url(url)  # lève InvalidUrlError si l'URL est invalide
         domain = parsed.registered_domain
-        raw = float(self.model.score([url])[0])
+        raw, explanation = self._score(url)
         if not math.isfinite(raw):
             # min/max transformeraient NaN en 0, donc en verdict « sûr » : on refuse.
             raise ValueError(f"score du modèle non fini : {raw!r}")
@@ -222,7 +236,27 @@ class UrlAnalyzer:
             latency_ms=round((time.perf_counter() - start) * 1000),
             enrichment_skipped=skipped,
             model_version=self.model_version,
+            explanation=explanation,
         )
+
+    def _score(self, url: str) -> tuple[float, UrlExplanation | None]:
+        """Score brut du modèle et, si possible, son explication SHAP.
+
+        Les features ne sont extraites qu'une fois pour les deux. Une erreur de
+        l'explication est journalisée sans faire échouer l'analyse ; une URL invalide
+        reste une erreur de l'entrée.
+        """
+        if self.explainer is None:
+            return float(self.model.score([url])[0]), None
+        model = self.explainer.model
+        x = model.features([url])  # lève InvalidUrlError si l'URL est invalide
+        raw = float(model.score_features(x)[0])
+        try:
+            explanation = self.explainer.explain_features(x)[0]
+        except Exception:  # l'explication est un plus, jamais une cause d'échec
+            logger.exception("explication SHAP impossible : analyse sans explication")
+            explanation = None
+        return raw, explanation
 
     def _observations(self, url: str, enriched: EnrichmentResult) -> Observations:
         features: Mapping[str, float] = self._features.transform([url]).iloc[0].to_dict()
@@ -232,3 +266,16 @@ class UrlAnalyzer:
             requests_information=any(features.get(name, 0) > 0 for name in INFORMATION_FEATURES),
             **domain_observations(enriched.signals, features),
         )
+
+
+def _explainer_for(model: UrlScorer) -> UrlExplainer | None:
+    """Explicateur SHAP du modèle, ou ``None`` s'il ne s'y prête pas."""
+    from phishguard.urls.model import UrlModel
+
+    if not isinstance(model, UrlModel):
+        return None
+    try:
+        return UrlExplainer(model)
+    except UnsupportedModelError as exc:
+        logger.info("modèle URL sans explication SHAP : %s", exc)
+        return None

@@ -28,6 +28,7 @@ dependencies = [
     "tenacity>=8.2",  # nouvelles tentatives sur les erreurs temporaires (étape 2.8)
     "cachetools>=5.3",  # cache à durée de vie des réponses des sources (étape 2.8)
     "olefile>=0.46",  # macros des documents Office 97-2003 joints aux emails (étape 2.13)
+    "pyyaml>=6.0",  # gabarits des raisons lisibles, lus avec safe_load (étape 3.2)
 ]
 
 [project.optional-dependencies]
@@ -51,9 +52,10 @@ Repository = "https://github.com/arixstoo/PhishGuard"
 Issues = "https://github.com/arixstoo/PhishGuard/issues"
 
 [tool.setuptools.package-data]
-# Listes de référence des features URL, relues aussi par l'extension (module 5), et
-# paramètres versionnés de la fusion du score (étape 2.10).
-phishguard = ["urls/data/*.json", "fusion/*.json"]
+# Listes de référence des features URL, relues aussi par l'extension (module 5),
+# paramètres versionnés de la fusion du score (étape 2.10) et gabarits des raisons
+# lisibles en trois langues (étape 3.2).
+phishguard = ["urls/data/*.json", "fusion/*.json", "explain/*.yml"]
 
 [tool.ruff]
 line-length = 100

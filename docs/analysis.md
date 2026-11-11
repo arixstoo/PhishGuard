@@ -24,6 +24,7 @@ analysis.verdict, analysis.score, analysis.mitre, analysis.to_dict()
 | 3. Enrichissement par les six sources (étapes 2.4 à 2.9) | **seulement si `enrichment=True`**, et jamais pour une URL interne | oui |
 | 4. Fusion : score et verdict (étape 2.10) | oui | non |
 | 5. Techniques MITRE ATT&CK (étape 2.11) | verdict suspect ou phishing | non |
+| 6. Explication SHAP du score (étape 3.1), traduite en phrases par `to_response(langue)` (étape 3.2, [`reasons.md`](reasons.md)) | si le modèle s'y prête (`UrlModel` à base d'arbres) ; `explain=False` la désactive | non |
 
 L'enrichissement est **désactivé par défaut** : c'est l'utilisateur qui l'active (opt-in). Quand il n'a pas lieu, `analysis.enrichment_skipped` dit pourquoi : `not_requested` (non demandé, ou aucune source configurée) ou `internal_host`. Un score du modèle non fini (NaN) lève `ValueError` au lieu de devenir un verdict « sûr » silencieux. Une URL invalide lève `InvalidUrlError` : c'est une erreur de l'entrée, que l'API renverra comme telle, pas une panne de source.
 
@@ -46,6 +47,7 @@ Le blocage du réseau laisse passer un seul appel : `socket.socketpair()`. Sous 
 
 - **Toutes les sources en panne** (réseau coupé, DNS injoignable) : l'analyse aboutit en moins de 3 s avec le verdict du modèle seul, identique à `fuse(probabilité)` sans signal. Un phishing garde ses techniques ATT&CK.
 - **Toutes les sources trop lentes** : elles sont arrêtées par le budget de l'orchestrateur, et le verdict du modèle est renvoyé dans le délai.
+- **Explication impossible** (modèle sans moteur SHAP, erreur pendant le calcul) : l'analyse aboutit sans explication, l'erreur est journalisée, et la réponse cite une raison générale. L'explication est un plus, jamais une cause d'échec.
 
 ### Contrat commun des sources
 

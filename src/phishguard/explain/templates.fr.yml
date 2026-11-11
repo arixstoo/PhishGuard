@@ -1,0 +1,88 @@
+# Gabarits des raisons montrées à l'utilisateur, en français (étape 3.2).
+#
+# Règles d'écriture :
+# - une phrase courte, au présent, sans jargon : un non-technicien doit la comprendre ;
+# - un constat vérifiable, jamais une accusation (« ressemble à », pas « est un faux ») ;
+# - les variables entre accolades ({brand}, {n}…) sont remplies par
+#   phishguard.explain.reasons, après nettoyage (aucun texte de l'utilisateur brut).
+#
+# Les fichiers en.yml et ar.yml doivent avoir exactement les mêmes clés et les mêmes
+# variables : un test le vérifie.
+
+language: fr
+version: 1
+
+reasons:
+  # Règles dures de la fusion (étape 2.10) : seule raison citée quand elles s'appliquent.
+  hard_rule.blocklist: "Ce site figure dans votre liste noire personnelle."
+  hard_rule.google_safe_browsing: "Google Safe Browsing signale cette page comme dangereuse."
+  hard_rule.allowlist: "Ce site figure dans votre liste blanche personnelle."
+
+  # Modèle URL, quand aucune raison plus précise n'est compréhensible.
+  model: "La forme de cette adresse ressemble à celle de liens de phishing connus."
+
+  # Features du modèle URL (étape 1.5), classées par leur contribution SHAP (étape 3.1).
+  url.brand_lookalike: "L'adresse ressemble à celle de {brand} mais n'est pas la sienne."
+  url.homograph: "L'adresse imite {brand} avec des caractères qui ressemblent à des lettres latines."
+  url.mixed_script: "L'adresse contient des lettres d'alphabets différents pour imiter un site connu."
+  url.brand_in_host: "L'adresse contient le nom {brand}, mais ce n'est pas un site officiel de {brand}."
+  url.brand_in_path: "Le lien cite {brand}, mais le site n'appartient pas à {brand}."
+  url.ip_host: "Le lien mène à une adresse numérique (adresse IP) au lieu d'un nom de site."
+  url.userinfo: "L'adresse contient un « @ » qui cache le site réellement visité."
+  url.port: "Le lien passe par un accès réseau inhabituel (port)."
+  url.shortener: "Le lien passe par un raccourcisseur qui cache sa vraie destination."
+  url.risky_tld: "L'extension « .{tld} » est très souvent utilisée par des sites de phishing."
+  url.login_keywords: "L'adresse contient des mots comme « connexion » ou « vérifier », typiques des fausses pages de connexion."
+  url.embedded_url: "Le lien contient une autre adresse, pour tromper sur sa destination."
+  url.many_subdomains: "L'adresse empile {n} sous-domaines pour faire illusion."
+  url.long_host: "Le nom du site est inhabituellement long ({n} caractères)."
+  url.many_hyphens: "Le nom du site contient beaucoup de tirets ({n})."
+  url.many_digits: "Le nom du site contient beaucoup de chiffres ({n})."
+
+  # Sources de Threat Intelligence (étapes 2.4 à 2.7), si l'enrichissement est activé.
+  signal.domain_age: "Ce site a été créé il y a seulement {n} jours."
+  signal.rdap: "Ce site a été créé récemment."
+  signal.virustotal: "Des antivirus de VirusTotal signalent ce site comme dangereux."
+  signal.virustotal_engines: "{n} antivirus de VirusTotal signalent ce site comme dangereux."
+  signal.urlscan: "urlscan.io a jugé la page suspecte lors d'une visite isolée."
+  signal.dns: "La configuration technique du site ressemble à celle de sites jetables."
+  signal.certificate_transparency: "Le certificat de sécurité du site est très récent."
+  signal.other: "La source {source} signale un risque."
+
+  # Règles du score email (étapes 1.11 et 2.13), une par règle.
+  email.dmarc_fail: "Le domaine de l'expéditeur n'a pas autorisé cet envoi."
+  email.spf_fail: "Le serveur qui a envoyé cet email n'est pas autorisé par le domaine de l'expéditeur."
+  email.spf_softfail: "Le serveur qui a envoyé cet email n'est probablement pas autorisé par le domaine de l'expéditeur."
+  email.dkim_fail: "La signature de l'email est invalide : il a pu être modifié ou falsifié."
+  email.reply_to_differs: "Votre réponse partirait vers une autre adresse que celle de l'expéditeur."
+  email.display_name_spoof: "Le nom affiché imite une autre adresse que l'adresse réelle de l'expéditeur."
+  email.return_path_differs: "L'adresse de retour est sur un autre domaine (fréquent pour les envois en masse)."
+  email.mismatched_link: "Le lien affiché ne mène pas à l'endroit annoncé."
+  email.non_web_link: "Un lien lance du code au lieu d'ouvrir une page."
+  email.form: "L'email contient un formulaire : un service légitime vous renvoie vers son site."
+  email.ip_link: "Un lien mène à une adresse numérique (adresse IP) au lieu d'un nom de site."
+  email.url_model: "Un lien ressemble à des liens de phishing connus."
+  email.shortener_link: "Un lien passe par un raccourcisseur qui cache sa vraie destination."
+  email.dangerous_attachment: "Une pièce jointe peut lancer un programme ou ouvrir une fausse page de connexion."
+  email.disguised_attachment: "Le nom d'une pièce jointe cache sa vraie nature (par exemple « facture.pdf.exe »)."
+  email.type_mismatch: "Une pièce jointe se fait passer pour un document ou une image, mais contient un programme."
+  email.remote_content_document: "Un document joint télécharge du contenu à l'ouverture, une technique d'installation de logiciel malveillant."
+  email.hidden_archive_payload: "Une archive jointe est protégée par mot de passe ou contient un programme, ce qui échappe aux antivirus."
+  email.active_pdf: "Un PDF joint contient du code ou des fichiers qui se lancent à l'ouverture."
+  email.credential_form_attachment: "Une page jointe demande un mot de passe : un service légitime ne le fait jamais par pièce jointe."
+  email.archive_attachment: "Une archive est jointe : son contenu n'est pas vérifiable sans l'ouvrir."
+  email.hidden_text: "L'email contient du texte caché, souvent utilisé pour tromper les filtres."
+  email.zero_width_chars: "Des caractères invisibles coupent les mots, souvent pour tromper les filtres."
+  email.urgent_account_request: "Le message vous presse d'agir sur un compte, une carte ou un colis."
+
+# Conseil d'action, toujours affiché sous les raisons, selon le canal et le verdict.
+advice:
+  url.phishing: "N'entrez aucun mot de passe ni aucune information bancaire. Ouvrez le site en tapant vous-même son adresse."
+  url.suspicious: "Prudence : ne saisissez rien sur cette page. En cas de doute, ouvrez le site officiel en tapant vous-même son adresse."
+  url.safe: "Aucun signal inquiétant. Restez attentif si la page vous demande un mot de passe ou un paiement."
+  email.phishing: "N'ouvrez aucun lien ni aucune pièce jointe et ne répondez pas. Contactez l'organisme par ses coordonnées officielles."
+  email.suspicious: "Prudence : n'ouvrez ni lien ni pièce jointe avant d'avoir vérifié l'expéditeur par un autre moyen."
+  email.safe: "Aucun signal inquiétant. Restez attentif si l'email demande un mot de passe, un code ou un paiement."
+  message.phishing: "Ne cliquez pas sur le lien et ne répondez pas. Contactez l'organisme par son numéro ou son site officiel."
+  message.suspicious: "Prudence : ne cliquez pas et ne communiquez aucun code avant d'avoir vérifié l'expéditeur par un autre moyen."
+  message.safe: "Aucun signal inquiétant. Ne communiquez jamais un code reçu par message, même à quelqu'un qui se présente comme votre banque."

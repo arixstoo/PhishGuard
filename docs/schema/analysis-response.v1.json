@@ -2,7 +2,7 @@
   "$defs": {
     "Reason": {
       "additionalProperties": false,
-      "description": "Une raison du verdict. Le code est stable ; le message peut être reformulé.",
+      "description": "Une raison du verdict, en langage simple (étape 3.2).\n\nLe ``code`` est stable : un client peut s'en servir pour traduire ou choisir une\nicône, avec les variables de ``params``. Le ``message`` est déjà rédigé dans la langue\nde la réponse et peut être reformulé d'une version à l'autre. C'est du **texte\nbrut** : à insérer comme texte, jamais comme HTML.",
       "properties": {
         "code": {
           "minLength": 1,
@@ -11,9 +11,25 @@
           "type": "string"
         },
         "message": {
+          "maxLength": 300,
           "minLength": 1,
           "title": "Message",
           "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "description": "Variables de la phrase (marque, nombre de jours…)",
+          "title": "Params",
+          "type": "object"
         },
         "points": {
           "description": "Part du score attribuée à cette raison",
@@ -120,11 +136,18 @@
       "type": "object"
     }
   },
-  "$id": "https://github.com/arixstoo/PhishGuard/schema/analysis-response/1.0.0",
+  "$id": "https://github.com/arixstoo/PhishGuard/schema/analysis-response/1.1.0",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Réponse d'une analyse, quel que soit le canal (URL, SMS, email).",
   "properties": {
+    "advice": {
+      "description": "Conseil d'action, toujours présent, selon le canal et le verdict",
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Advice",
+      "type": "string"
+    },
     "channel": {
       "enum": [
         "url",
@@ -157,6 +180,17 @@
       "title": "Fusion Version",
       "type": "string"
     },
+    "language": {
+      "default": "fr",
+      "description": "Langue des phrases",
+      "enum": [
+        "fr",
+        "en",
+        "ar"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
     "latency_ms": {
       "minimum": 0,
       "title": "Latency Ms",
@@ -175,14 +209,16 @@
       "type": "string"
     },
     "reasons": {
+      "description": "Au plus trois raisons, de la plus forte",
       "items": {
         "$ref": "#/$defs/Reason"
       },
+      "maxItems": 3,
       "title": "Reasons",
       "type": "array"
     },
     "schema_version": {
-      "default": "1.0.0",
+      "default": "1.1.0",
       "pattern": "^\\d+\\.\\d+\\.\\d+$",
       "title": "Schema Version",
       "type": "string"
@@ -222,7 +258,8 @@
     "model_version",
     "fusion_version",
     "enrichment",
-    "latency_ms"
+    "latency_ms",
+    "advice"
   ],
   "title": "AnalysisResponse",
   "type": "object"
