@@ -30,7 +30,7 @@ from __future__ import annotations
 import random
 import string
 import zlib
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
 from urllib.parse import urlsplit, urlunsplit
@@ -141,12 +141,12 @@ def swap_homoglyphs(text: str, rate: float = 0.3, seed: int = 0) -> str:
     return _replace(text, HOMOGLYPHS, rate, seed)
 
 
-def leetspeak(text: str, rate: float = 0.5, seed: int = 0) -> str:
+def leetspeak(text: str, rate: float = 0.5, seed: int = 0, table: Mapping[str, str] = LEET) -> str:
     """Remplace des lettres par un chiffre qui leur ressemble : ``compte`` → ``c0mpt3`` (TXT-04).
 
     Seules les minuscules sont remplacées, comme dans les leurres réels.
     """
-    return _replace(text, LEET, rate, seed)
+    return _replace(text, dict(table), rate, seed)
 
 
 def split_with_symbols(
@@ -264,15 +264,19 @@ def add_benign_path(
     return _restore(_rebuild(parts, path=path), added)
 
 
-def add_long_param(url: str, length: int = 200, seed: int = 0) -> str:
+def add_long_param(
+    url: str, length: int = 200, seed: int = 0, names: Sequence[str] = TRACKING_PARAMS
+) -> str:
     """Ajoute un paramètre de suivi de ``length`` caractères à la requête (URL-06)."""
     if length < 1:
         raise ValueError(f"length doit être au moins 1 : {length!r}")
+    if not names:
+        raise ValueError("names ne contient aucun nom de paramètre")
     url, added = _with_scheme(url)
     parts = urlsplit(url)
     rnd = random.Random(seed)
     value = "".join(rnd.choice(_TOKEN_ALPHABET) for _ in range(length))
-    param = f"{rnd.choice(TRACKING_PARAMS)}={value}"
+    param = f"{rnd.choice(names)}={value}"
     query = f"{parts.query}&{param}" if parts.query else param
     return _restore(_rebuild(parts, query=query), added)
 

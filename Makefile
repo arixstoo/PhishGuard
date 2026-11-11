@@ -21,7 +21,7 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install lint format test \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	explain-url calibrate-text cards schema robustness
+	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -125,7 +125,16 @@ ROBUSTNESS_LABEL ?= baseline
 ROBUSTNESS_DESCRIPTION ?= modèles d'origine, avant toute défense
 
 robustness: $(SPLIT) $(URL_MODEL) ## Banc d'essai : rappel et FPR sous chaque perturbation (étape 3.7)
-	$(PYTHON) scripts/robustness_benchmark.py --label $(ROBUSTNESS_LABEL) 		--description "$(ROBUSTNESS_DESCRIPTION)"
+	$(PYTHON) scripts/robustness_benchmark.py --label $(ROBUSTNESS_LABEL) \
+		--description "$(ROBUSTNESS_DESCRIPTION)"
+
+train-adversarial: $(SPLIT) $(URL_MODEL) ## Entraînement adversarial : url_v2 et text_v2 (étape 3.9)
+	$(PYTHON) scripts/train_adversarial.py
+
+robustness-adversarial: ## Banc d'essai des modèles url_v2 et text_v2 (étape 3.9)
+	$(PYTHON) scripts/robustness_benchmark.py --label adversarial --url-host-rule \
+		--url-model models/url_v2.joblib --text-model models/text_v2.joblib \
+		--description "normalisation de l'étape 3.8 et entraînement adversarial de l'étape 3.9 (url_v2, text_v2), règle d'alerte des hôtes"
 
 # --------------------------------------------------------------------------- #
 # Documentation (étape 1.12)

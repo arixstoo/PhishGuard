@@ -94,6 +94,7 @@ make schema                             # regenerate the analysis response JSON 
 make explain-url                        # SHAP explanations of the URL model: global plot and 10 explained URLs (docs/explain-url.md)
 make calibrate-text                     # calibrate the SMS model margin into a probability, on validation (docs/explain-text.md)
 make robustness                         # recall and false positives under each evasion perturbation (docs/robustness-report.md)
+make train-adversarial robustness-adversarial  # adversarial training (url_v2, text_v2) and its benchmark pass
 python scripts/check_enrichers.py URL   # query the real Threat Intel sources with your own keys (docs/enrichers.md)
 ```
 

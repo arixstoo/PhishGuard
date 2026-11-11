@@ -1,0 +1,1167 @@
+{
+  "report_version": "1.0.0",
+  "metadata": {
+    "generated_at": "2026-11-09T12:57:14+00:00",
+    "label": "adversarial_phishing_only",
+    "description": "ablation : entraînement adversarial sur des copies du phishing seul",
+    "seed": 0,
+    "perturbations": {
+      "zero_width": {
+        "technique": "TXT-02",
+        "vector": "text",
+        "description": "U+200B après chaque troisième lettre d'un mot"
+      },
+      "homoglyphs": {
+        "technique": "TXT-01",
+        "vector": "text",
+        "description": "30 % des lettres remplaçables par leur homoglyphe cyrillique"
+      },
+      "leetspeak": {
+        "technique": "TXT-04",
+        "vector": "text",
+        "description": "50 % des lettres a, e, i, l, o, s, t remplacées par un chiffre"
+      },
+      "split_symbols": {
+        "technique": "TXT-03",
+        "vector": "text",
+        "description": "la moitié des mots de 4 lettres ou plus coupés par des points"
+      },
+      "pad_benign": {
+        "technique": "TXT-05",
+        "vector": "text",
+        "description": "20 mots de messages personnels ajoutés à la fin"
+      },
+      "homoglyphs_full": {
+        "technique": "TXT-01",
+        "vector": "text",
+        "description": "toutes les lettres remplaçables par leur homoglyphe cyrillique"
+      },
+      "zero_width_dense": {
+        "technique": "TXT-02",
+        "vector": "text",
+        "description": "U+200B entre toutes les lettres d'un mot"
+      },
+      "pad_benign_long": {
+        "technique": "TXT-05",
+        "vector": "text",
+        "description": "50 mots de messages personnels ajoutés à la fin"
+      },
+      "url_subdomains": {
+        "technique": "URL-03",
+        "vector": "url",
+        "description": "2 sous-domaines d'allure légitime devant l'hôte"
+      },
+      "url_benign_path": {
+        "technique": "URL-04",
+        "vector": "url",
+        "description": "page déplacée sous 3 répertoires d'allure légitime"
+      },
+      "url_long_param": {
+        "technique": "URL-06",
+        "vector": "url",
+        "description": "paramètre de suivi de 200 caractères ajouté à la requête"
+      },
+      "url_uppercase": {
+        "technique": "URL-07",
+        "vector": "url",
+        "description": "la moitié des lettres de l'hôte en majuscules"
+      },
+      "url_homoglyphs": {
+        "technique": "URL-02",
+        "vector": "url",
+        "description": "30 % des lettres remplaçables de l'hôte (hors TLD) en cyrillique"
+      }
+    }
+  },
+  "blocks": {
+    "url": {
+      "threshold": 0.9198893253648569,
+      "seed": 0,
+      "samples": {
+        "phishing": 4200,
+        "legitimate": 16804
+      },
+      "baseline": {
+        "recall": {
+          "n": 4200,
+          "flagged": 2928,
+          "rate": 0.6971428571428572,
+          "low": 0.6830711992879099,
+          "high": 0.7108542045617499
+        },
+        "fpr": {
+          "n": 16804,
+          "flagged": 101,
+          "rate": 0.006010473696738872,
+          "low": 0.004949393275086922,
+          "high": 0.007297366594425415
+        }
+      },
+      "perturbations": [
+        {
+          "perturbation": "url_subdomains",
+          "technique": "URL-03",
+          "vector": "url",
+          "description": "2 sous-domaines d'allure légitime devant l'hôte",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 4200,
+              "flagged": 4196,
+              "rate": 0.9990476190476191,
+              "low": 0.9975535646491569,
+              "high": 0.999629583260127
+            },
+            "legitimate": {
+              "n": 16804,
+              "flagged": 16739,
+              "rate": 0.9961318733634849,
+              "low": 0.9950732061962232,
+              "high": 0.9969637487450943
+            }
+          },
+          "recall": {
+            "n": 4200,
+            "flagged": 3355,
+            "rate": 0.7988095238095239,
+            "low": 0.7864146253758193,
+            "high": 0.8106582995412377
+          },
+          "fpr": {
+            "n": 16804,
+            "flagged": 4225,
+            "rate": 0.2514282313734825,
+            "low": 0.24492600714187523,
+            "high": 0.25804408272379803
+          },
+          "delta_recall": 0.10166666666666668,
+          "delta_fpr": 0.24541775767674365,
+          "evaded": 208,
+          "newly_detected": 635,
+          "new_false_positives": 4143,
+          "mean_score_shift": {
+            "phishing": 0.10591060194218677,
+            "legitimate": 0.770265361238446
+          }
+        },
+        {
+          "perturbation": "url_benign_path",
+          "technique": "URL-04",
+          "vector": "url",
+          "description": "page déplacée sous 3 répertoires d'allure légitime",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 4200,
+              "flagged": 4200,
+              "rate": 1.0,
+              "low": 0.9990861691839198,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 16804,
+              "flagged": 16804,
+              "rate": 1.0,
+              "low": 0.9997714400164267,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 4200,
+            "flagged": 3152,
+            "rate": 0.7504761904761905,
+            "low": 0.7371638009882204,
+            "high": 0.7633307942410577
+          },
+          "fpr": {
+            "n": 16804,
+            "flagged": 1756,
+            "rate": 0.10449892882646988,
+            "low": 0.09996368255152499,
+            "high": 0.10921496653807616
+          },
+          "delta_recall": 0.053333333333333344,
+          "delta_fpr": 0.098488455129731,
+          "evaded": 167,
+          "newly_detected": 391,
+          "new_false_positives": 1686,
+          "mean_score_shift": {
+            "phishing": 0.07036466089996977,
+            "legitimate": 0.5500762465721749
+          }
+        },
+        {
+          "perturbation": "url_long_param",
+          "technique": "URL-06",
+          "vector": "url",
+          "description": "paramètre de suivi de 200 caractères ajouté à la requête",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 4200,
+              "flagged": 4200,
+              "rate": 1.0,
+              "low": 0.9990861691839198,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 16804,
+              "flagged": 16804,
+              "rate": 1.0,
+              "low": 0.9997714400164267,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 4200,
+            "flagged": 4172,
+            "rate": 0.9933333333333333,
+            "low": 0.9903815438579503,
+            "high": 0.9953834764035171
+          },
+          "fpr": {
+            "n": 16804,
+            "flagged": 15801,
+            "rate": 0.9403118305165437,
+            "low": 0.9366281537160993,
+            "high": 0.943794231987488
+          },
+          "delta_recall": 0.2961904761904761,
+          "delta_fpr": 0.9343013568198048,
+          "evaded": 0,
+          "newly_detected": 1244,
+          "new_false_positives": 15704,
+          "mean_score_shift": {
+            "phishing": 0.15650221420385266,
+            "legitimate": 0.919413417067363
+          }
+        },
+        {
+          "perturbation": "url_uppercase",
+          "technique": "URL-07",
+          "vector": "url",
+          "description": "la moitié des lettres de l'hôte en majuscules",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 4200,
+              "flagged": 4199,
+              "rate": 0.9997619047619047,
+              "low": 0.998652443676519,
+              "high": 0.999957970188742
+            },
+            "legitimate": {
+              "n": 16804,
+              "flagged": 16804,
+              "rate": 1.0,
+              "low": 0.9997714400164267,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 4200,
+            "flagged": 2928,
+            "rate": 0.6971428571428572,
+            "low": 0.6830711992879099,
+            "high": 0.7108542045617499
+          },
+          "fpr": {
+            "n": 16804,
+            "flagged": 101,
+            "rate": 0.006010473696738872,
+            "low": 0.004949393275086922,
+            "high": 0.007297366594425415
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": 0.0,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "url_homoglyphs",
+          "technique": "URL-02",
+          "vector": "url",
+          "description": "30 % des lettres remplaçables de l'hôte (hors TLD) en cyrillique",
+          "creates_lookalike": true,
+          "changed": {
+            "phishing": {
+              "n": 4200,
+              "flagged": 4115,
+              "rate": 0.9797619047619047,
+              "low": 0.9750442171438568,
+              "high": 0.9836027499540471
+            },
+            "legitimate": {
+              "n": 16804,
+              "flagged": 16332,
+              "rate": 0.9719114496548441,
+              "low": 0.9693033443549074,
+              "high": 0.9743038348084184
+            }
+          },
+          "recall": {
+            "n": 4200,
+            "flagged": 4172,
+            "rate": 0.9933333333333333,
+            "low": 0.9903815438579503,
+            "high": 0.9953834764035171
+          },
+          "fpr": {
+            "n": 16804,
+            "flagged": 16337,
+            "rate": 0.9722089978576529,
+            "low": 0.9696136949575472,
+            "high": 0.9745884445961716
+          },
+          "delta_recall": 0.2961904761904761,
+          "delta_fpr": 0.966198524160914,
+          "evaded": 0,
+          "newly_detected": 1244,
+          "new_false_positives": 16236,
+          "mean_score_shift": {
+            "phishing": 0.15779354728636408,
+            "legitimate": 0.9195265487442501
+          }
+        }
+      ],
+      "threshold_name": "fpr_0_5pct",
+      "model": {
+        "version": "url_v2_phishing_only",
+        "sha256": "9ca9d8dbf12100ecaea91d627477e251222360dee3a7aaa6da745c79cda5c214",
+        "normalization": "1.0.0",
+        "adversarial": {
+          "generator_version": "1.0.0",
+          "classes": "phishing",
+          "copies": 1,
+          "seed": 3009,
+          "added": 19599
+        }
+      },
+      "host_rule": true,
+      "dataset_sha256": "0310e419432c749350f01ce8e8841313f89d66ee82ef52082ff8e195c1a2a66f"
+    },
+    "sms": {
+      "threshold": -0.25174343691605633,
+      "seed": 0,
+      "samples": {
+        "phishing": 96,
+        "legitimate": 678
+      },
+      "baseline": {
+        "recall": {
+          "n": 96,
+          "flagged": 90,
+          "rate": 0.9375,
+          "low": 0.8702889506383905,
+          "high": 0.9710437203123955
+        },
+        "fpr": {
+          "n": 678,
+          "flagged": 11,
+          "rate": 0.016224188790560472,
+          "low": 0.009082952587697363,
+          "high": 0.028816759016874728
+        }
+      },
+      "perturbations": [
+        {
+          "perturbation": "zero_width",
+          "technique": "TXT-02",
+          "vector": "text",
+          "description": "U+200B après chaque troisième lettre d'un mot",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 96,
+              "rate": 1.0,
+              "low": 0.9615230525151842,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 671,
+              "rate": 0.9896755162241888,
+              "low": 0.9788431517796404,
+              "high": 0.9949900669620734
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 90,
+            "rate": 0.9375,
+            "low": 0.8702889506383905,
+            "high": 0.9710437203123955
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 11,
+            "rate": 0.016224188790560472,
+            "low": 0.009082952587697363,
+            "high": 0.028816759016874728
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": 0.0,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "homoglyphs",
+          "technique": "TXT-01",
+          "vector": "text",
+          "description": "30 % des lettres remplaçables par leur homoglyphe cyrillique",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 96,
+              "rate": 1.0,
+              "low": 0.9615230525151842,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 675,
+              "rate": 0.995575221238938,
+              "low": 0.9870720627980836,
+              "high": 0.9984940862899159
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 90,
+            "rate": 0.9375,
+            "low": 0.8702889506383905,
+            "high": 0.9710437203123955
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 11,
+            "rate": 0.016224188790560472,
+            "low": 0.009082952587697363,
+            "high": 0.028816759016874728
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": 0.0,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "leetspeak",
+          "technique": "TXT-04",
+          "vector": "text",
+          "description": "50 % des lettres a, e, i, l, o, s, t remplacées par un chiffre",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 95,
+              "rate": 0.9895833333333334,
+              "low": 0.9433324450728878,
+              "high": 0.9981588771815634
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 659,
+              "rate": 0.971976401179941,
+              "low": 0.9566469376135173,
+              "high": 0.9819874900893392
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 96,
+            "rate": 1.0,
+            "low": 0.9615230525151842,
+            "high": 1.0
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 277,
+            "rate": 0.4085545722713864,
+            "low": 0.37216871329508433,
+            "high": 0.4459708663374872
+          },
+          "delta_recall": 0.0625,
+          "delta_fpr": 0.39233038348082594,
+          "evaded": 0,
+          "newly_detected": 6,
+          "new_false_positives": 267,
+          "mean_score_shift": {
+            "phishing": 0.05873923590368297,
+            "legitimate": 0.4729225702318842
+          }
+        },
+        {
+          "perturbation": "split_symbols",
+          "technique": "TXT-03",
+          "vector": "text",
+          "description": "la moitié des mots de 4 lettres ou plus coupés par des points",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 95,
+              "rate": 0.9895833333333334,
+              "low": 0.9433324450728878,
+              "high": 0.9981588771815634
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 656,
+              "rate": 0.967551622418879,
+              "low": 0.9513591107693351,
+              "high": 0.9784756191738071
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 89,
+            "rate": 0.9270833333333334,
+            "low": 0.8570680669280426,
+            "high": 0.9642328737620105
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 3,
+            "rate": 0.004424778761061947,
+            "low": 0.0015059137100842416,
+            "high": 0.012927937201916432
+          },
+          "delta_recall": -0.01041666666666663,
+          "delta_fpr": -0.011799410029498525,
+          "evaded": 1,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": -0.22456733910805338,
+            "legitimate": 0.03420473048316096
+          }
+        },
+        {
+          "perturbation": "pad_benign",
+          "technique": "TXT-05",
+          "vector": "text",
+          "description": "20 mots de messages personnels ajoutés à la fin",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 96,
+              "rate": 1.0,
+              "low": 0.9615230525151842,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 678,
+              "rate": 1.0,
+              "low": 0.9943658468477137,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 71,
+            "rate": 0.7395833333333334,
+            "low": 0.6437875744340357,
+            "high": 0.8169422215628234
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 0,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.005634153152286396
+          },
+          "delta_recall": -0.19791666666666663,
+          "delta_fpr": -0.016224188790560472,
+          "evaded": 19,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": -0.6943575023109622,
+            "legitimate": -0.3979618804036087
+          }
+        },
+        {
+          "perturbation": "homoglyphs_full",
+          "technique": "TXT-01",
+          "vector": "text",
+          "description": "toutes les lettres remplaçables par leur homoglyphe cyrillique",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 96,
+              "rate": 1.0,
+              "low": 0.9615230525151842,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 675,
+              "rate": 0.995575221238938,
+              "low": 0.9870720627980836,
+              "high": 0.9984940862899159
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 90,
+            "rate": 0.9375,
+            "low": 0.8702889506383905,
+            "high": 0.9710437203123955
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 11,
+            "rate": 0.016224188790560472,
+            "low": 0.009082952587697363,
+            "high": 0.028816759016874728
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": 0.0,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "zero_width_dense",
+          "technique": "TXT-02",
+          "vector": "text",
+          "description": "U+200B entre toutes les lettres d'un mot",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 96,
+              "rate": 1.0,
+              "low": 0.9615230525151842,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 676,
+              "rate": 0.9970501474926253,
+              "low": 0.9893086937752957,
+              "high": 0.9991906878992749
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 90,
+            "rate": 0.9375,
+            "low": 0.8702889506383905,
+            "high": 0.9710437203123955
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 11,
+            "rate": 0.016224188790560472,
+            "low": 0.009082952587697363,
+            "high": 0.028816759016874728
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": 0.0,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "pad_benign_long",
+          "technique": "TXT-05",
+          "vector": "text",
+          "description": "50 mots de messages personnels ajoutés à la fin",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 96,
+              "flagged": 96,
+              "rate": 1.0,
+              "low": 0.9615230525151842,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 678,
+              "flagged": 678,
+              "rate": 1.0,
+              "low": 0.9943658468477137,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 96,
+            "flagged": 26,
+            "rate": 0.2708333333333333,
+            "low": 0.192036585940851,
+            "high": 0.367265348323023
+          },
+          "fpr": {
+            "n": 678,
+            "flagged": 0,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.005634153152286396
+          },
+          "delta_recall": -0.6666666666666667,
+          "delta_fpr": -0.016224188790560472,
+          "evaded": 64,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": -1.1421604134163383,
+            "legitimate": -0.5026340544585425
+          }
+        }
+      ],
+      "threshold_name": "decision",
+      "model": {
+        "version": "text_v2_phishing_only",
+        "sha256": "12dab56e311b28105905598ab2eb4d7d8b8f4ddf587186a76274de7959ad41fa",
+        "approach": "char_svm",
+        "normalization": "1.0.0",
+        "adversarial": {
+          "generator_version": "1.0.0",
+          "classes": "phishing",
+          "copies": 1,
+          "seed": 3009,
+          "added": 450
+        }
+      },
+      "dataset_sha256": "7d039a24a6083ed9ef0f806ebad56bbb976e3aeb8de05669173bfdc4996c239d"
+    },
+    "sms_fr_ar": {
+      "threshold": -0.25174343691605633,
+      "seed": 0,
+      "samples": {
+        "phishing": 50,
+        "legitimate": 50
+      },
+      "baseline": {
+        "recall": {
+          "n": 50,
+          "flagged": 41,
+          "rate": 0.82,
+          "low": 0.6920368054529739,
+          "high": 0.902299172675462
+        },
+        "fpr": {
+          "n": 50,
+          "flagged": 29,
+          "rate": 0.58,
+          "low": 0.4423319668777783,
+          "high": 0.7062520276543307
+        }
+      },
+      "perturbations": [
+        {
+          "perturbation": "zero_width",
+          "technique": "TXT-02",
+          "vector": "text",
+          "description": "U+200B après chaque troisième lettre d'un mot",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 41,
+            "rate": 0.82,
+            "low": 0.6920368054529739,
+            "high": 0.902299172675462
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 29,
+            "rate": 0.58,
+            "low": 0.4423319668777783,
+            "high": 0.7062520276543307
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": 0.0,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "homoglyphs",
+          "technique": "TXT-01",
+          "vector": "text",
+          "description": "30 % des lettres remplaçables par leur homoglyphe cyrillique",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 43,
+              "rate": 0.86,
+              "low": 0.738135428014719,
+              "high": 0.9304925473797714
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 32,
+              "rate": 0.64,
+              "low": 0.5014076201030195,
+              "high": 0.7586143703281711
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 41,
+            "rate": 0.82,
+            "low": 0.6920368054529739,
+            "high": 0.902299172675462
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 29,
+            "rate": 0.58,
+            "low": 0.4423319668777783,
+            "high": 0.7062520276543307
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": -0.0005660283899668178,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "leetspeak",
+          "technique": "TXT-04",
+          "vector": "text",
+          "description": "50 % des lettres a, e, i, l, o, s, t remplacées par un chiffre",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 43,
+              "rate": 0.86,
+              "low": 0.738135428014719,
+              "high": 0.9304925473797714
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 31,
+              "rate": 0.62,
+              "low": 0.4815019502239357,
+              "high": 0.7413740415742278
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 48,
+            "rate": 0.96,
+            "low": 0.8653966212204534,
+            "high": 0.9889613473391734
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 40,
+            "rate": 0.8,
+            "low": 0.6696262789551477,
+            "high": 0.8875637005402612
+          },
+          "delta_recall": 0.14,
+          "delta_fpr": 0.22000000000000008,
+          "evaded": 0,
+          "newly_detected": 7,
+          "new_false_positives": 11,
+          "mean_score_shift": {
+            "phishing": 0.1827429641610704,
+            "legitimate": 0.20080863625622108
+          }
+        },
+        {
+          "perturbation": "split_symbols",
+          "technique": "TXT-03",
+          "vector": "text",
+          "description": "la moitié des mots de 4 lettres ou plus coupés par des points",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 41,
+            "rate": 0.82,
+            "low": 0.6920368054529739,
+            "high": 0.902299172675462
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 18,
+            "rate": 0.36,
+            "low": 0.24138562967182875,
+            "high": 0.49859237989698046
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": -0.21999999999999997,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 1,
+          "mean_score_shift": {
+            "phishing": -0.040725923608091144,
+            "legitimate": -0.05077211093003175
+          }
+        },
+        {
+          "perturbation": "pad_benign",
+          "technique": "TXT-05",
+          "vector": "text",
+          "description": "20 mots de messages personnels ajoutés à la fin",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 0,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.07135003417431873
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 0,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.07135003417431873
+          },
+          "delta_recall": -0.82,
+          "delta_fpr": -0.58,
+          "evaded": 41,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": -0.7486730470278831,
+            "legitimate": -0.7137724708577028
+          }
+        },
+        {
+          "perturbation": "homoglyphs_full",
+          "technique": "TXT-01",
+          "vector": "text",
+          "description": "toutes les lettres remplaçables par leur homoglyphe cyrillique",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 43,
+              "rate": 0.86,
+              "low": 0.738135428014719,
+              "high": 0.9304925473797714
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 32,
+              "rate": 0.64,
+              "low": 0.5014076201030195,
+              "high": 0.7586143703281711
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 41,
+            "rate": 0.82,
+            "low": 0.6920368054529739,
+            "high": 0.902299172675462
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 29,
+            "rate": 0.58,
+            "low": 0.4423319668777783,
+            "high": 0.7062520276543307
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": -0.0005660283899668178,
+            "legitimate": 0.002154543957181281
+          }
+        },
+        {
+          "perturbation": "zero_width_dense",
+          "technique": "TXT-02",
+          "vector": "text",
+          "description": "U+200B entre toutes les lettres d'un mot",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 41,
+            "rate": 0.82,
+            "low": 0.6920368054529739,
+            "high": 0.902299172675462
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 29,
+            "rate": 0.58,
+            "low": 0.4423319668777783,
+            "high": 0.7062520276543307
+          },
+          "delta_recall": 0.0,
+          "delta_fpr": 0.0,
+          "evaded": 0,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": 0.0,
+            "legitimate": 0.0
+          }
+        },
+        {
+          "perturbation": "pad_benign_long",
+          "technique": "TXT-05",
+          "vector": "text",
+          "description": "50 mots de messages personnels ajoutés à la fin",
+          "creates_lookalike": false,
+          "changed": {
+            "phishing": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            },
+            "legitimate": {
+              "n": 50,
+              "flagged": 50,
+              "rate": 1.0,
+              "low": 0.9286499658256813,
+              "high": 1.0
+            }
+          },
+          "recall": {
+            "n": 50,
+            "flagged": 0,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.07135003417431873
+          },
+          "fpr": {
+            "n": 50,
+            "flagged": 0,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.07135003417431873
+          },
+          "delta_recall": -0.82,
+          "delta_fpr": -0.58,
+          "evaded": 41,
+          "newly_detected": 0,
+          "new_false_positives": 0,
+          "mean_score_shift": {
+            "phishing": -1.0160000339311026,
+            "legitimate": -0.911089597856015
+          }
+        }
+      ],
+      "threshold_name": "decision",
+      "model": {
+        "version": "text_v2_phishing_only",
+        "sha256": "12dab56e311b28105905598ab2eb4d7d8b8f4ddf587186a76274de7959ad41fa",
+        "approach": "char_svm",
+        "normalization": "1.0.0",
+        "adversarial": {
+          "generator_version": "1.0.0",
+          "classes": "phishing",
+          "copies": 1,
+          "seed": 3009,
+          "added": 450
+        }
+      },
+      "dataset_sha256": "4c9fcf0707b324c4aef129b622e395bdd013e09871111a926c917fff18e77660"
+    }
+  }
+}

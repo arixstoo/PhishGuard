@@ -43,24 +43,24 @@ ATT&CK décrit des comportements d'attaquant, pas des attaques contre un modèle
 
 ## Vue d'ensemble
 
-Statut de la contre-mesure, établi à l'étape 3.5 et mis à jour à chaque défense (dernière mise à jour : étape 3.8) : **en place** (le code la contient et des tests la vérifient), **partielle** (elle existe mais ne couvre pas toutes les variantes), **prévue** (une étape du plan la traite), **non couverte** (aucune étape ne la traite encore).
+Statut de la contre-mesure, établi à l'étape 3.5 et mis à jour à chaque défense (dernière mise à jour : étape 3.9) : **en place** (le code la contient et des tests la vérifient), **partielle** (elle existe mais ne couvre pas toutes les variantes), **prévue** (une étape du plan la traite), **non couverte** (aucune étape ne la traite encore).
 
 | Id | Technique | Vecteur | Contre-mesure | Statut |
 | --- | --- | --- | --- | --- |
 | [URL-01](#url-01--typosquatting) | Typosquatting | URL | `is_typosquat`, `brand_min_distance` | partielle |
 | [URL-02](#url-02--homographes-idn) | Homographes IDN | URL | `host_mixed_script`, `homograph_brand`, règle d'alerte des hôtes (3.8) | en place |
-| [URL-03](#url-03--sous-domaines-trompeurs) | Sous-domaines trompeurs | URL | `brand_in_host`, `host_n_subdomains` | partielle |
-| [URL-04](#url-04--chemins-et-paramètres-bénins) | Chemins et paramètres bénins | URL | entraînement adversarial (3.9) | prévue |
+| [URL-03](#url-03--sous-domaines-trompeurs) | Sous-domaines trompeurs | URL | `brand_in_host`, `host_n_subdomains`, entraînement adversarial (3.9) | en place |
+| [URL-04](#url-04--chemins-et-paramètres-bénins) | Chemins et paramètres bénins | URL | entraînement adversarial (3.9) | en place |
 | [URL-05](#url-05--domaine-de-confiance-détourné) | Domaine de confiance détourné | URL | Threat Intelligence (module 2) | partielle |
-| [URL-06](#url-06--url-très-longue) | URL très longue | URL | longueurs par composant ; entraînement adversarial (3.9) | prévue |
+| [URL-06](#url-06--url-très-longue) | URL très longue | URL | longueurs par composant ; entraînement adversarial (3.9) | en place |
 | [URL-07](#url-07--casse-mêlée) | Casse mêlée | URL | normalisation de l'hôte, mots-clés sans casse | en place |
 | [URL-08](#url-08--raccourcisseurs-et-redirections) | Raccourcisseurs et redirections | URL | `is_shortener`, `path_has_embedded_url` | partielle |
 | [URL-09](#url-09--identifiants-avant-lhôte) | Identifiants avant l'hôte | URL | `has_userinfo` | en place |
 | [TXT-01](#txt-01--homoglyphes) | Homoglyphes | texte | repli des confusables (3.8) | en place |
 | [TXT-02](#txt-02--caractères-de-largeur-nulle) | Caractères de largeur nulle | texte | catégories Cf et Cc retirées, mots-clés et modèle (3.8) | en place |
-| [TXT-03](#txt-03--mots-coupés-par-des-symboles) | Mots coupés par des symboles | texte | entraînement adversarial (3.9) | prévue |
-| [TXT-04](#txt-04--leetspeak) | Leetspeak | texte | n-grammes de caractères ; entraînement adversarial (3.9) | partielle |
-| [TXT-05](#txt-05--dilution-par-du-texte-légitime) | Dilution par du texte légitime | texte | catégories de leurre ; entraînement adversarial (3.9) | prévue |
+| [TXT-03](#txt-03--mots-coupés-par-des-symboles) | Mots coupés par des symboles | texte | n-grammes de caractères ; entraînement adversarial (3.9) | en place |
+| [TXT-04](#txt-04--leetspeak) | Leetspeak | texte | n-grammes de caractères ; entraînement adversarial (3.9) | en place |
+| [TXT-05](#txt-05--dilution-par-du-texte-légitime) | Dilution par du texte légitime | texte | catégories de leurre ; entraînement adversarial (3.9) | partielle |
 | [TXT-06](#txt-06--message-en-image) | Message en image | texte, email | aucune | non couverte |
 | [TXT-07](#txt-07--message-rédigé-par-un-llm) | Message rédigé par un LLM | texte, email | signaux d'infrastructure (module 2) ; mesure (3.10) | prévue |
 | [EML-01](#eml-01--texte-caché-en-html) | Texte caché en HTML | email | texte caché détecté et compté | en place |
@@ -118,7 +118,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Description** : placer la marque à gauche d'un domaine quelconque : `paypal.com.secure-login.example`. Sur mobile, la barre d'adresse tronque souvent la fin, et l'utilisateur ne voit que `paypal.com.secure…`.
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : une feature qui ne lit que le domaine enregistré ne voit jamais la marque. Inversement, un attaquant peut **ajouter** des sous-domaines anodins (`fr.support.`) pour rapprocher son hôte d'un hôte d'entreprise légitime.
-- **Contre-mesure** : `brand_in_host` cherche la marque dans **tous** les labels de l'hôte, sauf sur son domaine officiel ; `host_n_subdomains` compte les labels (sans un `www` initial). **Limites** : la sensibilité du modèle à l'ajout de sous-domaines bénins n'est pas mesurée avant l'étape 3.7.
+- **Contre-mesure** : `brand_in_host` cherche la marque dans **tous** les labels de l'hôte, sauf sur son domaine officiel ; `host_n_subdomains` compte les labels (sans un `www` initial). Mesuré à l'étape 3.7 : deux sous-domaines bénins coûtaient 12,5 points de rappel à `url_v1`. Depuis l'étape 3.9, `url_v2` est entraîné avec des sous-domaines ajoutés aux deux classes : sous `url_subdomains`, il détecte 66,9 % du phishing (61,4 % pour `url_v1`), pour un FPR de 0,96 % au lieu de 5,6 % ([robustness-report.md](robustness-report.md#défense-2--entraînement-adversarial-étape-39)).
 - **Perturbation** : `url_subdomains` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1583.001, T1036.
 
@@ -127,7 +127,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Description** : ajouter à l'URL un chemin ou des paramètres d'allure légitime : `/fr/aide/index.html`, `?utm_source=newsletter&lang=fr`.
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : l'audit des biais (étape 1.3) et SHAP (étape 3.1) ont montré que `url_v1` associe les chemins courts au phishing et les chemins profonds au légitime : beaucoup d'URLs légitimes du jeu sont des pages internes de Common Crawl. Allonger le chemin pousse donc le score vers « légitime » sans rien changer à la page. C'est la technique la plus simple à exécuter contre ce modèle, et probablement la plus efficace.
-- **Contre-mesure** : les features de longueur sont calculées par composant, jamais sur l'URL entière ; les mots-clés (`path_kw_hits`) et les marques (`brand_in_path`) du chemin restent lus. Prévu à l'étape 3.9 : entraînement adversarial avec des chemins ajoutés.
+- **Contre-mesure** : les features de longueur sont calculées par composant, jamais sur l'URL entière ; les mots-clés (`path_kw_hits`) et les marques (`brand_in_path`) du chemin restent lus. Depuis l'étape 3.9, entraînement adversarial avec des chemins ajoutés aux deux classes : sous `url_benign_path`, le FPR passe de 11,3 % à 0,71 %. **Limite** : le rappel sous perturbation reste 4,4 points sous le rappel propre.
 - **Perturbation** : `url_benign_path` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1566.002.
 
@@ -144,7 +144,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Description** : rallonger l'URL par un paramètre de plusieurs centaines de caractères, pour repousser la partie suspecte hors de l'écran ou noyer les mots-clés.
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : comme URL-04, une longue requête rapproche l'URL des URLs légitimes à paramètres de suivi. Un modèle qui lirait l'URL entière diluerait ses n-grammes suspects.
-- **Contre-mesure** : `query_len` et `query_n_params` sont des features séparées, et l'hôte est mesuré à part (`host_len`) : rallonger la requête ne change pas les features de l'hôte. Prévu à l'étape 3.9 : entraînement adversarial avec de longs paramètres.
+- **Contre-mesure** : `query_len` et `query_n_params` sont des features séparées, et l'hôte est mesuré à part (`host_len`) : rallonger la requête ne change pas les features de l'hôte. Depuis l'étape 3.9, entraînement adversarial avec de longs paramètres de suivi ajoutés aux deux classes : sous `url_long_param`, le FPR passe de 49,1 % à 0,77 %. Le modèle ne prend plus un lien d'emailing pour du phishing.
 - **Perturbation** : `url_long_param` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1566.002.
 
@@ -202,7 +202,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Description** : séparer les lettres d'un mot-clé par des points, des tirets ou des espaces : `V.é.r.i.f.i.e.z`, `c-o-m-p-t-e`, `c o d e`.
 - **Vecteur** : texte.
 - **Pourquoi ça trompe un modèle** : `char_wb` construit ses n-grammes à l'intérieur des mots. Avec des espaces, chaque lettre devient un mot d'une lettre et les n-grammes informatifs disparaissent ; avec des points, les n-grammes sont nouveaux. Les mots-clés ne correspondent plus.
-- **Contre-mesure** : aucune à l'étape 3.5. La normalisation de l'étape 3.8 ne recolle pas les lettres : défaire cette coupure sans abîmer les sigles et les numéros est un choix délicat, laissé à l'entraînement adversarial (3.9), qui mesurera si le modèle apprend la forme coupée.
+- **Contre-mesure** : aucune à l'étape 3.5. La normalisation de l'étape 3.8 ne recolle pas les lettres : défaire cette coupure sans abîmer les sigles et les numéros est un choix délicat, laissé à l'entraînement adversarial (3.9). Mesuré : les n-grammes de caractères résistaient déjà (rappel inchangé sous `split_symbols` avant défense), et `text_v2`, entraîné avec d'autres séparateurs (`-`, `_`, `*`), perd un message sur 96 sous la coupure par des points du banc.
 - **Perturbation** : `split_symbols` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027.
 
@@ -211,7 +211,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Description** : remplacer des lettres par des chiffres ou des symboles qui leur ressemblent : `c0mpte`, `v3r1f13z`, `$ecurite`.
 - **Vecteur** : texte, URL (domaine).
 - **Pourquoi ça trompe un modèle** : comme les homoglyphes, chaque substitution efface des n-grammes. La lecture reste facile pour un humain.
-- **Contre-mesure** : **partielle**. Les n-grammes de caractères gardent ceux des lettres non modifiées (`mpte`), ce qui avait motivé leur choix à l'étape 1.9. Côté URL, `is_typosquat` traite `paypa1` comme une modification. Remplacer systématiquement les chiffres par des lettres détruirait les montants et les codes : prévu à l'étape 3.9 (entraînement adversarial) plutôt qu'en normalisation.
+- **Contre-mesure** : **partielle**. Les n-grammes de caractères gardent ceux des lettres non modifiées (`mpte`), ce qui avait motivé leur choix à l'étape 1.9. Côté URL, `is_typosquat` traite `paypa1` comme une modification. Remplacer systématiquement les chiffres par des lettres détruirait les montants et les codes : traité par l'entraînement adversarial (3.9) plutôt qu'en normalisation. Avec `text_v2`, entraîné sur une autre table leet (`@`, `$`, `!`…) appliquée aux deux classes, le FPR sous `leetspeak` passe de 10,2 % à 5,2 %, à rappel égal.
 - **Perturbation** : `leetspeak` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027.
 
@@ -220,7 +220,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Description** : ajouter au leurre des phrases anodines (« Merci de votre fidélité. Votre conseiller reste à votre disposition. ») ou une liste de mots typiques des messages légitimes (*good word attack*).
 - **Vecteur** : texte, email.
 - **Pourquoi ça trompe un modèle** : le TF-IDF est normalisé (norme L2) : plus le message est long, plus le poids de chaque n-gramme suspect baisse. Les mots ajoutés ont en plus des coefficients négatifs. L'attaquant peut choisir ces mots en observant les verdicts (AML.T0043.001).
-- **Contre-mesure** : les catégories de leurre ne dépendent pas de la longueur (un lien reste un lien, une demande de code reste une demande de code) ; dans un email, la Threat Intelligence juge les liens indépendamment du texte. Prévu à l'étape 3.9 : entraînement avec des exemples dilués.
+- **Contre-mesure** : les catégories de leurre ne dépendent pas de la longueur (un lien reste un lien, une demande de code reste une demande de code) ; dans un email, la Threat Intelligence juge les liens indépendamment du texte. L'entraînement adversarial (3.9) avec des exemples dilués n'aide presque pas : 50 mots anodins coûtent encore 29,2 points de rappel à `text_v2`, car le TF-IDF normalise la longueur. **Statut partiel** : la défense restante est l'ensemble modèle + catégories de leurre (3.12).
 - **Perturbation** : `pad_benign` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.001, AML.T0043.003 ; T1027.
 

@@ -55,8 +55,15 @@ from phishguard.urls.model import UrlModel
 ROOT = Path(__file__).resolve().parents[1]
 REPORT_VERSION = "1.0.0"
 DEFAULT_URL_THRESHOLD = "fpr_0_5pct"
-# Ordre des passages dans la comparaison : avant défenses, puis chaque défense.
+# Ordre des passages dans la comparaison : avant défenses, puis chaque défense. Les
+# autres passages (ablations) n'apparaissent que dans le résumé.
 RUN_ORDER = ("baseline", "normalization", "adversarial")
+RUN_LABELS = {
+    "baseline": "modèle d'origine",
+    "normalization": "normalisation seule",
+    "adversarial": "normalisation + entraînement adversarial",
+    "adversarial_phishing_only": "ablation : augmentation du phishing seul",
+}
 BLOCK_LABELS = {
     "url": "URL (test)",
     "sms": "SMS (test UCI, anglais)",
@@ -134,6 +141,15 @@ def with_host_rule(model: UrlModel) -> Callable[[list[str]], np.ndarray]:
     return score
 
 
+def _adversarial_info(metadata: Any) -> dict[str, Any] | None:
+    """Réglages de l'entraînement adversarial (étape 3.9), comptes seulement."""
+    info = metadata.get("adversarial") if hasattr(metadata, "get") else None
+    if not info:
+        return None
+    keys = ("generator_version", "classes", "copies", "seed", "added")
+    return {k: info[k] for k in keys if k in info}
+
+
 def url_block(args: argparse.Namespace) -> dict[str, Any]:
     model = UrlModel.load(args.url_model)
     name = url_threshold_name(args.url_evaluation)
@@ -152,6 +168,7 @@ def url_block(args: argparse.Namespace) -> dict[str, Any]:
         "version": model.metadata.get("model_version", "unknown"),
         "sha256": sha256_file(args.url_model),
         "normalization": model.metadata.get("normalization"),
+        "adversarial": _adversarial_info(model.metadata),
     }
     result["host_rule"] = bool(args.url_host_rule)
     result["dataset_sha256"] = sha256_file(args.url_dataset)
@@ -165,6 +182,7 @@ def text_blocks(args: argparse.Namespace, skip: set[str]) -> dict[str, dict[str,
         "sha256": sha256_file(args.text_model),
         "approach": model.approach,
         "normalization": model.metadata.get("normalization"),
+        "adversarial": _adversarial_info(model.metadata),
     }
     blocks: dict[str, tuple[list[str], np.ndarray, str]] = {}
     if "sms" not in skip:
@@ -333,7 +351,11 @@ def load_runs(metrics_dir: Path) -> dict[str, dict[str, Any]]:
 
 
 def render_comparison(runs: dict[str, dict[str, Any]]) -> str:
-    """Rappel sous chaque perturbation, un passage par colonne, FPR à côté."""
+    """Rappel sous chaque perturbation, un passage par colonne, FPR à côté.
+
+    Seuls les passages de :data:`RUN_ORDER` y figurent ; les ablations sont dans le résumé.
+    """
+    runs = {label: run for label, run in runs.items() if label in RUN_ORDER} or runs
     labels = list(runs)
     lines = [
         (
@@ -379,6 +401,79 @@ def render_comparison(runs: dict[str, dict[str, Any]]) -> str:
             f"#### {BLOCK_LABELS[block]}",
             "",
             markdown_table(headers, table, ["left"] + ["right"] * (len(headers) - 1)),
+        ]
+    return "\n".join(lines)
+
+
+def summarize(result: dict[str, Any]) -> dict[str, Any]:
+    """Une ligne du résumé : propre, moyenne et pire cas sous perturbation.
+
+    Les perturbations qui fabriquent une imitation (``creates_lookalike``) sont exclues
+    du FPR sous perturbation : leur légitime perturbé n'est plus légitime.
+    """
+    rows = result["perturbations"]
+    recalls = [r for r in rows if r["recall"]["rate"] is not None]
+    fprs = [r for r in rows if r["fpr"]["rate"] is not None and not r.get("creates_lookalike")]
+    worst = min(recalls, key=lambda r: r["recall"]["rate"], default=None)
+    worst_fpr = max(fprs, key=lambda r: r["fpr"]["rate"], default=None)
+    return {
+        "clean_recall": result["baseline"]["recall"]["rate"],
+        "clean_fpr": result["baseline"]["fpr"]["rate"],
+        "mean_recall": float(np.mean([r["recall"]["rate"] for r in recalls])) if recalls else None,
+        "worst_recall": None if worst is None else worst["recall"]["rate"],
+        "worst_recall_perturbation": None if worst is None else worst["perturbation"],
+        "max_fpr": None if worst_fpr is None else worst_fpr["fpr"]["rate"],
+        "max_fpr_perturbation": None if worst_fpr is None else worst_fpr["perturbation"],
+    }
+
+
+def render_summary(runs: dict[str, dict[str, Any]]) -> str:
+    """Un passage par ligne : l'effet de chaque défense en un coup d'œil."""
+    lines = [
+        (
+            "*Généré par `scripts/robustness_benchmark.py`. « Sous perturbation » : moyenne "
+            "et pire cas sur toutes les perturbations du bloc ; le FPR sous perturbation "
+            "exclut celles qui fabriquent une imitation (note ¹).*"
+        )
+    ]
+    blocks = [b for b in BLOCK_LABELS if any(b in r["blocks"] for r in runs.values())]
+    for block in blocks:
+        table = []
+        for label, run in runs.items():
+            result = run["blocks"].get(block)
+            if result is None:
+                continue
+            s = summarize(result)
+            table.append(
+                [
+                    f"`{label}` ({RUN_LABELS.get(label, run['metadata']['description'])})",
+                    fr_percent(s["clean_recall"]),
+                    fr_percent(s["clean_fpr"], 2),
+                    "n/d" if s["mean_recall"] is None else fr_percent(s["mean_recall"]),
+                    "n/d"
+                    if s["worst_recall"] is None
+                    else f"{fr_percent(s['worst_recall'])} (`{s['worst_recall_perturbation']}`)",
+                    "n/d"
+                    if s["max_fpr"] is None
+                    else f"{fr_percent(s['max_fpr'], 2)} (`{s['max_fpr_perturbation']}`)",
+                ]
+            )
+        lines += [
+            "",
+            f"#### {BLOCK_LABELS[block]}",
+            "",
+            markdown_table(
+                [
+                    "Passage",
+                    "Rappel propre",
+                    "FPR propre",
+                    "Rappel moyen sous perturbation",
+                    "Pire rappel",
+                    "Pire FPR sous perturbation",
+                ],
+                table,
+                ["left", "right", "right", "right", "right", "right"],
+            ),
         ]
     return "\n".join(lines)
 
@@ -452,9 +547,9 @@ def main(argv: list[str] | None = None) -> int:
         update_generated_block(
             args.doc, f"robustness-{args.label.replace('_', '-')}", render_run(report)
         )
-        update_generated_block(
-            args.doc, "robustness-comparison", render_comparison(load_runs(args.metrics_dir))
-        )
+        runs = load_runs(args.metrics_dir)
+        update_generated_block(args.doc, "robustness-comparison", render_comparison(runs))
+        update_generated_block(args.doc, "robustness-summary", render_summary(runs))
         logger.info("document mis à jour : %s", args.doc)
     print_summary(report)
     return 0

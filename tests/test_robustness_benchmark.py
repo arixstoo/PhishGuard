@@ -161,7 +161,8 @@ def test_comparison_orders_runs_and_aligns_rows(tmp_path):
     assert list(runs) == ["baseline", "normalization", "zeta"]
     text = script.render_comparison(runs)
     header = next(line for line in text.splitlines() if line.startswith("| Perturbation"))
-    assert header.count("Rappel `") == 3
+    assert header.count("Rappel `") == 2  # « zeta » n'est pas une défense : résumé seul
+    assert "`zeta`" not in header
     row = next(line for line in text.splitlines() if "`homoglyphs_full`" in line)
     assert row.split(" | ")[1:3] == ["0,0 %", "0,00 %"]  # baseline : tout le phishing passe
     assert row.split(" | ")[3] == "50,0 %"
@@ -175,7 +176,14 @@ def test_cli_rejects_bad_labels():
 
 def test_report_document_has_both_blocks():
     doc = (ROOT / "docs/robustness-report.md").read_text(encoding="utf-8")
-    for block in ("robustness-baseline", "robustness-comparison"):
+    for block in (
+        "robustness-baseline",
+        "robustness-normalization",
+        "robustness-adversarial",
+        "robustness-adversarial-phishing-only",
+        "robustness-comparison",
+        "robustness-summary",
+    ):
         assert doc.count(f"<!-- generated:{block}:start -->") == 1
 
 
@@ -209,3 +217,35 @@ def test_lookalike_footnote_and_host_rule_note():
     text = script.render_block("url", result)
     assert " ¹ |" in text and "¹ La perturbation fabrique une imitation" in text
     assert "Règle d'alerte de l'étape 3.8 appliquée" in text
+
+
+def test_summary_has_one_line_per_run_and_excludes_lookalikes(tmp_path):
+    for label in ("adversarial_phishing_only", "baseline", "adversarial"):
+        path = tmp_path / f"robustness_{label}.json"
+        path.write_text(json.dumps(report(label)))
+    runs = script.load_runs(tmp_path)
+    assert list(runs) == ["baseline", "adversarial", "adversarial_phishing_only"]
+    text = script.render_summary(runs)
+    rows = [line for line in text.splitlines() if line.startswith("| `")]
+    assert len(rows) == 3
+    assert "ablation" in rows[2]
+    assert "0,0 % (`homoglyphs_full`)" in rows[0]  # pire rappel
+
+    result = run()
+    result["perturbations"][0]["creates_lookalike"] = True
+    result["perturbations"][0]["fpr"]["rate"] = 0.9
+    summary = script.summarize(result)
+    assert summary["max_fpr"] < 0.9  # l'imitation n'est pas une fausse alerte
+    assert summary["max_fpr_perturbation"] != "homoglyphs_full"
+    assert summary["worst_recall_perturbation"] == "homoglyphs_full"
+
+
+def test_adversarial_info_keeps_counts_only():
+    metadata = {"adversarial": {"classes": "both", "copies": 1, "seed": 3009, "added": 10, "x": 1}}
+    assert script._adversarial_info(metadata) == {
+        "classes": "both",
+        "copies": 1,
+        "seed": 3009,
+        "added": 10,
+    }
+    assert script._adversarial_info({}) is None
