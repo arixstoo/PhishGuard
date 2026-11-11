@@ -71,6 +71,23 @@ Statut de la contre-mesure à la date de l'étape 3.5 : **en place** (le code la
 
 Vingt et une techniques : neuf sur l'URL, sept sur le texte, cinq sur l'email.
 
+### Techniques reproduites par les perturbations
+
+Dix techniques sont reproduites par `src/phishguard/adversarial/perturb.py` (étape 3.6) pour mesurer la robustesse des modèles (étape 3.7). Ce sont celles qui changent la forme d'un échantillon sans en changer le sens, et qu'on peut appliquer telles quelles au jeu de test. Les autres demandent un contenu qui n'existe pas dans les jeux (image, QR code, page hébergée) ou ne visent pas le modèle.
+
+| Id | Perturbation | Réglage du banc d'essai |
+| --- | --- | --- |
+| URL-02 | `url_homoglyphs` | 30 % des lettres remplaçables de l'hôte (hors suffixe public) en cyrillique |
+| URL-03 | `url_subdomains` | 2 sous-domaines d'allure légitime devant l'hôte |
+| URL-04 | `url_benign_path` | page déplacée sous 3 répertoires d'allure légitime |
+| URL-06 | `url_long_param` | paramètre de suivi de 200 caractères |
+| URL-07 | `url_uppercase` | la moitié des lettres de l'hôte en majuscules |
+| TXT-01 | `homoglyphs` | 30 % des lettres remplaçables en cyrillique |
+| TXT-02 | `zero_width` | U+200B après chaque troisième lettre d'un mot |
+| TXT-03 | `split_symbols` | la moitié des mots de 4 lettres ou plus coupés par des points |
+| TXT-04 | `leetspeak` | 50 % des lettres a, e, i, l, o, s, t remplacées par un chiffre |
+| TXT-05 | `pad_benign` | 20 mots de messages personnels ajoutés à la fin |
+
 ---
 
 ## URL
@@ -91,6 +108,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : pour un modèle de caractères, `а` (U+0430) et `a` (U+0061) n'ont rien en commun ; pour une liste de marques, `аpple` n'est pas `apple`. La forme Punycode ajoute en plus des chiffres et des tirets sans rapport avec ce que lit l'utilisateur.
 - **Contre-mesure** : `host_mixed_script` (écritures non admises ensemble dans un label, profil *Highly Restrictive* d'UTS #39) et `homograph_brand` (le squelette visuel de l'hôte contient une marque absente de sa forme réelle). **Limites** : la table des confusables de `urls/idn.py` est volontairement courte (cyrillique, grec, quelques lettres latines) ; un hôte **entièrement** cyrillique (`раураl`) n'est pas mixte. Prévu à l'étape 3.8 : signal d'alerte fort pour tout hôte qui mélange des écritures, et squelette selon UTS #39.
+- **Perturbation** : `url_homoglyphs` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1583.001, T1036.
 
 ### URL-03 — Sous-domaines trompeurs
@@ -99,6 +117,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : une feature qui ne lit que le domaine enregistré ne voit jamais la marque. Inversement, un attaquant peut **ajouter** des sous-domaines anodins (`fr.support.`) pour rapprocher son hôte d'un hôte d'entreprise légitime.
 - **Contre-mesure** : `brand_in_host` cherche la marque dans **tous** les labels de l'hôte, sauf sur son domaine officiel ; `host_n_subdomains` compte les labels (sans un `www` initial). **Limites** : la sensibilité du modèle à l'ajout de sous-domaines bénins n'est pas mesurée avant l'étape 3.7.
+- **Perturbation** : `url_subdomains` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1583.001, T1036.
 
 ### URL-04 — Chemins et paramètres bénins
@@ -107,6 +126,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : l'audit des biais (étape 1.3) et SHAP (étape 3.1) ont montré que `url_v1` associe les chemins courts au phishing et les chemins profonds au légitime : beaucoup d'URLs légitimes du jeu sont des pages internes de Common Crawl. Allonger le chemin pousse donc le score vers « légitime » sans rien changer à la page. C'est la technique la plus simple à exécuter contre ce modèle, et probablement la plus efficace.
 - **Contre-mesure** : les features de longueur sont calculées par composant, jamais sur l'URL entière ; les mots-clés (`path_kw_hits`) et les marques (`brand_in_path`) du chemin restent lus. Prévu à l'étape 3.9 : entraînement adversarial avec des chemins ajoutés.
+- **Perturbation** : `url_benign_path` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1566.002.
 
 ### URL-05 — Domaine de confiance détourné
@@ -123,6 +143,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : comme URL-04, une longue requête rapproche l'URL des URLs légitimes à paramètres de suivi. Un modèle qui lirait l'URL entière diluerait ses n-grammes suspects.
 - **Contre-mesure** : `query_len` et `query_n_params` sont des features séparées, et l'hôte est mesuré à part (`host_len`) : rallonger la requête ne change pas les features de l'hôte. Prévu à l'étape 3.9 : entraînement adversarial avec de longs paramètres.
+- **Perturbation** : `url_long_param` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1566.002.
 
 ### URL-07 — Casse mêlée
@@ -131,6 +152,7 @@ Le modèle `url_v1` (étape 1.6) est un LightGBM sur 25 features lexicales calcu
 - **Vecteur** : URL.
 - **Pourquoi ça trompe un modèle** : un modèle qui distingue les majuscules voit des n-grammes inconnus. Pour l'utilisateur, rien ne change : l'hôte est insensible à la casse.
 - **Contre-mesure** : l'hôte est mis en minuscules par la normalisation (`data/urls.normalize_url`), à l'entraînement comme à l'inférence ; les mots-clés et les marques du chemin sont cherchés sans tenir compte de la casse. Le chemin garde sa casse (il est sensible à la casse côté serveur), mais aucune feature n'en dépend. Le banc d'essai (3.7) doit le confirmer : une perturbation sans effet attendu est un test de non-régression.
+- **Perturbation** : `url_uppercase` (étape 3.6).
 - **Références** : AML.T0043.003.
 
 ### URL-08 — Raccourcisseurs et redirections
@@ -161,6 +183,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Vecteur** : texte (aussi : objet et corps d'un email).
 - **Pourquoi ça trompe un modèle** : chaque lettre remplacée fait disparaître tous les n-grammes qui la contiennent, jusqu'à cinq par lettre. Le modèle voit des n-grammes jamais vus à l'entraînement, de poids nul : le score tombe vers la constante du SVM. Le lecteur, lui, ne voit aucune différence.
 - **Contre-mesure** : aucune pour le modèle à l'étape 3.5 (les mots-clés des catégories ne replient pas non plus les confusables). Prévu à l'étape 3.8 : repli des caractères confusables vers leur squelette (UTS #39), à l'entraînement comme à l'inférence, et journalisation quand l'entrée a été modifiée.
+- **Perturbation** : `homoglyphs` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027 (technique la plus proche).
 
 ### TXT-02 — Caractères de largeur nulle
@@ -169,6 +192,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Vecteur** : texte, email.
 - **Pourquoi ça trompe un modèle** : invisibles à l'écran, ils coupent les n-grammes comme une lettre étrangère. Un filtre par mots-clés ne retrouve plus « bloqué ».
 - **Contre-mesure** : **partielle**. La normalisation des mots-clés smishing (`text/smishing.normalize`) retire déjà la catégorie Unicode Cf, donc les catégories de leurre résistent ; le score email compte les caractères de largeur nulle (`zero_width_chars`). Mais le TF-IDF du modèle les voit encore. Prévu à l'étape 3.8 : suppression des caractères Cf et de contrôle avant le modèle.
+- **Perturbation** : `zero_width` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027.
 
 ### TXT-03 — Mots coupés par des symboles
@@ -177,6 +201,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Vecteur** : texte.
 - **Pourquoi ça trompe un modèle** : `char_wb` construit ses n-grammes à l'intérieur des mots. Avec des espaces, chaque lettre devient un mot d'une lettre et les n-grammes informatifs disparaissent ; avec des points, les n-grammes sont nouveaux. Les mots-clés ne correspondent plus.
 - **Contre-mesure** : aucune à l'étape 3.5. La normalisation de l'étape 3.8 ne recolle pas les lettres : défaire cette coupure sans abîmer les sigles et les numéros est un choix délicat, laissé à l'entraînement adversarial (3.9), qui mesurera si le modèle apprend la forme coupée.
+- **Perturbation** : `split_symbols` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027.
 
 ### TXT-04 — Leetspeak
@@ -185,6 +210,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Vecteur** : texte, URL (domaine).
 - **Pourquoi ça trompe un modèle** : comme les homoglyphes, chaque substitution efface des n-grammes. La lecture reste facile pour un humain.
 - **Contre-mesure** : **partielle**. Les n-grammes de caractères gardent ceux des lettres non modifiées (`mpte`), ce qui avait motivé leur choix à l'étape 1.9. Côté URL, `is_typosquat` traite `paypa1` comme une modification. Remplacer systématiquement les chiffres par des lettres détruirait les montants et les codes : prévu à l'étape 3.9 (entraînement adversarial) plutôt qu'en normalisation.
+- **Perturbation** : `leetspeak` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.003 ; T1027.
 
 ### TXT-05 — Dilution par du texte légitime
@@ -193,6 +219,7 @@ Le modèle `text_v1` (étape 1.9) est un SVM linéaire sur des n-grammes de cara
 - **Vecteur** : texte, email.
 - **Pourquoi ça trompe un modèle** : le TF-IDF est normalisé (norme L2) : plus le message est long, plus le poids de chaque n-gramme suspect baisse. Les mots ajoutés ont en plus des coefficients négatifs. L'attaquant peut choisir ces mots en observant les verdicts (AML.T0043.001).
 - **Contre-mesure** : les catégories de leurre ne dépendent pas de la longueur (un lien reste un lien, une demande de code reste une demande de code) ; dans un email, la Threat Intelligence juge les liens indépendamment du texte. Prévu à l'étape 3.9 : entraînement avec des exemples dilués.
+- **Perturbation** : `pad_benign` (étape 3.6).
 - **Références** : AML.T0015, AML.T0043.001, AML.T0043.003 ; T1027.
 
 ### TXT-06 — Message en image
