@@ -97,7 +97,8 @@ class RateLimiter:
             # En-têtes : la limite la plus proche d'être atteinte.
             if decision is None or current.remaining < decision.remaining:
                 decision = current
-        assert decision is not None  # parse_many ne renvoie jamais une liste vide ici
+        if decision is None:  # la configuration refuse une liste de limites vide
+            raise RuntimeError(f"aucune limite de débit pour le niveau {kind!r}")
         return decision
 
 

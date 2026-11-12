@@ -1,0 +1,36 @@
+# Dependabot (étape 4.8) : mises à jour de version, en plus des alertes de sécurité.
+#
+# - uv : uv.lock (dépendances Python, épinglées avec leurs empreintes) ;
+# - github-actions : actions épinglées par SHA, commentaire de version compris.
+#
+# npm (extension, module 5) et docker (image, étape 4.9) s'ajoutent avec leur premier
+# manifeste : un écosystème sans manifeste fait échouer chaque passage de Dependabot.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+    commit-message:
+      prefix: deps
+    groups:
+      # Correctifs et versions mineures regroupés ; une version majeure a sa propre PR.
+      python-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']

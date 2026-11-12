@@ -18,7 +18,7 @@ EMAIL_SAMPLES := data/raw/emails/phishing_pot/manifest.json
 EMAIL_SAMPLE_COUNT := 200
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format test fuzz \
+.PHONY: help install sync lock audit lint format test fuzz \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness 	api api-key
@@ -31,8 +31,25 @@ help: ## Affiche cette aide
 # Outils
 # --------------------------------------------------------------------------- #
 
-install: ## Installe le paquet et les outils de développement
+install: ## Installe le paquet et les outils de développement (versions non verrouillées)
 	$(PYTHON) -m pip install -e '.[dev]'
+
+sync: ## Environnement reproductible : versions et empreintes exactes de uv.lock (étape 4.8)
+	uv sync --locked --extra dev
+
+lock: ## Met à jour uv.lock après une modification des dépendances de pyproject.toml
+	uv lock
+
+# Tout uv.lock, extras compris, avec les empreintes : ce que la CI installe.
+AUDIT_REQUIREMENTS := $(or $(TMPDIR),/tmp)/phishguard-audit-requirements.txt
+
+audit: ## Dépendances vulnérables (pip-audit), analyse statique (bandit), secrets (gitleaks)
+	uv export --locked --all-extras --no-emit-project --no-header --quiet \
+		--format requirements-txt -o $(AUDIT_REQUIREMENTS)
+	$(PYTHON) -m pip_audit --disable-pip --require-hashes --progress-spinner off \
+		-r $(AUDIT_REQUIREMENTS)
+	$(PYTHON) -m bandit -q -r src
+	gitleaks git . --redact --no-banner
 
 lint: ## Vérifie le style (ruff)
 	$(PYTHON) -m ruff check .

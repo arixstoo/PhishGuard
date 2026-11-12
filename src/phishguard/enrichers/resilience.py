@@ -89,7 +89,8 @@ class RetryPolicy:
     def backoff(self, attempt: int) -> float:
         """Délai avant la tentative ``attempt + 1`` (``attempt`` commence à 1)."""
         delay = min(self.max_delay, self.base_delay * 2 ** (attempt - 1))
-        return min(self.max_delay, delay + random.uniform(0, self.jitter))
+        # Gigue des nouvelles tentatives : aucun usage cryptographique.
+        return min(self.max_delay, delay + random.uniform(0, self.jitter))  # nosec B311
 
 
 DEFAULT_RETRY = RetryPolicy()
@@ -143,7 +144,8 @@ async def send_with_retry(
 
     def retry(state: RetryCallState) -> bool:
         outcome = state.outcome
-        assert outcome is not None
+        if outcome is None:  # tenacity appelle retry après chaque tentative
+            raise RuntimeError("tentative sans résultat")
         if outcome.failed:
             retryable = RETRYABLE_ERRORS if idempotent else NOT_SENT_ERRORS
             return isinstance(outcome.exception(), retryable)
@@ -164,7 +166,8 @@ async def send_with_retry(
         logger.debug("nouvelle tentative %d", state.attempt_number + 1)
 
     def give_up(state: RetryCallState) -> Any:
-        assert state.outcome is not None
+        if state.outcome is None:
+            raise RuntimeError("abandon sans tentative")
         return state.outcome.result()  # dernière réponse, ou relève la dernière exception
 
     retrying = AsyncRetrying(

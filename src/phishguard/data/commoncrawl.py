@@ -193,7 +193,8 @@ def select_captures(
 
 def domain_rng(seed: int, domain: str) -> random.Random:
     """Générateur propre à un domaine : le tirage ne dépend pas de l'ordre de traitement."""
-    return random.Random(f"{seed}:{domain}")
+    # Générateur non cryptographique voulu : échantillonnage reproductible.
+    return random.Random(f"{seed}:{domain}")  # nosec B311
 
 
 def sample_captures(captures: list[Capture], k: int, rng: random.Random) -> list[Capture]:
