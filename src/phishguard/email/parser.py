@@ -26,6 +26,7 @@ import re
 from collections.abc import Iterator
 from dataclasses import asdict, dataclass, field
 from email import policy
+from email.header import decode_header, make_header
 from email.message import EmailMessage, Message
 from email.parser import BytesParser
 from email.utils import getaddresses, parseaddr
@@ -227,14 +228,70 @@ def make_address(display_name: str, address: str) -> Address | None:
     )
 
 
-def _header(msg: Message, name: str) -> str | None:
-    value = msg.get(name)
-    return None if value is None else str(value)
+_LINE_BREAKS_RE = re.compile(r"[\r\n]+")
 
 
-def _addresses(msg: Message, name: str) -> list[Address]:
-    values = msg.get_all(name) or []
-    pairs = getaddresses([str(v) for v in values])
+def _one_line(value: str) -> str:
+    return _LINE_BREAKS_RE.sub(" ", value)
+
+
+def _decoded_raw(value: str) -> str:
+    """Décodage RFC 2047 d'une valeur brute, sans la bibliothèque des en-têtes typés."""
+    try:
+        return str(make_header(decode_header(value)))
+    except Exception:  # noqa: BLE001 : base64 invalide, jeu de caractères inconnu…
+        return value
+
+
+def _header_fields(
+    msg: Message, name: str, defects: list[str] | None
+) -> Iterator[tuple[str | None, str]]:
+    """Champs d'un en-tête un par un : ``(valeur typée, valeur brute)``.
+
+    ``msg.get_all`` construit des en-têtes typés et lève dès qu'**un seul** champ est
+    invalide : un mot encodé dont le texte décodé contient un retour à la ligne
+    (``=?utf-8?b?…?=`` piégé) fait lever ``ValueError`` sur tout ``From``, et l'analyse
+    de l'expéditeur (usurpation, Reply-To) serait perdue pour un seul octet. Ici, un
+    champ refusé donne ``None`` comme valeur typée et est noté dans ``defects``
+    (``header_invalid:From``) : c'est un indice en soi.
+    """
+    wanted = name.lower()
+    for key, raw in msg.raw_items():
+        if key.lower() != wanted:
+            continue
+        parsed: str | None
+        try:
+            parsed = str(msg.policy.header_fetch_parse(key, raw))
+        except Exception:  # noqa: BLE001 : la bibliothèque lève ValueError, IndexError…
+            parsed = None
+            if defects is not None and f"header_invalid:{name}" not in defects:
+                defects.append(f"header_invalid:{name}")
+        yield parsed, str(raw)
+
+
+def _header_values(msg: Message, name: str, defects: list[str] | None = None) -> list[str]:
+    """Valeurs décodées d'un en-tête, sur une ligne ; un champ refusé est décodé à la main."""
+    return [
+        _one_line(parsed if parsed is not None else _decoded_raw(raw))
+        for parsed, raw in _header_fields(msg, name, defects)
+    ]
+
+
+def _header(msg: Message, name: str, defects: list[str] | None = None) -> str | None:
+    values = _header_values(msg, name, defects)
+    return values[0] if values else None
+
+
+def _addresses(msg: Message, name: str, defects: list[str] | None = None) -> list[Address]:
+    """Adresses d'un en-tête. Un champ refusé est découpé sur sa forme **brute** (les mots
+    encodés n'y contiennent ni ``,`` ni ``:`` ni ``@``), puis chaque nom affiché est décodé :
+    décoder d'abord laisserait le texte injecté fausser le découpage."""
+    pairs: list[tuple[str, str]] = []
+    for parsed, raw in _header_fields(msg, name, defects):
+        if parsed is not None:
+            pairs.extend((_one_line(n), e) for n, e in getaddresses([parsed]))
+        else:
+            pairs.extend((_one_line(_decoded_raw(n)), e) for n, e in getaddresses([_one_line(raw)]))
     return [a for a in (make_address(n, e) for n, e in pairs) if a is not None]
 
 
@@ -461,23 +518,24 @@ def parse_eml(
 
 
 def _read_headers(msg: Message, result: ParsedEmail) -> None:
-    result.subject = _header(msg, "Subject") or ""
-    result.date = _header(msg, "Date")
-    result.message_id = _header(msg, "Message-ID")
+    defects = result.defects
+    result.subject = _header(msg, "Subject", defects) or ""
+    result.date = _header(msg, "Date", defects)
+    result.message_id = _header(msg, "Message-ID", defects)
     # « "Service client", _ <x@y> » (virgule hors des guillemets) se découpe en deux
     # entrées dont la première n'a pas d'adresse : on garde la première vraie adresse.
-    senders = _addresses(msg, "From")
+    senders = _addresses(msg, "From", defects)
     with_address = [a for a in senders if a.domain is not None]
     result.from_ = with_address[0] if with_address else (senders[0] if senders else None)
     if len(with_address) > 1:
         result.defects.append("multiple_from")
-    result.reply_to = _addresses(msg, "Reply-To")
-    return_path = _header(msg, "Return-Path")
+    result.reply_to = _addresses(msg, "Reply-To", defects)
+    return_path = _header(msg, "Return-Path", defects)
     if return_path:
         result.return_path = make_address(*parseaddr(return_path))
 
     result.reply_to_differs = any(_differs(result.from_, r) for r in result.reply_to)
-    result.mailing_list = msg.get("List-Id") is not None or msg.get("List-Post") is not None
+    result.mailing_list = "List-Id" in msg or "List-Post" in msg
     result.return_path_differs = _differs(result.from_, result.return_path)
     if result.from_ is not None and result.from_.registered_domain is not None:
         shown = display_name_domain(result.from_.display_name)
@@ -486,8 +544,8 @@ def _read_headers(msg: Message, result: ParsedEmail) -> None:
 
 def _read_auth(msg: Message, result: ParsedEmail, trusted: list[str] | None) -> None:
     result.auth = read_auth_results(
-        [str(v) for v in msg.get_all("Authentication-Results") or []],
-        [str(v) for v in msg.get_all("Received-SPF") or []],
+        _header_values(msg, "Authentication-Results", result.defects),
+        _header_values(msg, "Received-SPF", result.defects),
         trusted,
     )
 
