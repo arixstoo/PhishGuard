@@ -256,6 +256,44 @@ def test_empty_and_garbage_inputs():
         assert not [d for d in result.defects if "_failed:" in d]
 
 
+def _encoded(text: str) -> str:
+    import base64
+
+    return "=?utf-8?b?" + base64.b64encode(text.encode()).decode() + "?="
+
+
+def test_regression_encoded_line_break_does_not_blind_the_sender_checks():
+    """Trouvé par le fuzzing (étape 4.7) : deux octets nuls dans le nom affiché encodé de
+    ``11_arabic_idn.eml`` faisaient lever ``ValueError`` à la bibliothèque standard
+    (« address parts cannot contain CR or LF ») et toute l'étape des en-têtes était
+    perdue : plus d'expéditeur, plus de Reply-To, plus de détection d'usurpation."""
+    sender = _encoded("PayPal\r\nBcc: victime@example.org")
+    reply_to = _encoded("Support\n")
+    subject = _encoded("Compte\r\nsuspendu")
+    raw = (
+        f"From: {sender} <service@paypal.example.com>\r\n"
+        f"Reply-To: {reply_to} <collect@evil.example.org>\r\n"
+        f"Subject: {subject}\r\n"
+        "\r\nBonjour"
+    ).encode()
+    result = parse_eml(raw)
+    assert not [d for d in result.defects if "_failed:" in d]
+    assert {"header_invalid:From", "header_invalid:Reply-To"} <= set(result.defects)
+    assert result.from_.registered_domain == "example.com"
+    assert "\n" not in result.from_.display_name and "\r" not in result.from_.display_name
+    assert [a.address for a in result.reply_to] == ["collect@evil.example.org"]
+    assert result.reply_to_differs is True
+    assert result.subject == "Compte suspendu"
+
+
+def test_regression_fuzzed_arabic_idn_fixture():
+    raw = bytearray((FIXTURES / "11_arabic_idn.eml").read_bytes())
+    raw[16:18] = b"\x00\x00"  # au début du nom affiché encodé de « From »
+    result = parse_eml(bytes(raw))
+    assert not [d for d in result.defects if "_failed:" in d]
+    assert result.from_ is not None and result.from_.domain is not None
+
+
 @settings(max_examples=200, deadline=None, suppress_health_check=[HealthCheck.too_slow])
 @given(st.binary(max_size=2000))
 def test_random_bytes_never_crash_the_parser(raw):

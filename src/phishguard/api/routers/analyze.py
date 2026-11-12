@@ -13,7 +13,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from phishguard.api.dependencies import AppState, analysis_service, app_state, require_json
-from phishguard.api.errors import ERROR_RESPONSES, ApiError, ErrorResponse
+from phishguard.api.errors import JSON_ERROR_RESPONSES, ApiError, error_responses
 from phishguard.api.logs import annotate_analysis
 from phishguard.api.schemas import TextRequest, UrlRequest
 from phishguard.api.service import (
@@ -45,7 +45,7 @@ def _input_error(exc: Exception) -> ApiError:
     "/url",
     response_model=AnalysisResponse,
     dependencies=[Depends(require_json)],
-    responses={400: {"model": ErrorResponse, "description": "URL inanalysable"}, **ERROR_RESPONSES},
+    responses={**error_responses(400), **JSON_ERROR_RESPONSES},
     summary="Analyser une URL",
 )
 async def analyze_url(body: UrlRequest, service: Service) -> AnalysisResponse:
@@ -61,7 +61,7 @@ async def analyze_url(body: UrlRequest, service: Service) -> AnalysisResponse:
     "/text",
     response_model=AnalysisResponse,
     dependencies=[Depends(require_json)],
-    responses=ERROR_RESPONSES,
+    responses=JSON_ERROR_RESPONSES,
     summary="Analyser un SMS ou un message",
 )
 async def analyze_text(body: TextRequest, service: Service) -> AnalysisResponse:
@@ -73,11 +73,7 @@ async def analyze_text(body: TextRequest, service: Service) -> AnalysisResponse:
 @router.post(
     "/email",
     response_model=AnalysisResponse,
-    responses={
-        413: {"model": ErrorResponse, "description": "Fichier trop volumineux"},
-        415: {"model": ErrorResponse, "description": "Type de fichier refusé"},
-        **ERROR_RESPONSES,
-    },
+    responses=JSON_ERROR_RESPONSES,  # mêmes cas : fichier trop gros, d'un autre type, vide
     summary="Analyser un email (fichier .eml)",
 )
 async def analyze_email(

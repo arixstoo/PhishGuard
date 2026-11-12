@@ -13,9 +13,24 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import HealthCheck, settings
 
 from phishguard.data.split import temporal_group_split
 from phishguard.data.urls import COLUMNS
+
+# Profils hypothesis (étape 4.7), choisis par ``--hypothesis-profile`` :
+# - default : 100 exemples par propriété, pour la suite courante ;
+# - fuzz : 1 000 exemples (``make fuzz``, job de la CI) ;
+# - ci : comme default, avec la graine d'un échec affichée pour le rejouer.
+# Un test qui fixe son propre ``max_examples`` le garde dans tous les profils.
+settings.register_profile("ci", print_blob=True)
+settings.register_profile(
+    "fuzz",
+    max_examples=1000,
+    deadline=None,
+    print_blob=True,
+    suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large],
+)
 
 START = pd.Timestamp("2026-01-01", tz="UTC")
 _WORDS = ("alpha", "nova", "green", "pixel", "metro", "solar", "river", "lumen", "terra")
