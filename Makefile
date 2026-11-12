@@ -22,7 +22,7 @@ EMAIL_SAMPLE_COUNT := 200
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
-	api api-key docker-build docker-scan docker-up docker-down
+	api api-key docker-build docker-scan docker-up docker-down export
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -176,6 +176,9 @@ cards: ## Met à jour les chiffres des model cards et du README depuis docs/metr
 
 schema: ## Régénère le schéma JSON de la réponse d'analyse (étape 2.11 bis)
 	$(PYTHON) scripts/export_schema.py
+
+export: ## Modèle URL déployé (url_v2) en JSON pour l'extension et vecteurs de référence (étape 4.11)
+	$(PYTHON) scripts/export_model.py
 
 # --------------------------------------------------------------------------- #
 # API (module 4)

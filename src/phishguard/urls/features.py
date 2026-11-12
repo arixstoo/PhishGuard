@@ -31,13 +31,16 @@ production lisent l'URL de la même façon.
 
 from __future__ import annotations
 
+import hashlib
 import ipaddress
+import json
 import math
 import re
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import lru_cache
+from importlib import resources
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
@@ -49,6 +52,12 @@ from phishguard.security.normalize import normalize_url_text
 from phishguard.urls.brands import BrandIndex, load_brands, load_shorteners, max_typo_edits
 from phishguard.urls.idn import is_mixed_script, skeleton, to_ascii, to_unicode
 from phishguard.urls.tld import TldRiskTable, top_level_domain
+
+# Version de l'extracteur (étape 4.11), écrite dans l'export du modèle et son manifeste.
+# À incrémenter à toute modification du calcul d'une feature : l'extension refuse un
+# modèle produit par un autre extracteur que le sien. Les listes de référence ont leur
+# propre empreinte (:func:`reference_data_sha256`), calculée et non déclarée.
+FEATURE_EXTRACTOR_VERSION = "1.0.0"
 
 GROUPS = ("scheme", "host", "path", "length")
 FAMILIES = ("base", "brand", "homograph", "tld", "shortener")
@@ -201,6 +210,30 @@ FEATURES: tuple[FeatureSpec, ...] = (
 )
 FEATURE_NAMES: tuple[str, ...] = tuple(f.name for f in FEATURES)
 _SPECS = {f.name: f for f in FEATURES}
+
+
+@lru_cache(maxsize=1)
+def reference_data_sha256() -> str:
+    """Empreinte SHA-256 de tout ce qui, hors code, détermine les features (étape 4.11).
+
+    Listes du paquet (``brands.json``, ``shorteners.json``), mots-clés, ordre des
+    features, distance plafond, et version de ``tldextract`` (sa liste des suffixes
+    publics embarquée fixe ``host_n_subdomains`` et le domaine enregistré). Une liste
+    modifiée sans régénérer l'export change cette empreinte : l'extension le voit.
+    """
+    package = resources.files("phishguard.urls").joinpath("data")
+    payload = {
+        "features": list(FEATURE_NAMES),
+        "keywords": list(KEYWORDS),
+        "brand_distance_cap": BRAND_DISTANCE_CAP,
+        "tldextract": tldextract.__version__,
+        "files": {
+            name: hashlib.sha256(package.joinpath(name).read_bytes()).hexdigest()
+            for name in ("brands.json", "shorteners.json")
+        },
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(canonical.encode("ascii")).hexdigest()
 
 
 class InvalidUrlError(ValueError):
