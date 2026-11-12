@@ -22,6 +22,16 @@ from phishguard.api.errors import error_response
 
 # Enveloppe multipart autour du fichier : délimiteurs, en-têtes de partie, champs.
 MULTIPART_OVERHEAD = 16 * 1024
+# Clé commune des chemins inconnus (limite de débit, journal) : des URLs aléatoires ne
+# créent ni compteurs ni valeurs de journal nouvelles, et un jeton glissé dans un chemin
+# n'est jamais écrit.
+UNMATCHED_ROUTE = "_unmatched"
+
+
+def route_key(path: str, routes: frozenset[str]) -> str:
+    """Modèle de route connu (``/v1/analyze/url``), sinon :data:`UNMATCHED_ROUTE`."""
+    path = path.rstrip("/") or "/"
+    return path if path in routes else UNMATCHED_ROUTE
 
 
 class BodySizeLimitMiddleware:

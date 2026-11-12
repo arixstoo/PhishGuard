@@ -21,10 +21,11 @@ Organisation :
 - ``storage.py``    base SQLite : empreintes des clés, retours en quarantaine ;
 - ``errors.py``     enveloppe d'erreur commune, sans trace ni recopie de l'entrée ;
 - ``middleware.py`` limite de taille des corps de requête ;
-- ``hardening.py``  en-têtes de sécurité, CORS, délai par requête (étape 4.5).
+- ``hardening.py``  en-têtes de sécurité, CORS, délai par requête (étape 4.5) ;
+- ``logs.py``       journal sans données personnelles, identifiant de requête (étape 4.6).
 
-Ordre des couches, de l'extérieur vers l'intérieur : en-têtes de sécurité, CORS, délai et
-filet d'erreurs, limite de débit (avant toute lecture du corps), limite de taille du
+Ordre des couches, de l'extérieur vers l'intérieur : en-têtes de sécurité, journal de la
+requête, CORS, délai et filet d'erreurs, limite de débit (avant toute lecture du corps), limite de taille du
 corps, routage, authentification, validation, service. Les trois premières sont à
 l'extérieur pour que **toute** réponse, même un 429 ou un 500, porte les mêmes en-têtes.
 """
@@ -47,6 +48,7 @@ from phishguard.api.hardening import (
     cors_options,
     security_headers,
 )
+from phishguard.api.logs import RequestLogMiddleware, configure_logging
 from phishguard.api.middleware import MULTIPART_OVERHEAD, BodySizeLimitMiddleware
 from phishguard.api.ratelimit import RateLimiter, RateLimitMiddleware
 from phishguard.api.routers import analyze, feedback, meta
@@ -143,12 +145,13 @@ def create_app(
     app.include_router(meta.health_router, prefix=API_PREFIX)
     app.include_router(v1)
 
+    # Modèles des routes, tirés du schéma OpenAPI (API publique, calculé même si /docs est
+    # désactivé) : les routeurs inclus ne sont pas listés dans app.routes.
+    routes = frozenset(app.openapi()["paths"])
     app.add_middleware(
         RateLimitMiddleware,
         limiter=RateLimiter(settings),
-        # Modèles des routes, tirés du schéma OpenAPI (API publique, calculé même si
-        # /docs est désactivé) : les routeurs inclus ne sont pas listés dans app.routes.
-        routes=list(app.openapi()["paths"]),
+        routes=routes,
         exempt_paths=[HEALTH_ROUTE],
     )
 
@@ -156,6 +159,7 @@ def create_app(
     app.add_middleware(RequestGuardMiddleware, timeout_seconds=settings.request_timeout_seconds)
     if (cors := cors_options(settings)) is not None:
         app.add_middleware(CORSMiddleware, **cors)
+    app.add_middleware(RequestLogMiddleware, routes=routes)  # préflights CORS compris
     app.add_middleware(
         SecurityHeadersMiddleware,
         headers=security_headers(settings),
@@ -169,7 +173,10 @@ def __getattr__(name: str) -> FastAPI:
     importer le module (tests, outils) ne lit ni la configuration ni les modèles."""
     if name == "app":
         global app
-        app = create_app()
+        settings = get_api_settings()
+        # Chaque worker uvicorn importe l'application : chacun installe le journal.
+        configure_logging(settings)
+        app = create_app(settings)
         return app
     raise AttributeError(name)
 
