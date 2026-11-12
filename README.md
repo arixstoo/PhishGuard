@@ -114,7 +114,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | M1 Detection | URL / text / email detectors, temporal split, model cards | ✅ done (`v0.1.0`) |
 | M2 Threat Intel | Enrichers, SSRF guard, signal fusion, MITRE mapping, response schema, attachment content | ✅ done (`v0.2.0`) |
 | M3 XAI & adversarial | SHAP explanations, readable reasons, evasion catalogue, normalisation, adversarial training, LLM-phishing test, robustness report | ✅ done (`v0.3.0`) |
-| M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image | ⏳ planned |
+| M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image, safe feedback, model export, signed model registry, load test | ✅ done (`v0.4.0`) |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, user tests | ⏳ planned |
 | M6 Launch | Deployment, Chrome Web Store, docs site, v1.0 | ⏳ planned |
 

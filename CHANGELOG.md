@@ -2,9 +2,9 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
-## [Non publié] : module 4, API et backend sécurisés
+## [0.4.0] : module 4, API et backend sécurisés
 
-Le moteur devient un service HTTP : trois routes d'analyse au contrat figé, des entrées bornées dès le schéma, des clés d'API stockées en empreinte seulement et des limites de débit par niveau de client, appliquées avant la lecture du corps ([docs/api.md](docs/api.md)).
+Le moteur devient un service HTTP : trois routes d'analyse au contrat figé, des entrées bornées dès le schéma, des clés d'API stockées en empreinte seulement et des limites de débit par niveau de client, appliquées avant la lecture du corps ([docs/api.md](docs/api.md)). Il est livré dans une image Docker durcie, analysée par trivy et démarrée par la CI sur une machine propre ; il ne charge que des modèles dont la signature Ed25519 a été vérifiée ; il reçoit les retours des utilisateurs sans jamais les laisser toucher au modèle ; il exporte son modèle URL en JSON avec des vecteurs de référence pour l'extension ; et il tient 50 requêtes par seconde avec une médiane d'environ 12 ms.
 
 ### API
 
