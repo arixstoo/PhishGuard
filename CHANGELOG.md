@@ -16,6 +16,12 @@ Le moteur devient un service HTTP : trois routes d'analyse au contrat figé, des
   - trois niveaux : anonyme (30/min par IP), clé (300/min), clé refusée (10/min par IP, contre la recherche de clés). IPv6 regroupée par /64, un compteur par route, fenêtre glissante, `Retry-After` et `X-RateLimit-*`. Le limiteur passe avant la lecture du corps ;
   - `X-Forwarded-For` lu de droite à gauche et seulement depuis un proxy déclaré (`PHISHGUARD_API_TRUSTED_PROXIES`, vide par défaut) : un en-tête falsifié ne change pas le compteur ;
   - **`limits` au lieu de `slowapi`** : les limites dynamiques de slowapi 0.1.10 partagent la requête courante entre requêtes concurrentes, et son middleware ne les appliquait pas. Écart au cahier des charges documenté dans [docs/api.md](docs/api.md).
+- Durcissement HTTP (`phishguard.api.hardening`, étape 4.5) :
+  - en-têtes de sécurité sur **toute** réponse, y compris 429, 413 et 500 : `nosniff`, `Cache-Control: no-store`, politique de contenu `default-src 'none'`, `X-Frame-Options`, `Referrer-Policy`, `Cross-Origin-*-Policy`, `Permissions-Policy`, HSTS en production ;
+  - CORS à liste explicite (`PHISHGUARD_API_CORS_ALLOWED_ORIGINS`, vide par défaut) : `*`, `null`, joker et chemin refusés au démarrage, `http://` refusé en production hors boucle locale, aucun identifiant de navigateur ;
+  - délai par requête, lecture du corps comprise : 408 pour un client lent, 503 pour un traitement trop long, réponse tardive jetée. `python -m phishguard.api` borne les connexions (100 simultanées, 5 s d'inactivité, en-têtes de 16 Kio) ;
+  - filet d'erreurs en middleware : le 500 de Starlette contournait les en-têtes de sécurité. `debug=False` explicite ;
+  - `PHISHGUARD_API_ENVIRONMENT=production` ferme `/docs`, `/redoc` et `/openapi.json`, et refuse de démarrer si on les force. `HEAD /v1/health` pour `curl -I`.
 - 127 tests (`tests/test_api_*.py`) sur de petits modèles chargés par le vrai chemin de démarrage : URL de 100 000 caractères, texte vide, JSON malformé, octet nul, demi-codet, corps envoyé par morceaux, email trop gros ou d'un autre type, contrat de réponse relu par `AnalysisResponse`, exécution dans le pool de threads, 100 requêtes rapides puis 429, clé révoquée, `X-Forwarded-For` falsifié.
 
 ## [0.3.0] : module 3, explicabilité et robustesse adversariale
