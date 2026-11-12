@@ -286,3 +286,13 @@ def test_feedback_refuses_a_client_timestamp(client):
         "received_at": "1999-01-01T00:00:00Z",
     }
     assert_clean_error(client.post("/v1/feedback", json=body), 422, "validation_error")
+
+
+def test_body_that_is_not_utf8_gets_the_api_envelope(client):
+    """Régression (étape 4.13) : des octets cp1252 donnaient le message anglais de FastAPI."""
+    body = '{"text": "Votre colis est bloqué, payez 1,99 € ici"}'.encode("cp1252")
+    response = client.post(
+        "/v1/analyze/text", content=body, headers={"Content-Type": "application/json"}
+    )
+    assert_clean_error(response, 400, "invalid_body")
+    assert "UTF-8" in response.json()["error"]["message"]

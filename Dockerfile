@@ -74,9 +74,13 @@ COPY --from=build /opt/venv /opt/venv
 
 # Production par défaut : documentation fermée, HSTS, journal JSON. Chemins de l'image :
 # modèles en lecture seule, base SQLite dans le volume /data.
+# OMP_NUM_THREADS=1 (étape 4.13, docs/load-test.md) : chaque requête prédit une seule
+# ligne ; OpenMP y lançait une équipe de threads par appel, en concurrence avec les autres
+# requêtes du pool sur 2 CPU. Mesuré à 50 req/s : p95 de 263 à 117 ms, médiane inchangée.
 ENV PATH=/opt/venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    OMP_NUM_THREADS=1 \
     PHISHGUARD_API_ENVIRONMENT=production \
     PHISHGUARD_API_MODELS_DIR=/app/models \
     PHISHGUARD_API_DATABASE_PATH=/data/phishguard.sqlite3

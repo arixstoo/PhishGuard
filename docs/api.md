@@ -8,8 +8,10 @@ délègue à la couche service. Toutes les analyses renvoient le contrat figé d
 Étapes couvertes ici : 4.1 (squelette), 4.2 (entrées), 4.3 (service et endpoints), 4.4
 (authentification et limites), 4.5 (durcissement HTTP), 4.6 (journalisation), 4.10
 (retours sans risque, [feedback.md](feedback.md)), 4.12 (modèles signés,
-[model-registry.md](model-registry.md)). Les exemples `curl`, la politique de confidentialité et
-les mesures de charge arrivent à l'étape 4.13.
+[model-registry.md](model-registry.md)), 4.13 ([exemples](#exemples-curl),
+[limites](#limites), [politique de confidentialité](#politique-de-confidentialité-de-lapi),
+[test de charge](load-test.md)). Image Docker : [docker.md](docker.md) (étape 4.9) ;
+export pour l'extension : [model-export.md](model-export.md) (étape 4.11).
 
 ## Lancement
 
@@ -120,6 +122,7 @@ Une seule enveloppe, un `code` stable :
 | Statut | `code` | Cas |
 |---|---|---|
 | 400 | `invalid_input` | URL bien formée mais inanalysable (schéma `ftp:`, hôte vide) |
+| 400 | `invalid_body` | corps qui n'est pas de l'UTF-8 valide |
 | 401 | `invalid_api_key` | clé inconnue, révoquée, mal formée ou présentée deux fois |
 | 404 / 405 | `not_found` / `method_not_allowed` | route ou méthode inconnue |
 | 408 | `request_timeout` | corps reçu trop lentement (délai par requête) |
@@ -307,6 +310,122 @@ chaîne de requête et l'IP du client. Les tests (`tests/test_api_logging.py`) a
 une URL, un message et un email contenant un jeton secret, au niveau DEBUG, et vérifient
 qu'il n'apparaît dans aucune ligne, y compris sur les chemins d'erreur (URL invalide,
 validation, 500, chemin inconnu, clé refusée).
+
+## Exemples (`curl`)
+
+Base locale : `http://127.0.0.1:8000` (`make api` ou `make docker-up`). La clé est
+facultative ; sans elle, le quota anonyme s'applique.
+
+```bash
+API=http://127.0.0.1:8000
+KEY=pg_...   # make api-key NAME=demo, affichée une seule fois
+
+# Santé (sans clé ni limite de débit)
+curl -s $API/v1/health
+# {"status":"ok"}
+
+# Analyse d'une URL, locale (aucun envoi à des tiers)
+curl -s $API/v1/analyze/url -H 'Content-Type: application/json' -H "X-API-Key: $KEY" \
+  -d '{"url": "http://paypa1-secure.example/login", "language": "fr"}'
+# {"schema_version":"1.3.0","channel":"url","verdict":"phishing","score":88,
+#  "confidence":"medium","reasons":[{"code":"url.login_keywords",...}],...}
+
+# Vue analyste (valeurs SHAP, features) en anglais
+curl -s $API/v1/analyze/url -H 'Content-Type: application/json' \
+  -d '{"url": "https://www.example.com/", "language": "en", "analyst": true}'
+
+# SMS ou message
+curl -s $API/v1/analyze/text -H 'Content-Type: application/json' \
+  -d '{"text": "Votre colis est bloqué, payez 1,99 € ici : http://colis.example", "channel": "sms"}'
+
+# Email (.eml, 1 Mio au plus)
+curl -s $API/v1/analyze/email -F 'file=@message.eml;type=message/rfc822' -F language=fr
+
+# Retour sur un verdict : le domaine seulement
+curl -s $API/v1/feedback -H 'Content-Type: application/json' \
+  -d '{"domain": "paypa1-secure.example", "verdict": "phishing", "judgement": "false_positive"}'
+# {"status":"quarantined","received_at":"2026-11-13T09:00:00Z"}
+
+# Modèles servis et signature vérifiée
+curl -s $API/v1/model -H "X-API-Key: $KEY"
+
+# Une erreur : enveloppe commune, sans recopie de l'entrée
+curl -s $API/v1/analyze/url -H 'Content-Type: application/json' -d '{"url": "x"}'
+# {"error":{"code":"validation_error","message":"...",
+#  "details":[{"loc":["body","url"],"type":"string_too_short","msg":"..."}]}}
+```
+
+En-têtes utiles dans chaque réponse : `X-Request-ID` (à citer pour retrouver une ligne du
+journal), `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, et
+`Retry-After` sur un 429 ou un 503.
+
+## Limites
+
+| Limite | Valeur par défaut | Au-delà |
+|---|---|---|
+| URL | 4 à 2 048 caractères | 422 |
+| Texte | 1 à 5 000 caractères | 422 |
+| Email | 1 Mio | 413 |
+| Corps JSON | 64 Kio | 413 |
+| En-têtes HTTP | 16 Kio | connexion refusée |
+| Durée d'une requête, corps compris | 30 s | 408 (lecture) ou 503 (traitement) |
+| Connexions simultanées (`python -m phishguard.api`) | 100 | 503 |
+| Quota anonyme, par IP (/64 en IPv6) | 30/minute | 429 |
+| Quota avec clé | 300/minute | 429 |
+| Quota d'une clé refusée, par IP | 10/minute | 429 |
+| Quota des retours, en plus du niveau | 20/heure | 429 |
+| Retours en attente de relecture | 10 000 | 503 |
+
+Toutes se règlent par variables d'environnement ([Configuration](#configuration)).
+Performance mesurée : médiane d'environ 14 ms à 50 req/s sans enrichissement, sur un
+seul processus ([load-test.md](load-test.md)).
+
+## Politique de confidentialité de l'API
+
+Ce que l'API fait des données qu'elle reçoit. Chaque point est vérifié par un test.
+
+**Contenu analysé (URL, texte, email).**
+
+- Analysé **en mémoire**, puis oublié : jamais écrit sur disque ni en base, jamais
+  journalisé, ni en clair, ni haché.
+- **Jamais envoyé à un tiers par défaut.** Seulement si le serveur a activé la Threat
+  Intelligence (`PHISHGUARD_API_THREAT_INTEL_ENABLED`) **et** que le client le demande
+  pour cette analyse (`use_threat_intel: true`), l'URL ou son domaine part vers les
+  sources configurées (Google Safe Browsing, VirusTotal, urlscan.io ; voir
+  [enrichers.md](enrichers.md)), selon leurs propres conditions. Jamais pour une adresse
+  interne (boucle locale, réseau privé), jamais pour un texte ou un email. La réponse dit
+  si l'enrichissement a eu lieu (`enrichment` : `used` ou `skipped`).
+- **Jamais renvoyé** dans une erreur : ni l'URL, ni un extrait du texte.
+
+**Journal** ([Journalisation](#journalisation-étape-46)). Identifiant de requête, route,
+statut, latence, niveau du client, identifiant public de la clé, verdict, score, version
+du modèle. Jamais le contenu, l'URL, l'hôte, l'adresse IP, les en-têtes ni la clé.
+
+**Adresse IP.** Utilisée en mémoire pour la limite de débit (compteurs à fenêtre
+glissante d'une minute ou d'une heure, puis effacés), jamais stockée ni journalisée.
+
+**Clés d'API.** Seule l'empreinte SHA-256 est stockée ; une fuite de la base ne donne
+aucune clé utilisable.
+
+**Retours** ([feedback.md](feedback.md)). Domaine, verdict reçu, jugement, date de
+réception, niveau du client, identifiant public de la clé, et un pseudonyme quotidien du
+rapporteur, calculé sous une clé jamais écrite et renouvelée chaque jour : il ne permet
+ni de retrouver une IP, ni de suivre quelqu'un d'un jour à l'autre. Relus à la main,
+supprimés après relecture (`purge`). Ils ne modifient jamais le modèle.
+
+**Durées de conservation.**
+
+| Donnée | Durée |
+|---|---|
+| contenu analysé | la durée de la requête |
+| compteurs de débit (IP, clé) | la fenêtre de la limite (au plus une heure), en mémoire |
+| journal | selon l'hébergeur (conteneur : 3 × 10 Mo en rotation) |
+| empreintes des clés | jusqu'à suppression de la base (révocation sans effacement) |
+| retours | jusqu'à relecture, puis `purge` (90 jours recommandés) |
+
+**Ce qui reste hors du contrôle de l'API** : un proxy inverse ou un hébergeur placé
+devant elle peut journaliser les requêtes, URLs comprises. À configurer en conséquence
+(nginx : pas de `$request_uri` ni de corps dans `access_log`).
 
 ## Proxy inverse
 
