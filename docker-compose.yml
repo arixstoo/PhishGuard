@@ -1,0 +1,62 @@
+# API PhishGuard en conteneur (étape 4.9, docs/docker.md).
+#
+#   docker compose up --build -d
+#   curl -s http://127.0.0.1:8000/v1/health
+#   docker compose exec api python -m phishguard.api.keys create --name extension-dev
+#
+# Prérequis : les modèles déployés dans ./models (url_v2, text_v2 et leurs calibrations,
+# produits par « make train train-adversarial », voir phishguard.deployment).
+name: phishguard
+
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    image: phishguard-api:local
+    init: true # tini en PID 1 : signaux relayés, processus orphelins récupérés
+    restart: unless-stopped
+    # Boucle locale seulement : l'exposer passe par un proxy inverse TLS
+    # (PHISHGUARD_API_TRUSTED_PROXIES, docs/api.md).
+    ports:
+      - "127.0.0.1:8000:8000"
+    # Clés des sources de Threat Intelligence, et elles seules : fichier facultatif, jamais
+    # commité (.gitignore, pre-commit). Pas de .env complet : il contient aussi des secrets
+    # que l'API n'utilise pas (archives, collecte).
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      PHISHGUARD_API_ENVIRONMENT: production
+      PHISHGUARD_API_LOG_FORMAT: json
+    volumes:
+      - type: bind
+        source: ${PHISHGUARD_MODELS_HOST_DIR:-./models}
+        target: /app/models
+        read_only: true
+      - type: volume
+        source: phishguard-data
+        target: /data
+    # Durcissement à l'exécution : système de fichiers en lecture seule (seuls /data et un
+    # /tmp en mémoire sont inscriptibles), aucune capacité Linux, pas d'élévation de
+    # privilèges (setuid), ressources bornées.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 2
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  # Base SQLite : empreintes des clés d'API et retours en quarantaine.
+  phishguard-data:
