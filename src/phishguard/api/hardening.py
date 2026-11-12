@@ -85,6 +85,7 @@ SECURITY_HEADERS: Mapping[str, str] = {
 CORS_METHODS = ("GET", "POST")
 CORS_REQUEST_HEADERS = ("Content-Type", API_KEY_HEADER)
 CORS_EXPOSED_HEADERS = (
+    "X-Request-ID",
     "Retry-After",
     "X-RateLimit-Limit",
     "X-RateLimit-Remaining",

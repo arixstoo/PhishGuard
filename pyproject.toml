@@ -34,6 +34,7 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "python-multipart>=0.0.20",  # téléversement des .eml ; < 0.0.18 : CVE-2024-53981
     "limits>=4.0",  # limites de débit, stockage asynchrone (étape 4.4)
+    "structlog>=24.1",  # journal structuré sans données personnelles (étape 4.6)
 ]
 
 [project.optional-dependencies]
