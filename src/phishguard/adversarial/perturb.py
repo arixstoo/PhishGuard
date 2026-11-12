@@ -102,7 +102,8 @@ def _pick(rnd: random.Random, positions: Sequence[int], rate: float) -> list[int
 
 
 def _replace(text: str, table: dict[str, str], rate: float, seed: int) -> str:
-    rnd = random.Random(seed)
+    # Générateur non cryptographique voulu : perturbation déterministe (voir le module).
+    rnd = random.Random(seed)  # nosec B311
     chosen = set(_pick(rnd, [i for i, c in enumerate(text) if c in table], rate))
     return "".join(table[c] if i in chosen else c for i, c in enumerate(text))
 
@@ -161,7 +162,8 @@ def split_with_symbols(
         raise ValueError(f"separator doit être un symbole : {separator!r}")
     words = text.split(" ")
     candidates = [i for i, w in enumerate(words) if w.isalpha() and len(w) >= min_length]
-    chosen = set(_pick(random.Random(seed), candidates, rate))
+    # Générateur non cryptographique voulu : perturbation déterministe (voir le module).
+    chosen = set(_pick(random.Random(seed), candidates, rate))  # nosec B311
     return " ".join(separator.join(w) if i in chosen else w for i, w in enumerate(words))
 
 
@@ -235,7 +237,8 @@ def add_subdomains(
     netloc = _Netloc.parse(parts.netloc)
     if not netloc.host or is_ip_host(netloc.host.strip("[]").lower()):
         return _restore(url, added)
-    rnd = random.Random(seed)
+    # Générateur non cryptographique voulu : perturbation déterministe (voir le module).
+    rnd = random.Random(seed)  # nosec B311
     prefix = ".".join(rnd.choice(labels) for _ in range(n))
     host = f"{prefix}.{netloc.host}"
     if (
@@ -258,7 +261,8 @@ def add_benign_path(
         raise ValueError(f"depth doit être au moins 1 : {depth!r}")
     url, added = _with_scheme(url)
     parts = urlsplit(url)
-    rnd = random.Random(seed)
+    # Générateur non cryptographique voulu : perturbation déterministe (voir le module).
+    rnd = random.Random(seed)  # nosec B311
     prefix = "/".join(rnd.choice(segments) for _ in range(depth))
     path = f"/{prefix}{parts.path if parts.path.startswith('/') else '/' + parts.path}"
     return _restore(_rebuild(parts, path=path), added)
@@ -274,7 +278,8 @@ def add_long_param(
         raise ValueError("names ne contient aucun nom de paramètre")
     url, added = _with_scheme(url)
     parts = urlsplit(url)
-    rnd = random.Random(seed)
+    # Générateur non cryptographique voulu : perturbation déterministe (voir le module).
+    rnd = random.Random(seed)  # nosec B311
     value = "".join(rnd.choice(_TOKEN_ALPHABET) for _ in range(length))
     param = f"{rnd.choice(names)}={value}"
     query = f"{parts.query}&{param}" if parts.query else param
@@ -291,7 +296,8 @@ def partial_uppercase(url: str, rate: float = 0.5, seed: int = 0) -> str:
     parts = urlsplit(url)
     netloc = _Netloc.parse(parts.netloc)
     host = netloc.host
-    rnd = random.Random(seed)
+    # Générateur non cryptographique voulu : perturbation déterministe (voir le module).
+    rnd = random.Random(seed)  # nosec B311
     letters = [i for i, c in enumerate(host) if c.isascii() and c.islower()]
     chosen = set(_pick(rnd, letters, rate))
     host = "".join(c.upper() if i in chosen else c for i, c in enumerate(host))

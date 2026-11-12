@@ -253,7 +253,8 @@ def augment(
         if classes == "phishing" and label != LABEL_PHISHING:
             continue
         for copy in range(copies):
-            rnd = random.Random(P.sample_seed(seed + copy, sample))
+            # Générateur non cryptographique voulu : augmentation reproductible.
+            rnd = random.Random(P.sample_seed(seed + copy, sample))  # nosec B311
             order = rnd.sample(pool, k=len(pool))
             for recipe in order:
                 perturbed = recipe.apply_one(sample, rnd)
