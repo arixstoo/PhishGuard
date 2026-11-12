@@ -60,6 +60,7 @@ from phishguard.api.version import api_version
 from phishguard.deployment import Analyzers, load_analyzers
 from phishguard.email.parser import EmailLimits
 from phishguard.enrichers.orchestrator import Orchestrator
+from phishguard.registry import ManifestError, load_public_key
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +74,16 @@ AnalyzersFactory = Callable[[ApiSettings, Orchestrator | None], Analyzers]
 
 
 def _deployed_analyzers(settings: ApiSettings, orchestrator: Orchestrator | None) -> Analyzers:
+    public_key = None
+    if settings.models_public_key is not None:
+        public_key = load_public_key(settings.models_public_key)
+    else:
+        logger.warning("modèles chargés sans vérification de signature (développement)")
     return load_analyzers(
         settings.models_dir,
         orchestrator=orchestrator,
         email_limits=EmailLimits(max_bytes=settings.max_email_bytes),
+        public_key=public_key,
     )
 
 
@@ -99,7 +106,13 @@ def create_app(
                 stack.push_async_callback(orchestrator.aclose)
                 logger.info("Threat Intelligence active : %s", ", ".join(orchestrator.sources))
             # Chargement (pickle, plusieurs secondes) hors de la boucle asynchrone.
-            analyzers = await run_in_threadpool(factory, settings, orchestrator)
+            try:
+                analyzers = await run_in_threadpool(factory, settings, orchestrator)
+            except (ManifestError, FileNotFoundError, TypeError, ValueError) as exc:
+                # La trace est tronquée par le caviardage du journal (étape 4.6) : la cause
+                # tient sur une ligne. Ces messages ne citent que des fichiers de modèles.
+                logger.error("modèles refusés, démarrage annulé : %s", exc)
+                raise
             models = await run_in_threadpool(
                 describe_models,
                 analyzers,

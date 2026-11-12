@@ -210,6 +210,16 @@ class ModelOut(BaseModel):
     calibration_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
 
+class SignatureOut(BaseModel):
+    """Manifeste signé vérifié au démarrage (étape 4.12)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    release: str
+    key_id: str = Field(pattern=r"^[0-9a-f]{16}$")
+    manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class ModelsInfo(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -219,3 +229,6 @@ class ModelsInfo(BaseModel):
         default=None, description="Version de la normalisation des entrées (étape 3.8)"
     )
     models: dict[Literal["url", "text", "email"], ModelOut]
+    signature: SignatureOut | None = Field(
+        default=None, description="Manifeste signé vérifié au démarrage ; null : non signés"
+    )

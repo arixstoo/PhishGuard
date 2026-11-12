@@ -86,8 +86,12 @@ Les modèles ne sont **pas** dans l'image : `./models` est monté en **lecture s
    nouvelle image ne change pas de modèle par surprise ;
 3. ils ne sont pas versionnés : une image construite par la CI n'en aurait pas.
 
-La signature des modèles (étape 4.12) permet de vérifier, avant tout chargement, qu'un
-fichier monté est bien celui qui a été publié.
+**Signés (étape 4.12).** Le compose monte aussi `keys/model-signing.pub` en lecture
+seule et renseigne `PHISHGUARD_API_MODELS_PUBLIC_KEY` : l'API vérifie le manifeste signé
+avant de lire le moindre modèle et refuse de démarrer sinon. Avant le premier
+`docker compose up` : `make keygen` (une fois), puis `make export sign`
+([model-registry.md](model-registry.md)). Une clé publique absente est une erreur claire
+(`create_host_path: false`), pas un dossier vide monté à sa place.
 
 ### Base SQLite
 
@@ -110,7 +114,9 @@ Bloquant, à chaque push et chaque lundi :
    de `ReadonlyRootfs`, `CapDrop`, `no-new-privileges` et du montage des modèles) ;
 5. propriétés de l'image : UID 10001, pas de `pip`, ni `uv`, ni `curl`, ni `wget`, aucun
    modèle ni `.env` ;
-6. **`docker compose up --wait`** avec des modèles synthétiques, puis
+6. **`docker compose up --wait`** avec des modèles synthétiques **signés par une clé
+   éphémère** créée puis effacée dans le job (la clé de publication n'approche jamais
+   la CI), puis
    `scripts/docker_smoke.sh` : la CI est la « machine propre » du critère de fin.
 
 **Pourquoi `--ignore-unfixed` dans le contrôle bloquant.** Une faille sans correctif

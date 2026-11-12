@@ -35,6 +35,7 @@ dependencies = [
     "python-multipart>=0.0.20",  # téléversement des .eml ; < 0.0.18 : CVE-2024-53981
     "limits>=4.0",  # limites de débit, stockage asynchrone (étape 4.4)
     "structlog>=24.1",  # journal structuré sans données personnelles (étape 4.6)
+    "cryptography>=44.0",  # signature Ed25519 du manifeste des modèles (étape 4.12)
 ]
 
 [project.optional-dependencies]

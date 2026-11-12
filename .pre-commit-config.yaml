@@ -20,3 +20,13 @@ repos:
         language: fail
         files: (^|/)\.env(\..+)?$
         exclude: (^|/)\.env\.example$
+      - id: forbid-private-keys
+        name: Refuse les clés privées
+        entry: une clé privée ne se commite jamais (signature des modèles, docs/model-registry.md)
+        language: fail
+        files: \.(key|pem|p8|p12)$
+      - id: detect-private-key-content
+        name: Refuse un contenu de clé privée
+        entry: 'PRIVATE KEY-----'
+        language: pygrep
+        exclude: ^\.pre-commit-config\.yaml$  # ce fichier contient le motif

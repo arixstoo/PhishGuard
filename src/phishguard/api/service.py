@@ -31,7 +31,7 @@ from typing import Any
 from starlette.concurrency import run_in_threadpool
 
 from phishguard.analysis import EMAIL_RULES_VERSION
-from phishguard.api.schemas import ModelOut, ModelsInfo, TextRequest, UrlRequest
+from phishguard.api.schemas import ModelOut, ModelsInfo, SignatureOut, TextRequest, UrlRequest
 from phishguard.deployment import Analyzers, model_files
 from phishguard.email.parser import EmailTooLargeError
 from phishguard.fusion.score import default_config
@@ -137,7 +137,16 @@ def describe_models(analyzers: Analyzers, models_dir: Path | None) -> ModelsInfo
 
     url_metadata = getattr(analyzers.url.model, "metadata", None)
     normalization = url_metadata.get("normalization") if isinstance(url_metadata, Mapping) else None
+    manifest = getattr(analyzers, "manifest", None)
+    signature = (
+        SignatureOut(
+            release=manifest.release, key_id=manifest.key_id, manifest_sha256=manifest.sha256
+        )
+        if manifest is not None
+        else None
+    )
     return ModelsInfo(
+        signature=signature,
         schema_version=SCHEMA_VERSION,
         fusion_version=default_config().version,
         normalization_version=str(normalization) if normalization else None,

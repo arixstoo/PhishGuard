@@ -151,15 +151,25 @@ jobs:
         with:
           version: '0.12.13'
 
-      - name: Modèles de test (synthétiques)
+      # Modèles synthétiques signés par une clé éphémère, créée et jetée dans ce job :
+      # la chaîne complète (manifeste, signature, vérification au démarrage) est testée
+      # sans que la clé de publication ne s'approche jamais de la CI (étape 4.12).
+      - name: Modèles de test (synthétiques, signés)
         run: |
           uv run --locked --extra dev --python 3.12 \
             python scripts/smoke_models.py --output-dir "$RUNNER_TEMP/models"
-          chmod -R a+rX "$RUNNER_TEMP/models"
+          uv run --locked --extra dev --python 3.12 python scripts/sign_models.py keygen \
+            --private-key "$RUNNER_TEMP/ephemeral/signing.key" \
+            --public-key "$RUNNER_TEMP/ephemeral/signing.pub"
+          uv run --locked --extra dev --python 3.12 python scripts/sign_models.py sign \
+            --private-key "$RUNNER_TEMP/ephemeral/signing.key" --models-dir "$RUNNER_TEMP/models"
+          rm "$RUNNER_TEMP/ephemeral/signing.key"
+          chmod -R a+rX "$RUNNER_TEMP/models" "$RUNNER_TEMP/ephemeral"
 
       - name: docker compose up
         env:
           PHISHGUARD_MODELS_HOST_DIR: ${{ runner.temp }}/models
+          PHISHGUARD_MODELS_PUBLIC_KEY_HOST: ${{ runner.temp }}/ephemeral/signing.pub
         run: |
           docker tag "$IMAGE" phishguard-api:local
           docker compose up --no-build --detach --wait --wait-timeout 120

@@ -5,7 +5,9 @@
 #   docker compose exec api python -m phishguard.api.keys create --name extension-dev
 #
 # Prérequis : les modèles déployés dans ./models (url_v2, text_v2 et leurs calibrations,
-# produits par « make train train-adversarial », voir phishguard.deployment).
+# produits par « make train train-adversarial », voir phishguard.deployment), signés
+# (« make sign ») avec la clé dont la partie publique est keys/model-signing.pub
+# (étape 4.12, docs/model-registry.md). Sans signature valide, l'API ne démarre pas.
 name: phishguard
 
 services:
@@ -29,11 +31,20 @@ services:
     environment:
       PHISHGUARD_API_ENVIRONMENT: production
       PHISHGUARD_API_LOG_FORMAT: json
+      PHISHGUARD_API_MODELS_PUBLIC_KEY: /app/keys/model-signing.pub
     volumes:
       - type: bind
         source: ${PHISHGUARD_MODELS_HOST_DIR:-./models}
         target: /app/models
         read_only: true
+      # Clé publique de vérification des modèles. create_host_path: false : une clé
+      # absente est une erreur claire, pas un dossier vide créé à sa place.
+      - type: bind
+        source: ${PHISHGUARD_MODELS_PUBLIC_KEY_HOST:-./keys/model-signing.pub}
+        target: /app/keys/model-signing.pub
+        read_only: true
+        bind:
+          create_host_path: false
       - type: volume
         source: phishguard-data
         target: /data

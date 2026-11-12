@@ -26,7 +26,7 @@ import logging
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 import joblib
 import lightgbm
@@ -146,9 +146,13 @@ class UrlModel:
         return path
 
     @classmethod
-    def load(cls, path: Path) -> UrlModel:
-        """Charge un modèle. **Exécute du code (pickle)** : fichier de confiance seulement."""
-        payload = joblib.load(Path(path))
+    def load(cls, path: Path | BinaryIO) -> UrlModel:
+        """Charge un modèle. **Exécute du code (pickle)** : fichier de confiance seulement.
+
+        ``path`` peut être un flux d'octets déjà vérifiés (manifeste signé, étape 4.12) :
+        on désérialise alors exactement les octets dont l'empreinte a été contrôlée.
+        """
+        payload = joblib.load(path if hasattr(path, "read") else Path(path))
         if not isinstance(payload, dict) or payload.get("format_version") != FORMAT_VERSION:
             raise ValueError(f"{path} : format de modèle non reconnu")
         saved = payload.get("library_versions", {})
