@@ -2,7 +2,8 @@
 
 Toutes renvoient le contrat figé de l'étape 2.11 bis (:class:`AnalysisResponse`). Les
 routes ne contiennent aucune logique d'analyse : elles valident, délèguent à la couche
-service et traduisent ses erreurs en codes HTTP.
+service et traduisent ses erreurs en codes HTTP. Chaque analyse ajoute à la ligne de
+journal de sa requête son verdict et la version du modèle, rien de l'entrée (étape 4.6).
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from phishguard.api.dependencies import AppState, analysis_service, app_state, require_json
 from phishguard.api.errors import ERROR_RESPONSES, ApiError, ErrorResponse
+from phishguard.api.logs import annotate_analysis
 from phishguard.api.schemas import TextRequest, UrlRequest
 from phishguard.api.service import (
     AnalysisService,
@@ -48,9 +50,11 @@ def _input_error(exc: Exception) -> ApiError:
 )
 async def analyze_url(body: UrlRequest, service: Service) -> AnalysisResponse:
     try:
-        return await service.analyze_url(body)
+        response = await service.analyze_url(body)
     except InvalidInputError as exc:
         raise _input_error(exc) from None
+    annotate_analysis(response, threat_intel=body.use_threat_intel)
+    return response
 
 
 @router.post(
@@ -61,7 +65,9 @@ async def analyze_url(body: UrlRequest, service: Service) -> AnalysisResponse:
     summary="Analyser un SMS ou un message",
 )
 async def analyze_text(body: TextRequest, service: Service) -> AnalysisResponse:
-    return await service.analyze_text(body)
+    response = await service.analyze_text(body)
+    annotate_analysis(response)
+    return response
 
 
 @router.post(
@@ -88,9 +94,13 @@ async def analyze_email(
     if not content.strip():
         raise ApiError(422, "validation_error", "Fichier vide.")
     try:
-        return await service.analyze_email(EmailUpload(content, language=language, analyst=analyst))
+        response = await service.analyze_email(
+            EmailUpload(content, language=language, analyst=analyst)
+        )
     except (InvalidInputError, InputTooLargeError) as exc:
         raise _input_error(exc) from None
+    annotate_analysis(response)
+    return response
 
 
 async def _read_bounded(file: UploadFile, limit: int) -> bytes:

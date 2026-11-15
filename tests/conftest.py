@@ -7,6 +7,7 @@ légitimes longues) pour que les modèles fassent des erreurs à analyser.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import numpy as np
@@ -64,6 +65,28 @@ def split_dataset_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
     path = tmp_path_factory.mktemp("data") / "urls_split.parquet"
     df.assign(split=temporal_group_split(df)).to_parquet(path, index=False)
     return path
+
+
+@pytest.fixture(autouse=True)
+def _restore_logging() -> Iterator[None]:
+    """Un test qui installe le journal de l'API (étape 4.6) ne le laisse pas aux suivants."""
+    import logging
+
+    import structlog
+
+    root = logging.getLogger()
+    handlers, level = list(root.handlers), root.level
+    uvicorn_state = {
+        name: (list(logging.getLogger(name).handlers), logging.getLogger(name).propagate)
+        for name in ("uvicorn", "uvicorn.error")
+    }
+    yield
+    root.handlers[:] = handlers
+    root.setLevel(level)
+    for name, (saved, propagate) in uvicorn_state.items():
+        logging.getLogger(name).handlers[:] = saved
+        logging.getLogger(name).propagate = propagate
+    structlog.reset_defaults()
 
 
 @pytest.fixture(autouse=True)

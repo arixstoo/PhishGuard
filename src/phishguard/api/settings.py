@@ -116,6 +116,12 @@ class ApiSettings(BaseSettings):
     # Durée de mise en cache des pré-vérifications CORS par le navigateur.
     cors_max_age_seconds: int = Field(default=600, ge=0, le=86_400)
 
+    # --- Journalisation (étape 4.6) ----------------------------------------- #
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    # json : une ligne JSON par événement ; console : texte lisible. Non renseigné :
+    # json en production, console en développement.
+    log_format: Literal["json", "console"] | None = None
+
     # --- Threat Intelligence (module 2) ------------------------------------ #
     # Le serveur n'interroge des sources externes que si ce drapeau est vrai **et** que
     # le client le demande pour l'analyse (``use_threat_intel``).
@@ -160,6 +166,11 @@ class ApiSettings(BaseSettings):
             raise ValueError(f"limite de débit invalide : {value!r} (ex. « 30/minute »)") from None
         return value
 
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def _upper_level(cls, value: object) -> object:
+        return value.strip().upper() if isinstance(value, str) else value
+
     @field_validator("cors_allowed_origins", mode="before")
     @classmethod
     def _parse_origins(cls, value: object) -> object:
@@ -186,6 +197,10 @@ class ApiSettings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def log_json(self) -> bool:
+        return self.log_format == "json" if self.log_format else self.is_production
 
     @property
     def docs_active(self) -> bool:

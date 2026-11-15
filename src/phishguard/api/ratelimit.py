@@ -51,12 +51,11 @@ from starlette.requests import Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from phishguard.api.errors import error_response
+from phishguard.api.middleware import route_key
 from phishguard.api.security import ClientKind, resolve_client
 from phishguard.api.settings import ApiSettings
 
 logger = logging.getLogger(__name__)
-
-UNMATCHED_ROUTE = "_unmatched"
 
 
 @dataclass(frozen=True)
@@ -119,8 +118,7 @@ class RateLimitMiddleware:
         self.exempt_paths = frozenset(exempt_paths)
 
     def route_key(self, path: str) -> str:
-        path = path.rstrip("/") or "/"
-        return path if path in self.routes else UNMATCHED_ROUTE
+        return route_key(path, self.routes)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http" or not self.limiter.enabled:

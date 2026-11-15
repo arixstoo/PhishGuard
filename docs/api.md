@@ -6,7 +6,7 @@ délègue à la couche service. Toutes les analyses renvoient le contrat figé d
 2.11 bis ([response-schema.md](response-schema.md)).
 
 Étapes couvertes ici : 4.1 (squelette), 4.2 (entrées), 4.3 (service et endpoints), 4.4
-(authentification et limites), 4.5 (durcissement HTTP). Les exemples `curl`, la politique de confidentialité et
+(authentification et limites), 4.5 (durcissement HTTP), 4.6 (journalisation). Les exemples `curl`, la politique de confidentialité et
 les mesures de charge arrivent à l'étape 4.13.
 
 ## Lancement
@@ -42,6 +42,8 @@ invalide empêche le démarrage.
 | `PHISHGUARD_API_CORS_ALLOWED_ORIGINS` | vide | origines exactes autorisées depuis un navigateur |
 | `PHISHGUARD_API_CORS_MAX_AGE_SECONDS` | `600` | mise en cache des pré-vérifications CORS |
 | `PHISHGUARD_API_REQUEST_TIMEOUT_SECONDS` | `30` | durée maximale d'une requête, corps compris |
+| `PHISHGUARD_API_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `PHISHGUARD_API_LOG_FORMAT` | selon l'environnement | `json` (production) ou `console` (développement) |
 | `PHISHGUARD_API_MAX_EMAIL_BYTES` | 1 Mio | taille maximale d'un email |
 | `PHISHGUARD_API_MAX_JSON_BYTES` | 64 Kio | taille maximale d'un corps JSON |
 | `PHISHGUARD_API_THREAT_INTEL_ENABLED` | `false` | autoriser l'enrichissement à la demande du client |
@@ -254,6 +256,48 @@ PHISHGUARD_API_CORS_ALLOWED_ORIGINS=chrome-extension://<identifiant>,https://phi
 - En production, `/docs`, `/redoc` et `/openapi.json` répondent 404 ; les forcer
   (`PHISHGUARD_API_DOCS_ENABLED=true`) empêche le démarrage.
 
+## Journalisation (étape 4.6)
+
+`structlog`, une ligne par requête (`phishguard.api.logs`), en JSON en production :
+
+```json
+{"method": "POST", "route": "/v1/analyze/url", "status": 200, "duration_ms": 108.09, "client": "anonymous", "key_id": null, "channel": "url", "verdict": "phishing", "score": 90, "model_version": "url_v2", "threat_intel": false, "event": "request", "request_id": "d61882ad1a934936ac7f8834d2d65592", "level": "info", "logger": "phishguard.api.access", "timestamp": "2026-11-12T16:17:46.861674Z"}
+```
+
+(Ligne réelle, pour `https://paypa1-secure.example/reset?token=SUPERSECRET123` : ni l'URL,
+ni son hôte, ni le jeton.)
+
+- **Journalisé** : identifiant de requête, méthode, **modèle** de la route, statut,
+  latence, niveau du client, identifiant public de la clé, canal, verdict, score, version
+  du modèle.
+- **Jamais journalisé** : le contenu des messages et des emails, les URLs (ni complètes,
+  ni leur hôte), les clés d'API, l'adresse IP, les en-têtes, la chaîne de requête. Un
+  chemin inconnu est écrit `_unmatched` : un jeton glissé dans le chemin n'est pas écrit.
+- `X-Request-ID` : tiré par le serveur à chaque requête et renvoyé au client (lisible en
+  CORS), pour retrouver une ligne sans rien journaliser d'autre. Une valeur envoyée par
+  le client est ignorée : elle permettrait de brouiller la corrélation ou d'injecter du
+  texte. Les journaux écrits pendant la requête, y compris depuis le pool de threads,
+  portent le même identifiant.
+
+La règle tient par construction, à trois niveaux :
+
+1. **liste blanche** : les routes ne peuvent ajouter à leur ligne que `channel`,
+   `verdict`, `score`, `model_version` et `threat_intel` (`annotate`, toute autre clé
+   lève une erreur) ;
+2. **exceptions sans message** : une trace ne garde que les types et les emplacements
+   (`exc_summary`). Les messages recopient souvent l'entrée : `InvalidUrlError` cite
+   l'URL, une erreur `httpx` l'URL de la source appelée, clé de Safe Browsing comprise ;
+3. **caviardage de tous les journaux**, ceux des bibliothèques compris : URLs, emails et
+   clés d'API remplacés (`[url]`, `[email]`, `[api-key]`), champs sensibles masqués,
+   caractères de contrôle neutralisés (pas de fausses lignes injectées), chaînes
+   tronquées. Effet de bord assumé : « Uvicorn running on [url] ».
+
+Le journal d'accès d'uvicorn est coupé (`access_log=False`) : il écrit le chemin brut, la
+chaîne de requête et l'IP du client. Les tests (`tests/test_api_logging.py`) analysent
+une URL, un message et un email contenant un jeton secret, au niveau DEBUG, et vérifient
+qu'il n'apparaît dans aucune ligne, y compris sur les chemins d'erreur (URL invalide,
+validation, 500, chemin inconnu, clé refusée).
+
 ## Proxy inverse
 
 Derrière un proxy, l'API voit l'IP du proxy ; le proxy ajoute celle du client dans
@@ -280,6 +324,7 @@ tourne dans le pool de threads de Starlette (`run_in_threadpool`), jamais sur la
 asynchrone. L'enrichissement par la Threat Intelligence reste sur la boucle, propriétaire
 du client HTTP partagé ; `UrlAnalyzer.analyze(run_sync=...)` sépare les deux.
 
-Ordre des couches, de l'extérieur vers l'intérieur : en-têtes de sécurité, CORS, délai et
+Ordre des couches, de l'extérieur vers l'intérieur : en-têtes de sécurité, journal de la
+requête, CORS, délai et
 filet d'erreurs, limite de débit, taille du corps, routage, authentification, validation,
 service.
