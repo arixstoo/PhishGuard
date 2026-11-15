@@ -1,0 +1,191 @@
+name: security
+
+# Étape 4.8 : analyse statique du code, dépendances vulnérables, secrets.
+# Chaque job est bloquant. Exécution aussi chaque semaine : une vulnérabilité publiée
+# aujourd'hui touche des dépendances qui n'ont pas changé depuis le dernier commit.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 5 * * 1' # lundi, 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bandit:
+    name: Analyse statique (bandit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: '0.12.13'
+
+      # Tous niveaux de gravité : la base est propre, toute nouvelle alerte est examinée.
+      # Une exception justifiée s'écrit « # nosec <test> » avec sa raison en commentaire.
+      - name: bandit -r src
+        run: uv run --locked --extra dev --python 3.12 bandit -r src
+
+  pip-audit:
+    name: Dépendances vulnérables (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: '0.12.13'
+
+      # Tout le fichier de verrouillage, extras compris (explain, embeddings, dev), avec les
+      # empreintes : on audite exactement ce que la CI et l'image installent.
+      - name: Export de uv.lock
+        run: |
+          uv export --locked --all-extras --no-emit-project --no-header \
+            --format requirements-txt -o "$RUNNER_TEMP/requirements.txt"
+
+      # pip-audit lui-même vient de uv.lock (extra dev), empreintes vérifiées.
+      - name: pip-audit
+        run: |
+          uv run --locked --extra dev --python 3.12 pip-audit --disable-pip --require-hashes \
+            --progress-spinner off -r "$RUNNER_TEMP/requirements.txt"
+
+  gitleaks:
+    name: Secrets (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Même version que .pre-commit-config.yaml. Binaire officiel vérifié par son
+      # empreinte SHA-256 (gitleaks_8.30.1_checksums.txt), plutôt qu'une action tierce.
+      GITLEAKS_VERSION: '8.30.1'
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # tout l'historique : un secret retiré reste dans les anciens commits
+          persist-credentials: false
+
+      - name: Installation de gitleaks
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+
+      - name: gitleaks git
+        run: |
+          "$RUNNER_TEMP/gitleaks" git . --redact --no-banner --verbose
+
+  image:
+    # Étape 4.9 : l'image est construite, analysée, puis démarrée sur cette machine propre
+    # avec de petits modèles synthétiques (docs/docker.md).
+    name: Image Docker (trivy, démarrage)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      IMAGE: phishguard-api:ci
+      # Image officielle de trivy épinglée par version et par empreinte : une étiquette
+      # republiée (compromission de la chaîne de publication) ne change pas ce qui tourne.
+      TRIVY_IMAGE: ghcr.io/aquasecurity/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Construction de l'image
+        run: docker build --target runtime --tag "$IMAGE" .
+
+      # Bloquant : toute vulnérabilité HIGH ou CRITICAL qui a un correctif (paquets Debian
+      # et Python), et tout secret présent dans une couche. Les failles sans correctif
+      # publié sont listées par l'étape suivante, sans bloquer : il n'y a rien à appliquer.
+      - name: trivy image (bloquant)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" "$TRIVY_IMAGE" \
+            image --scanners vuln,secret --severity HIGH,CRITICAL --ignore-unfixed \
+            --exit-code 1 --no-progress "$IMAGE"
+
+      - name: trivy image (rapport complet)
+        if: always()
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" "$TRIVY_IMAGE" \
+            image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --skip-db-update \
+            --no-progress "$IMAGE"
+
+      # Mauvaises configurations du Dockerfile (utilisateur root, étiquette mobile, secrets
+      # en variables d'image…).
+      - name: trivy config
+        run: |
+          docker run --rm -v "$PWD:/src:ro" "$TRIVY_IMAGE" \
+            config --severity HIGH,CRITICAL --exit-code 1 /src
+
+      - name: Propriétés de l'image
+        run: |
+          test "$(docker image inspect --format '{{.Config.User}}' "$IMAGE")" = "10001:10001"
+          docker run --rm --entrypoint python "$IMAGE" -c '
+          import importlib.util, os, pathlib
+          assert os.getuid() == 10001 and os.getgid() == 10001, "utilisateur root"
+          assert importlib.util.find_spec("pip") is None, "pip présent"
+          for tool in ("uv", "curl", "wget"):
+              assert not pathlib.Path("/usr/bin", tool).exists(), tool
+          assert not list(pathlib.Path("/app/models").iterdir()), "modèle dans l image"
+          for name in (".env", ".env.docker"):
+              assert not pathlib.Path("/app", name).exists(), name
+          '
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: '0.12.13'
+
+      # Modèles synthétiques signés par une clé éphémère, créée et jetée dans ce job :
+      # la chaîne complète (manifeste, signature, vérification au démarrage) est testée
+      # sans que la clé de publication ne s'approche jamais de la CI (étape 4.12).
+      - name: Modèles de test (synthétiques, signés)
+        run: |
+          uv run --locked --extra dev --python 3.12 \
+            python scripts/smoke_models.py --output-dir "$RUNNER_TEMP/models"
+          uv run --locked --extra dev --python 3.12 python scripts/sign_models.py keygen \
+            --private-key "$RUNNER_TEMP/ephemeral/signing.key" \
+            --public-key "$RUNNER_TEMP/ephemeral/signing.pub"
+          uv run --locked --extra dev --python 3.12 python scripts/sign_models.py sign \
+            --private-key "$RUNNER_TEMP/ephemeral/signing.key" --models-dir "$RUNNER_TEMP/models"
+          rm "$RUNNER_TEMP/ephemeral/signing.key"
+          chmod -R a+rX "$RUNNER_TEMP/models" "$RUNNER_TEMP/ephemeral"
+
+      - name: docker compose up
+        env:
+          PHISHGUARD_MODELS_HOST_DIR: ${{ runner.temp }}/models
+          PHISHGUARD_MODELS_PUBLIC_KEY_HOST: ${{ runner.temp }}/ephemeral/signing.pub
+        run: |
+          docker tag "$IMAGE" phishguard-api:local
+          docker compose up --no-build --detach --wait --wait-timeout 120
+          bash scripts/docker_smoke.sh http://127.0.0.1:8000
+          # trivy config n'analyse pas le compose : durcissement vérifié sur le conteneur lancé.
+          cid="$(docker compose ps --quiet api)"
+          test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$cid")" = true
+          test "$(docker inspect --format '{{.HostConfig.CapDrop}}' "$cid")" = "[ALL]"
+          docker inspect --format '{{.HostConfig.SecurityOpt}}' "$cid" | grep -q 'no-new-privileges:true'
+          docker inspect --format '{{range .Mounts}}{{.Destination}}={{.RW}} {{end}}' "$cid" \
+            | grep -q '/app/models=false'
+
+      - name: Journal du conteneur
+        if: failure()
+        run: docker compose logs --no-color api
+
+      - name: docker compose down
+        if: always()
+        run: docker compose down --volumes

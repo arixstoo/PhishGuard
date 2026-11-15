@@ -7,14 +7,30 @@ légitimes longues) pour que les modèles fassent des erreurs à analyser.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import HealthCheck, settings
 
 from phishguard.data.split import temporal_group_split
 from phishguard.data.urls import COLUMNS
+
+# Profils hypothesis (étape 4.7), choisis par ``--hypothesis-profile`` :
+# - default : 100 exemples par propriété, pour la suite courante ;
+# - fuzz : 1 000 exemples (``make fuzz``, job de la CI) ;
+# - ci : comme default, avec la graine d'un échec affichée pour le rejouer.
+# Un test qui fixe son propre ``max_examples`` le garde dans tous les profils.
+settings.register_profile("ci", print_blob=True)
+settings.register_profile(
+    "fuzz",
+    max_examples=1000,
+    deadline=None,
+    print_blob=True,
+    suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large],
+)
 
 START = pd.Timestamp("2026-01-01", tz="UTC")
 _WORDS = ("alpha", "nova", "green", "pixel", "metro", "solar", "river", "lumen", "terra")
@@ -64,6 +80,28 @@ def split_dataset_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
     path = tmp_path_factory.mktemp("data") / "urls_split.parquet"
     df.assign(split=temporal_group_split(df)).to_parquet(path, index=False)
     return path
+
+
+@pytest.fixture(autouse=True)
+def _restore_logging() -> Iterator[None]:
+    """Un test qui installe le journal de l'API (étape 4.6) ne le laisse pas aux suivants."""
+    import logging
+
+    import structlog
+
+    root = logging.getLogger()
+    handlers, level = list(root.handlers), root.level
+    uvicorn_state = {
+        name: (list(logging.getLogger(name).handlers), logging.getLogger(name).propagate)
+        for name in ("uvicorn", "uvicorn.error")
+    }
+    yield
+    root.handlers[:] = handlers
+    root.setLevel(level)
+    for name, (saved, propagate) in uvicorn_state.items():
+        logging.getLogger(name).handlers[:] = saved
+        logging.getLogger(name).propagate = propagate
+    structlog.reset_defaults()
 
 
 @pytest.fixture(autouse=True)

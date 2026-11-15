@@ -1,0 +1,12 @@
+# Surcharge du compose pour le test de charge (étape 4.13, docs/load-test.md).
+#
+#   docker compose -f docker-compose.yml -f scripts/loadtest/compose.loadtest.yml up -d --wait
+#
+# Seul changement : le quota d'une clé d'API, relevé pour que 50 requêtes par seconde
+# pendant une minute (3 000 requêtes) ne reçoivent pas de 429. Le limiteur reste actif et
+# compte chaque requête : son coût fait partie de la mesure. Tout le reste (production,
+# lecture seule, ressources bornées, modèles signés) est celui du compose normal.
+services:
+  api:
+    environment:
+      PHISHGUARD_API_RATE_LIMIT_AUTHENTICATED: 100000/minute

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "phishguard"
-version = "0.3.0"
+version = "0.4.0"
 description = "Open-source, explainable and privacy-first phishing detection (URL, SMS, email)."
 readme = "README.md"
 license = { text = "MIT" }
@@ -32,6 +32,10 @@ dependencies = [
     # API HTTP (module 4)
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.20",  # téléversement des .eml ; < 0.0.18 : CVE-2024-53981
+    "limits>=4.0",  # limites de débit, stockage asynchrone (étape 4.4)
+    "structlog>=24.1",  # journal structuré sans données personnelles (étape 4.6)
+    "cryptography>=44.0",  # signature Ed25519 du manifeste des modèles (étape 4.12)
 ]
 
 [project.optional-dependencies]
@@ -43,6 +47,8 @@ dev = [
     "hypothesis",
     "respx",  # réponses HTTP simulées pour les enrichisseurs (module 2)
     "shap>=0.46",  # les tests comparent les valeurs SHAP de LightGBM à la référence (étape 3.1)
+    "bandit>=1.8",  # analyse statique du code (étape 4.8)
+    "pip-audit>=2.7",  # dépendances vulnérables connues (étape 4.8)
 ]
 # Graphiques SHAP de `make explain-url` (étape 3.1). L'analyse elle-même n'en a pas besoin :
 # les valeurs SHAP du modèle URL sont calculées par LightGBM.
@@ -68,3 +74,6 @@ force-exclude = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "fuzz: propriétés hypothesis des parseurs et de l'API (étape 4.7) ; make fuzz en lance 1 000 exemples",
+]

@@ -4,6 +4,9 @@
 __pycache__/
 *.py[cod]
 .env
+# Clés privées : jamais versionnées (keys/ ne contient que des clés publiques).
+*.key
+*.pem
 .env.*
 !.env.example
 node_modules/
@@ -15,3 +18,4 @@ build/
 .ruff_cache/
 .coverage
 htmlcov/
+.hypothesis/

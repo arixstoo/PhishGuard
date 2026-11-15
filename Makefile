@@ -18,11 +18,11 @@ EMAIL_SAMPLES := data/raw/emails/phishing_pot/manifest.json
 EMAIL_SAMPLE_COUNT := 200
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format test \
+.PHONY: help install sync lock audit lint format test fuzz \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
-	api
+	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -32,8 +32,25 @@ help: ## Affiche cette aide
 # Outils
 # --------------------------------------------------------------------------- #
 
-install: ## Installe le paquet et les outils de développement
+install: ## Installe le paquet et les outils de développement (versions non verrouillées)
 	$(PYTHON) -m pip install -e '.[dev]'
+
+sync: ## Environnement reproductible : versions et empreintes exactes de uv.lock (étape 4.8)
+	uv sync --locked --extra dev
+
+lock: ## Met à jour uv.lock après une modification des dépendances de pyproject.toml
+	uv lock
+
+# Tout uv.lock, extras compris, avec les empreintes : ce que la CI installe.
+AUDIT_REQUIREMENTS := $(or $(TMPDIR),/tmp)/phishguard-audit-requirements.txt
+
+audit: ## Dépendances vulnérables (pip-audit), analyse statique (bandit), secrets (gitleaks)
+	uv export --locked --all-extras --no-emit-project --no-header --quiet \
+		--format requirements-txt -o $(AUDIT_REQUIREMENTS)
+	$(PYTHON) -m pip_audit --disable-pip --require-hashes --progress-spinner off \
+		-r $(AUDIT_REQUIREMENTS)
+	$(PYTHON) -m bandit -q -r src
+	gitleaks git . --redact --no-banner
 
 lint: ## Vérifie le style (ruff)
 	$(PYTHON) -m ruff check .
@@ -43,8 +60,14 @@ format: ## Corrige le style (ruff)
 	$(PYTHON) -m ruff check --fix .
 	$(PYTHON) -m ruff format .
 
-test: ## Lance les tests avec couverture
-	$(PYTHON) -m pytest --cov=phishguard
+# Seuil de couverture de la suite complète (cahier des charges : 70 % ; mesurée : 97 %).
+COVERAGE_MIN := 90
+
+test: ## Lance les tests avec couverture (échoue sous COVERAGE_MIN %)
+	$(PYTHON) -m pytest --cov=phishguard --cov-report=term --cov-fail-under=$(COVERAGE_MIN)
+
+fuzz: ## Fuzzing hypothesis des parseurs et de l'API, 1 000 exemples par propriété (étape 4.7)
+	$(PYTHON) -m pytest -m fuzz --hypothesis-profile=fuzz --hypothesis-show-statistics -q
 
 # --------------------------------------------------------------------------- #
 # Données (étapes 1.1 à 1.4)
@@ -154,9 +177,55 @@ cards: ## Met à jour les chiffres des model cards et du README depuis docs/metr
 schema: ## Régénère le schéma JSON de la réponse d'analyse (étape 2.11 bis)
 	$(PYTHON) scripts/export_schema.py
 
+# Clé privée de signature : hors du dépôt (refusée dedans), chiffrée par
+# PHISHGUARD_SIGNING_PASSPHRASE (étape 4.12, docs/model-registry.md).
+SIGNING_KEY ?= $(HOME)/.config/phishguard/model-signing.key
+PUBLIC_KEY := keys/model-signing.pub
+
+keygen: ## Crée la paire de clés Ed25519 de signature des modèles (une seule fois)
+	$(PYTHON) scripts/sign_models.py keygen --private-key $(SIGNING_KEY) --public-key $(PUBLIC_KEY)
+
+sign: ## Écrit et signe models/manifest.json (modèles déployés, calibrations, export)
+	$(PYTHON) scripts/sign_models.py sign --private-key $(SIGNING_KEY)
+
+verify: ## Vérifie la signature du manifeste et l'empreinte de chaque modèle
+	$(PYTHON) scripts/verify_models.py --public-key $(PUBLIC_KEY)
+
+export: ## Modèle URL déployé (url_v2) en JSON pour l'extension et vecteurs de référence (étape 4.11)
+	$(PYTHON) scripts/export_model.py
+
 # --------------------------------------------------------------------------- #
 # API (module 4)
 # --------------------------------------------------------------------------- #
 
 api: ## Lance l'API sur 127.0.0.1:8000, documentation sur /docs (étape 4.1)
 	$(PYTHON) -m phishguard.api
+
+api-key: ## Crée une clé d'API, affichée une seule fois : make api-key NAME=extension-dev (étape 4.4)
+	@test -n "$(NAME)" || (echo "usage : make api-key NAME=<usage de la clé>" && exit 1)
+	$(PYTHON) -m phishguard.api.keys create --name "$(NAME)"
+
+# --------------------------------------------------------------------------- #
+# Image Docker (étape 4.9, docs/docker.md)
+# --------------------------------------------------------------------------- #
+
+IMAGE ?= phishguard-api:local
+# Même image épinglée que la CI (.github/workflows/security.yml).
+TRIVY_IMAGE := ghcr.io/aquasecurity/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+
+docker-build: ## Construit l'image durcie de l'API (sans modèle ni secret)
+	docker build --target runtime --tag $(IMAGE) .
+
+docker-scan: ## Analyse l'image et sa configuration avec trivy, comme la CI
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro $(TRIVY_IMAGE) 		image --scanners vuln,secret --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 $(IMAGE)
+	docker run --rm -v "$(CURDIR):/src:ro" $(TRIVY_IMAGE) 		config --severity HIGH,CRITICAL --exit-code 1 /src
+
+docker-up: ## Lance l'API en conteneur (127.0.0.1:8000, modèles de ./models en lecture seule)
+	docker compose up --build --detach --wait
+	bash scripts/docker_smoke.sh http://127.0.0.1:8000
+
+docker-down: ## Arrête le conteneur (le volume de la base est conservé)
+	docker compose down
+
+loadtest: ## Test de charge : 50 req/s pendant 60 s sur l'analyse d'URL, k6 en conteneur (étape 4.13)
+	bash scripts/loadtest/run.sh 50 60s

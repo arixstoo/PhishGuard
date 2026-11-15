@@ -42,7 +42,7 @@ from __future__ import annotations
 import logging
 import math
 import time
-from collections.abc import Iterable, Mapping
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -93,6 +93,10 @@ INFORMATION_FEATURES = ("host_kw_hits", "path_kw_hits")
 # Pourquoi l'enrichissement n'a pas eu lieu : non demandé (ou aucune source configurée),
 # ou URL interne, jamais envoyée à des tiers.
 SkipReason = Literal["not_requested", "internal_host"]
+
+# Exécute une fonction synchrone hors de la boucle asynchrone et attend son résultat :
+# ``starlette.concurrency.run_in_threadpool`` (API, étape 4.3) ou ``asyncio.to_thread``.
+SyncRunner = Callable[..., Awaitable[Any]]
 
 
 def is_internal_host(parsed: ParsedUrl) -> bool:
@@ -180,6 +184,19 @@ class UrlAnalysis:
         }
 
 
+@dataclass(frozen=True)
+class _LocalUrlScore:
+    """Partie locale de l'analyse d'une URL, calculée avant l'enrichissement."""
+
+    parsed: ParsedUrl
+    normalization: NormalizationReport
+    host_alert: HostAlert | None
+    raw: float
+    probability: float
+    explanation: UrlExplanation | None
+    features: Mapping[str, float]  # constats ATT&CK (marques, mots-clés)
+
+
 class UrlAnalyzer:
     """Analyse d'URLs. ``orchestrator`` peut être absent : l'analyse reste alors locale.
 
@@ -233,22 +250,23 @@ class UrlAnalyzer:
         enrichment: bool = False,
         allowlisted: bool = False,
         blocklisted: bool = False,
+        run_sync: SyncRunner | None = None,
     ) -> UrlAnalysis:
-        """Analyse ``url``. L'enrichissement (envoi à des tiers) est désactivé par défaut."""
+        """Analyse ``url``. L'enrichissement (envoi à des tiers) est désactivé par défaut.
+
+        ``run_sync`` : exécuteur du calcul local (features, modèle, SHAP), qui occupe le
+        processeur plusieurs millisecondes. Un serveur asynchrone passe un pool de threads
+        (``run_in_threadpool``) pour ne pas bloquer sa boucle ; l'enrichissement reste,
+        lui, sur la boucle de l'appelant, propriétaire du client HTTP partagé.
+        """
         start = time.perf_counter()
-        parsed = parse_url(url)  # lève InvalidUrlError si l'URL est invalide
+        local = (
+            self._score_locally(url)
+            if run_sync is None
+            else await run_sync(self._score_locally, url)
+        )
+        parsed, host_alert = local.parsed, local.host_alert
         domain = parsed.registered_domain
-        # Normalisation (étape 3.8) : faite par parse_url ; journalisée ici, une fois.
-        normalization = normalize_url_text(url).report
-        log_normalization(normalization, "url")
-        host_alert = host_script_alert(parsed.host)
-        if host_alert is not None:
-            logger.info("hôte qui imite des lettres latines (%s)", host_alert)
-        raw, explanation = self._score(url)
-        if not math.isfinite(raw):
-            # min/max transformeraient NaN en 0, donc en verdict « sûr » : on refuse.
-            raise ValueError(f"score du modèle non fini : {raw!r}")
-        probability = self.calibrator(raw) if self.calibrator else min(1.0, max(0.0, raw))
 
         skipped: SkipReason | None = None
         if not enrichment or self.orchestrator is None:
@@ -264,24 +282,25 @@ class UrlAnalyzer:
 
         # La règle dure locale passe par la fusion, pas par les signaux de la réponse :
         # aucune source externe n'a été interrogée pour elle.
-        local = lookalike_host_signal(host_alert)
+        local_signal = lookalike_host_signal(host_alert)
         fusion = fuse(
-            probability,
-            (*enriched.signals, *((local,) if local is not None else ())),
+            local.probability,
+            (*enriched.signals, *((local_signal,) if local_signal is not None else ())),
             allowlisted=allowlisted,
             blocklisted=blocklisted,
             config=self.config,
         )
         mitre = map_techniques(
-            fusion.verdict, self._observations(url, enriched, lookalike=host_alert is not None)
+            fusion.verdict,
+            self._observations(local.features, enriched, lookalike=host_alert is not None),
         )
         return UrlAnalysis(
             url=url,
             domain=domain,
             verdict=fusion.verdict,
             score=fusion.score,
-            model_score=raw,
-            model_probability=probability,
+            model_score=local.raw,
+            model_probability=local.probability,
             calibrated=self.calibrator is not None,
             fusion=fusion,
             enrichment=enriched,
@@ -289,10 +308,38 @@ class UrlAnalyzer:
             latency_ms=round((time.perf_counter() - start) * 1000),
             enrichment_skipped=skipped,
             model_version=self.model_version,
-            explanation=explanation,
+            explanation=local.explanation,
             model_thresholds=self.model_thresholds,
             host_alert=host_alert,
+            normalization=local.normalization,
+        )
+
+    def _score_locally(self, url: str) -> _LocalUrlScore:
+        """Tout le calcul local, sans réseau : normalisation, score, explication, constats.
+
+        Synchrone et sans état partagé modifiable : sûr dans un thread de travail.
+        """
+        parsed = parse_url(url)  # lève InvalidUrlError si l'URL est invalide
+        # Normalisation (étape 3.8) : faite par parse_url ; journalisée ici, une fois.
+        normalization = normalize_url_text(url).report
+        log_normalization(normalization, "url")
+        host_alert = host_script_alert(parsed.host)
+        if host_alert is not None:
+            logger.info("hôte qui imite des lettres latines (%s)", host_alert)
+        raw, explanation = self._score(url)
+        if not math.isfinite(raw):
+            # min/max transformeraient NaN en 0, donc en verdict « sûr » : on refuse.
+            raise ValueError(f"score du modèle non fini : {raw!r}")
+        probability = self.calibrator(raw) if self.calibrator else min(1.0, max(0.0, raw))
+        features: Mapping[str, float] = self._features.transform([url]).iloc[0].to_dict()
+        return _LocalUrlScore(
+            parsed=parsed,
             normalization=normalization,
+            host_alert=host_alert,
+            raw=raw,
+            probability=probability,
+            explanation=explanation,
+            features=features,
         )
 
     def _score(self, url: str) -> tuple[float, UrlExplanation | None]:
@@ -314,10 +361,10 @@ class UrlAnalyzer:
             explanation = None
         return raw, explanation
 
+    @staticmethod
     def _observations(
-        self, url: str, enriched: EnrichmentResult, *, lookalike: bool = False
+        features: Mapping[str, float], enriched: EnrichmentResult, *, lookalike: bool = False
     ) -> Observations:
-        features: Mapping[str, float] = self._features.transform([url]).iloc[0].to_dict()
         domain = domain_observations(enriched.signals, features)
         domain["lookalike_domain"] = domain["lookalike_domain"] or lookalike
         return Observations(

@@ -13,9 +13,21 @@ qui le produit : mieux vaut un service qui ne démarre pas qu'un service qui ré
 Organisation :
 
 - ``settings.py``   configuration (``pydantic-settings``, préfixe ``PHISHGUARD_API_``) ;
-- ``schemas.py``    schémas de l'API ;
+- ``schemas.py``    schémas d'entrée stricts (étape 4.2) ;
+- ``service.py``    logique d'analyse, sans HTTP (étape 4.3) ;
 - ``routers/``      ``analyze.py``, ``feedback.py``, ``meta.py`` ;
-- ``errors.py``     enveloppe d'erreur commune, sans trace de pile.
+- ``security.py``   IP réelle du client et clés d'API (étape 4.4) ;
+- ``ratelimit.py``  limites de débit (étape 4.4) ;
+- ``storage.py``    base SQLite : empreintes des clés, retours en quarantaine ;
+- ``errors.py``     enveloppe d'erreur commune, sans trace ni recopie de l'entrée ;
+- ``middleware.py`` limite de taille des corps de requête ;
+- ``hardening.py``  en-têtes de sécurité, CORS, délai par requête (étape 4.5) ;
+- ``logs.py``       journal sans données personnelles, identifiant de requête (étape 4.6).
+
+Ordre des couches, de l'extérieur vers l'intérieur : en-têtes de sécurité, journal de la
+requête, CORS, délai et filet d'erreurs, limite de débit (avant toute lecture du corps), limite de taille du
+corps, routage, authentification, validation, service. Les trois premières sont à
+l'extérieur pour que **toute** réponse, même un 429 ou un 500, porte les mêmes en-têtes.
 """
 
 from __future__ import annotations
@@ -24,27 +36,55 @@ import logging
 from collections.abc import AsyncIterator, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from starlette.concurrency import run_in_threadpool
+from starlette.middleware.cors import CORSMiddleware
 
 from phishguard.api.dependencies import AppState
 from phishguard.api.errors import install_error_handlers
+from phishguard.api.hardening import (
+    RequestGuardMiddleware,
+    SecurityHeadersMiddleware,
+    cors_options,
+    security_headers,
+)
+from phishguard.api.logs import RequestLogMiddleware, configure_logging
+from phishguard.api.middleware import MULTIPART_OVERHEAD, BodySizeLimitMiddleware
+from phishguard.api.ratelimit import RateLimiter, RateLimitMiddleware
 from phishguard.api.routers import analyze, feedback, meta
+from phishguard.api.security import authenticated_client
+from phishguard.api.service import AnalysisService, describe_models
 from phishguard.api.settings import ApiSettings, get_api_settings
+from phishguard.api.storage import Database
 from phishguard.api.version import api_version
 from phishguard.deployment import Analyzers, load_analyzers
+from phishguard.email.parser import EmailLimits
 from phishguard.enrichers.orchestrator import Orchestrator
+from phishguard.registry import ManifestError, load_public_key
 
 logger = logging.getLogger(__name__)
 
 API_PREFIX = "/v1"
+EMAIL_ROUTE = f"{API_PREFIX}/analyze/email"
+FEEDBACK_ROUTE = f"{API_PREFIX}{feedback.FEEDBACK_ROUTE}"
+HEALTH_ROUTE = f"{API_PREFIX}/health"
 
 # Fabrique des analyseurs : les tests en injectent une qui construit de petits modèles.
 AnalyzersFactory = Callable[[ApiSettings, Orchestrator | None], Analyzers]
 
 
 def _deployed_analyzers(settings: ApiSettings, orchestrator: Orchestrator | None) -> Analyzers:
-    return load_analyzers(settings.models_dir, orchestrator=orchestrator)
+    public_key = None
+    if settings.models_public_key is not None:
+        public_key = load_public_key(settings.models_public_key)
+    else:
+        logger.warning("modèles chargés sans vérification de signature (développement)")
+    return load_analyzers(
+        settings.models_dir,
+        orchestrator=orchestrator,
+        email_limits=EmailLimits(max_bytes=settings.max_email_bytes),
+        public_key=public_key,
+    )
 
 
 def create_app(
@@ -53,7 +93,7 @@ def create_app(
     analyzers_factory: AnalyzersFactory | None = None,
 ) -> FastAPI:
     """Construit l'application. ``analyzers_factory`` remplace le chargement des modèles
-    déployés (tests)."""
+    déployés (tests) ; les empreintes de ``GET /v1/model`` ne sont alors pas calculées."""
     settings = settings or get_api_settings()
     factory = analyzers_factory or _deployed_analyzers
 
@@ -66,12 +106,27 @@ def create_app(
                 stack.push_async_callback(orchestrator.aclose)
                 logger.info("Threat Intelligence active : %s", ", ".join(orchestrator.sources))
             # Chargement (pickle, plusieurs secondes) hors de la boucle asynchrone.
-            analyzers = await run_in_threadpool(factory, settings, orchestrator)
-            app.state.phishguard = AppState(settings=settings, analyzers=analyzers)
+            try:
+                analyzers = await run_in_threadpool(factory, settings, orchestrator)
+            except (ManifestError, FileNotFoundError, TypeError, ValueError) as exc:
+                # La trace est tronquée par le caviardage du journal (étape 4.6) : la cause
+                # tient sur une ligne. Ces messages ne citent que des fichiers de modèles.
+                logger.error("modèles refusés, démarrage annulé : %s", exc)
+                raise
+            models = await run_in_threadpool(
+                describe_models,
+                analyzers,
+                settings.models_dir if analyzers_factory is None else None,
+            )
+            app.state.phishguard = AppState(
+                settings=settings,
+                database=Database(settings.database_path),
+                service=AnalysisService(analyzers),
+                models=models,
+            )
             logger.info(
-                "API prête : url=%s, text=%s",
-                analyzers.url.model_version,
-                analyzers.text.model_version,
+                "API prête : %s",
+                ", ".join(f"{kind}={m.version}" for kind, m in models.models.items()),
             )
             yield
 
@@ -80,19 +135,50 @@ def create_app(
         version=api_version(),
         summary="Détection de phishing explicable et respectueuse de la vie privée.",
         lifespan=lifespan,
-        docs_url="/docs" if settings.docs_enabled else None,
-        redoc_url="/redoc" if settings.docs_enabled else None,
-        openapi_url="/openapi.json" if settings.docs_enabled else None,
+        # Jamais de page de débogage Starlette (trace de pile et variables) : explicite.
+        debug=False,
+        docs_url="/docs" if settings.docs_active else None,
+        redoc_url="/redoc" if settings.docs_active else None,
+        openapi_url="/openapi.json" if settings.docs_active else None,
+        swagger_ui_oauth2_redirect_url="/docs/oauth2-redirect" if settings.docs_active else None,
     )
 
     install_error_handlers(app)
 
-    v1 = APIRouter(prefix=API_PREFIX)
+    # add_middleware empile : le dernier ajouté est le plus extérieur.
+    app.add_middleware(
+        BodySizeLimitMiddleware,
+        default_limit=settings.max_json_bytes,
+        route_limits={EMAIL_ROUTE: settings.max_email_bytes + MULTIPART_OVERHEAD},
+    )
+
+    v1 = APIRouter(prefix=API_PREFIX, dependencies=[Depends(authenticated_client)])
     v1.include_router(analyze.router)
     v1.include_router(feedback.router)
     v1.include_router(meta.router)
     app.include_router(meta.health_router, prefix=API_PREFIX)
     app.include_router(v1)
+
+    # Modèles des routes, tirés du schéma OpenAPI (API publique, calculé même si /docs est
+    # désactivé) : les routeurs inclus ne sont pas listés dans app.routes.
+    routes = frozenset(app.openapi()["paths"])
+    app.add_middleware(
+        RateLimitMiddleware,
+        limiter=RateLimiter(settings, route_limits={FEEDBACK_ROUTE: settings.rate_limit_feedback}),
+        routes=routes,
+        exempt_paths=[HEALTH_ROUTE],
+    )
+
+    # Couches extérieures (étape 4.5), de l'intérieur vers l'extérieur.
+    app.add_middleware(RequestGuardMiddleware, timeout_seconds=settings.request_timeout_seconds)
+    if (cors := cors_options(settings)) is not None:
+        app.add_middleware(CORSMiddleware, **cors)
+    app.add_middleware(RequestLogMiddleware, routes=routes)  # préflights CORS compris
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        headers=security_headers(settings),
+        docs_enabled=settings.docs_active,
+    )
     return app
 
 
@@ -101,7 +187,10 @@ def __getattr__(name: str) -> FastAPI:
     importer le module (tests, outils) ne lit ni la configuration ni les modèles."""
     if name == "app":
         global app
-        app = create_app()
+        settings = get_api_settings()
+        # Chaque worker uvicorn importe l'application : chacun installe le journal.
+        configure_logging(settings)
+        app = create_app(settings)
         return app
     raise AttributeError(name)
 
