@@ -20,10 +20,13 @@ Organisation :
 - ``ratelimit.py``  limites de débit (étape 4.4) ;
 - ``storage.py``    base SQLite : empreintes des clés, retours en quarantaine ;
 - ``errors.py``     enveloppe d'erreur commune, sans trace ni recopie de l'entrée ;
-- ``middleware.py`` limite de taille des corps de requête.
+- ``middleware.py`` limite de taille des corps de requête ;
+- ``hardening.py``  en-têtes de sécurité, CORS, délai par requête (étape 4.5).
 
-Ordre des couches, de l'extérieur vers l'intérieur : limite de débit (avant toute lecture
-du corps), limite de taille du corps, routage, authentification, validation, service.
+Ordre des couches, de l'extérieur vers l'intérieur : en-têtes de sécurité, CORS, délai et
+filet d'erreurs, limite de débit (avant toute lecture du corps), limite de taille du
+corps, routage, authentification, validation, service. Les trois premières sont à
+l'extérieur pour que **toute** réponse, même un 429 ou un 500, porte les mêmes en-têtes.
 """
 
 from __future__ import annotations
@@ -34,9 +37,16 @@ from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI
 from starlette.concurrency import run_in_threadpool
+from starlette.middleware.cors import CORSMiddleware
 
 from phishguard.api.dependencies import AppState
 from phishguard.api.errors import install_error_handlers
+from phishguard.api.hardening import (
+    RequestGuardMiddleware,
+    SecurityHeadersMiddleware,
+    cors_options,
+    security_headers,
+)
 from phishguard.api.middleware import MULTIPART_OVERHEAD, BodySizeLimitMiddleware
 from phishguard.api.ratelimit import RateLimiter, RateLimitMiddleware
 from phishguard.api.routers import analyze, feedback, meta
@@ -109,9 +119,12 @@ def create_app(
         version=api_version(),
         summary="Détection de phishing explicable et respectueuse de la vie privée.",
         lifespan=lifespan,
-        docs_url="/docs" if settings.docs_enabled else None,
-        redoc_url="/redoc" if settings.docs_enabled else None,
-        openapi_url="/openapi.json" if settings.docs_enabled else None,
+        # Jamais de page de débogage Starlette (trace de pile et variables) : explicite.
+        debug=False,
+        docs_url="/docs" if settings.docs_active else None,
+        redoc_url="/redoc" if settings.docs_active else None,
+        openapi_url="/openapi.json" if settings.docs_active else None,
+        swagger_ui_oauth2_redirect_url="/docs/oauth2-redirect" if settings.docs_active else None,
     )
 
     install_error_handlers(app)
@@ -137,6 +150,16 @@ def create_app(
         # /docs est désactivé) : les routeurs inclus ne sont pas listés dans app.routes.
         routes=list(app.openapi()["paths"]),
         exempt_paths=[HEALTH_ROUTE],
+    )
+
+    # Couches extérieures (étape 4.5), de l'intérieur vers l'extérieur.
+    app.add_middleware(RequestGuardMiddleware, timeout_seconds=settings.request_timeout_seconds)
+    if (cors := cors_options(settings)) is not None:
+        app.add_middleware(CORSMiddleware, **cors)
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        headers=security_headers(settings),
+        docs_enabled=settings.docs_active,
     )
     return app
 

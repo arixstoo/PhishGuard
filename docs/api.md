@@ -6,7 +6,7 @@ délègue à la couche service. Toutes les analyses renvoient le contrat figé d
 2.11 bis ([response-schema.md](response-schema.md)).
 
 Étapes couvertes ici : 4.1 (squelette), 4.2 (entrées), 4.3 (service et endpoints), 4.4
-(authentification et limites). Les exemples `curl`, la politique de confidentialité et
+(authentification et limites), 4.5 (durcissement HTTP). Les exemples `curl`, la politique de confidentialité et
 les mesures de charge arrivent à l'étape 4.13.
 
 ## Lancement
@@ -24,8 +24,9 @@ Les modèles déployés (`url_v2`, `text_v2`, règles email, voir `phishguard.de
 sont chargés **une seule fois au démarrage** (`lifespan`). Un modèle manquant fait échouer
 le démarrage, avec la commande qui le produit.
 
-Documentation interactive : `/docs` (Swagger), `/redoc`, `/openapi.json`. Désactivable
-par `PHISHGUARD_API_DOCS_ENABLED=false` (l'étape 4.5 le fera en production).
+Documentation interactive : `/docs` (Swagger), `/redoc`, `/openapi.json`, en
+développement seulement. `PHISHGUARD_API_ENVIRONMENT=production` la ferme, et l'API
+refuse de démarrer si on tente de la forcer (voir [Durcissement HTTP](#durcissement-http-étape-45)).
 
 ## Configuration
 
@@ -36,7 +37,11 @@ invalide empêche le démarrage.
 |---|---|---|
 | `PHISHGUARD_API_MODELS_DIR` | `models` | dossier des modèles déployés |
 | `PHISHGUARD_API_DATABASE_PATH` | `data/api/phishguard.sqlite3` | base SQLite |
-| `PHISHGUARD_API_DOCS_ENABLED` | `true` | `/docs`, `/redoc`, `/openapi.json` |
+| `PHISHGUARD_API_ENVIRONMENT` | `development` | `production` : documentation fermée, HSTS, origines `http://` refusées |
+| `PHISHGUARD_API_DOCS_ENABLED` | selon l'environnement | `/docs`, `/redoc`, `/openapi.json` ; `true` refusé en production |
+| `PHISHGUARD_API_CORS_ALLOWED_ORIGINS` | vide | origines exactes autorisées depuis un navigateur |
+| `PHISHGUARD_API_CORS_MAX_AGE_SECONDS` | `600` | mise en cache des pré-vérifications CORS |
+| `PHISHGUARD_API_REQUEST_TIMEOUT_SECONDS` | `30` | durée maximale d'une requête, corps compris |
 | `PHISHGUARD_API_MAX_EMAIL_BYTES` | 1 Mio | taille maximale d'un email |
 | `PHISHGUARD_API_MAX_JSON_BYTES` | 64 Kio | taille maximale d'un corps JSON |
 | `PHISHGUARD_API_THREAT_INTEL_ENABLED` | `false` | autoriser l'enrichissement à la demande du client |
@@ -106,12 +111,14 @@ Une seule enveloppe, un `code` stable :
 | 400 | `invalid_input` | URL bien formée mais inanalysable (schéma `ftp:`, hôte vide) |
 | 401 | `invalid_api_key` | clé inconnue, révoquée, mal formée ou présentée deux fois |
 | 404 / 405 | `not_found` / `method_not_allowed` | route ou méthode inconnue |
+| 408 | `request_timeout` | corps reçu trop lentement (délai par requête) |
 | 413 | `payload_too_large` | corps ou fichier trop gros |
 | 415 | `unsupported_media_type` | corps non JSON, fichier qui n'est pas un email |
 | 422 | `validation_error` | entrée hors schéma (taille, type, caractère, JSON malformé) |
 | 429 | `rate_limited` | limite de débit atteinte (`Retry-After`) |
 | 500 | `internal_error` | défaut du serveur, sans aucun détail |
 | 503 | `service_unavailable` | base des clés indisponible |
+| 503 | `timeout` | traitement plus long que le délai par requête (`Retry-After`) |
 
 **L'entrée n'est jamais renvoyée** : FastAPI recopie par défaut la valeur fautive
 (`input`) dans ses erreurs de validation, ce qui réfléchirait une URL de 100 000
@@ -168,6 +175,85 @@ appliquer la limite l'une de l'autre, et, par son middleware, la limite n'était
 appliquée du tout (slowapi 0.1.10). L'API utilise donc directement `limits`, le moteur de
 slowapi, en mode asynchrone, dans un middleware ASGI d'une centaine de lignes, testé.
 
+## Durcissement HTTP (étape 4.5)
+
+Trois couches à l'extérieur de toutes les autres (`phishguard.api.hardening`), pour que
+**toute** réponse en profite, y compris un 429, un 413 ou un 500.
+
+### En-têtes de sécurité
+
+| En-tête | Valeur | Raison |
+|---|---|---|
+| `X-Content-Type-Options` | `nosniff` | le navigateur ne réinterprète jamais le JSON |
+| `Cache-Control` | `no-store` | les réponses parlent des messages des utilisateurs |
+| `Content-Security-Policy` | `default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'` | l'API ne sert que du JSON |
+| `X-Frame-Options` | `DENY` | anciens navigateurs (doublon de `frame-ancestors`) |
+| `Referrer-Policy` | `no-referrer` | |
+| `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` | `same-origin` | isolation |
+| `Permissions-Policy` | API sensibles coupées | |
+| `Strict-Transport-Security` | `max-age=31536000` | production seulement (derrière TLS) |
+
+Aucun en-tête `Server` (`python -m phishguard.api`). La documentation interactive, en
+développement seulement, a sa propre politique de contenu : Swagger et ReDoc chargent
+leurs scripts depuis jsDelivr.
+
+```console
+$ PHISHGUARD_API_ENVIRONMENT=production make api
+$ curl -sI http://127.0.0.1:8000/v1/health
+HTTP/1.1 200 OK
+content-type: application/json
+x-content-type-options: nosniff
+cache-control: no-store
+x-frame-options: DENY
+referrer-policy: no-referrer
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+permissions-policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+x-permitted-cross-domain-policies: none
+strict-transport-security: max-age=31536000
+content-security-policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+```
+
+### CORS
+
+Une **liste explicite** d'origines (`PHISHGUARD_API_CORS_ALLOWED_ORIGINS`), vide par
+défaut : sans elle, aucune réponse ne porte d'en-tête CORS et les navigateurs bloquent
+tout appel venu d'un autre site.
+
+```bash
+PHISHGUARD_API_CORS_ALLOWED_ORIGINS=chrome-extension://<identifiant>,https://phishguard.example
+```
+
+- `*` est refusé au démarrage, comme `null` (origine des iframes isolées et des fichiers
+  locaux, qu'un attaquant obtient à volonté), un joker, un chemin ou une barre finale.
+- En production, une origine `http://` n'est admise que pour la boucle locale.
+- Méthodes `GET` et `POST`, en-têtes `Content-Type` et `X-API-Key` seulement ;
+  `Retry-After` et `X-RateLimit-*` lisibles par le client, même sur un 429.
+- **Pas d'identifiants de navigateur** (`allow_credentials=False`) : l'API ne connaît
+  aucun cookie, la clé est un en-tête que le client envoie lui-même.
+- `application/json` reste exigé (étape 4.2) : un autre site ne peut pas contourner la
+  pré-vérification avec une requête « simple » `text/plain`.
+
+### Délais et bornes
+
+- Délai par requête, **lecture du corps comprise** (`PHISHGUARD_API_REQUEST_TIMEOUT_SECONDS`,
+  30 s) : un client qui envoie son corps octet par octet reçoit 408 ; un traitement trop
+  long, 503 avec `Retry-After`. Le calcul ML d'un thread ne peut pas être interrompu : il
+  va à son terme et sa réponse tardive est jetée. Garder le thread est voulu : le pool
+  reste borné, alors qu'abandonner les threads laisserait un attaquant en empiler.
+- `python -m phishguard.api` : 100 connexions simultanées au plus (`--limit-concurrency`,
+  503 au-delà), connexions inactives fermées après 5 s (`--timeout-keep-alive`),
+  en-têtes bornés à 16 Kio.
+- Taille du corps bornée avant lecture (étape 4.2).
+
+### Erreurs et débogage
+
+- Jamais de trace de pile : `debug=False` explicite, et toute exception non prévue
+  devient un 500 sans détail. Ce filet est un middleware : le 500 de Starlette est produit
+  *à l'extérieur* des middlewares de l'application et perdrait les en-têtes de sécurité.
+- En production, `/docs`, `/redoc` et `/openapi.json` répondent 404 ; les forcer
+  (`PHISHGUARD_API_DOCS_ENABLED=true`) empêche le démarrage.
+
 ## Proxy inverse
 
 Derrière un proxy, l'API voit l'IP du proxy ; le proxy ajoute celle du client dans
@@ -194,5 +280,6 @@ tourne dans le pool de threads de Starlette (`run_in_threadpool`), jamais sur la
 asynchrone. L'enrichissement par la Threat Intelligence reste sur la boucle, propriétaire
 du client HTTP partagé ; `UrlAnalyzer.analyze(run_sync=...)` sépare les deux.
 
-Ordre des couches, de l'extérieur vers l'intérieur : limite de débit, taille du corps,
-routage, authentification, validation, service.
+Ordre des couches, de l'extérieur vers l'intérieur : en-têtes de sécurité, CORS, délai et
+filet d'erreurs, limite de débit, taille du corps, routage, authentification, validation,
+service.

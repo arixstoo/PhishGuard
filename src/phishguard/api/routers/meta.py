@@ -17,6 +17,8 @@ health_router = APIRouter(tags=["méta"])
 
 
 @health_router.get("/health", response_model=Health, summary="Le service répond")
+# HEAD aussi (sondes, ``curl -I``), hors schéma : une seule opération documentée.
+@health_router.head("/health", include_in_schema=False)
 async def health() -> Health:
     # Le lifespan a chargé les modèles avant la première requête : répondre suffit.
     return Health()
