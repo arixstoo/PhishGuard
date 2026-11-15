@@ -162,5 +162,9 @@ def install_error_handlers(app: FastAPI) -> None:
 # Réponses d'erreur communes, pour la documentation OpenAPI des routes.
 ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     status: {"model": ErrorResponse, "description": description}
-    for status, description in ((422, "Entrée invalide (taille, format, caractère de contrôle)"),)
+    for status, description in (
+        (401, "Clé d'API inconnue ou révoquée"),
+        (422, "Entrée invalide (taille, format, caractère de contrôle)"),
+        (429, "Limite de débit dépassée"),
+    )
 }
