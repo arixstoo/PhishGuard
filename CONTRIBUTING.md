@@ -9,10 +9,14 @@ Requires Python 3.11+ and git. On Windows, work inside WSL2.
 ```bash
 git clone https://github.com/arixstoo/PhishGuard.git && cd PhishGuard
 python -m venv .venv && source .venv/bin/activate
-pip install -e '.[dev]'
+pip install -e '.[dev]'     # or `make sync`: exact versions and hashes from uv.lock
 pre-commit install          # ruff (lint + format) and gitleaks (secret scan) on every commit
-pytest --cov=phishguard     # run the test suite
+make test                   # test suite, coverage >= 90 %
+make audit                  # pip-audit, bandit, gitleaks (same checks as CI)
 ```
+
+Changed a dependency in `pyproject.toml`? Run `make lock` and commit `uv.lock`: CI installs
+with `uv sync --locked` and fails on a stale lock file.
 
 ## Workflow
 
@@ -20,7 +24,8 @@ pytest --cov=phishguard     # run the test suite
 2. Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`,
    `test:`, `chore:`, `ci:`.
 3. Add tests for any behaviour change. Every bug fixed becomes a regression test.
-4. Open a pull request against `master`; CI (ruff + pytest) must be green.
+4. Open a pull request against `master`; CI (`ci`: ruff, pytest, fuzzing; `security`:
+   bandit, pip-audit, gitleaks) must be green. See [docs/ci-security.md](docs/ci-security.md).
 
 ## Lab safety rules
 

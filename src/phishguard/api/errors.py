@@ -148,13 +148,23 @@ def sanitized_details(errors: Any) -> list[ErrorDetail]:
 # --------------------------------------------------------------------------- #
 
 
+# Chaque gestionnaire vérifie le type reçu par un ``if`` explicite : un ``assert`` serait
+# retiré par ``python -O``. Un type inattendu est un défaut de câblage, pas de l'entrée.
+
+
+def _miswired(handler: str, exc: Exception) -> TypeError:
+    return TypeError(f"gestionnaire {handler} appelé pour {type(exc).__name__}")
+
+
 async def _api_error(_request: Request, exc: Exception) -> JSONResponse:
-    assert isinstance(exc, ApiError)
+    if not isinstance(exc, ApiError):
+        raise _miswired("ApiError", exc)
     return error_response(exc.status_code, exc.code, exc.message, headers=exc.headers)
 
 
 async def _validation_error(_request: Request, exc: Exception) -> JSONResponse:
-    assert isinstance(exc, RequestValidationError)
+    if not isinstance(exc, RequestValidationError):
+        raise _miswired("RequestValidationError", exc)
     return error_response(
         422,
         "validation_error",
@@ -164,7 +174,8 @@ async def _validation_error(_request: Request, exc: Exception) -> JSONResponse:
 
 
 async def _http_error(_request: Request, exc: Exception) -> JSONResponse:
-    assert isinstance(exc, StarletteHTTPException)
+    if not isinstance(exc, StarletteHTTPException):
+        raise _miswired("HTTPException", exc)
     code = _STATUS_CODES.get(exc.status_code, "http_error")
     # Le détail des exceptions HTTP de Starlette et FastAPI est un texte fixe (« Not
     # Found ») ; une chaîne venue d'ailleurs serait tronquée.

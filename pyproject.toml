@@ -46,6 +46,8 @@ dev = [
     "hypothesis",
     "respx",  # réponses HTTP simulées pour les enrichisseurs (module 2)
     "shap>=0.46",  # les tests comparent les valeurs SHAP de LightGBM à la référence (étape 3.1)
+    "bandit>=1.8",  # analyse statique du code (étape 4.8)
+    "pip-audit>=2.7",  # dépendances vulnérables connues (étape 4.8)
 ]
 # Graphiques SHAP de `make explain-url` (étape 3.1). L'analyse elle-même n'en a pas besoin :
 # les valeurs SHAP du modèle URL sont calculées par LightGBM.

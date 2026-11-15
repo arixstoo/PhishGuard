@@ -457,7 +457,8 @@ class UrlFeatureExtractor:
                 and self.brands.find(map(skeleton, labels), exclude=official) is not None
             )
         if "tld" in families:
-            assert self.tld_table is not None
+            if self.tld_table is None:
+                raise RuntimeError("famille « tld » demandée sans table des TLD")
             values["tld_phish_rate"] = self.tld_table.rate(top_level_domain(parsed.host))
         if "shortener" in families:
             values["is_shortener"] = (

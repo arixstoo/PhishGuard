@@ -1,0 +1,90 @@
+name: security
+
+# Étape 4.8 : analyse statique du code, dépendances vulnérables, secrets.
+# Chaque job est bloquant. Exécution aussi chaque semaine : une vulnérabilité publiée
+# aujourd'hui touche des dépendances qui n'ont pas changé depuis le dernier commit.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 5 * * 1' # lundi, 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bandit:
+    name: Analyse statique (bandit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: '0.12.13'
+
+      # Tous niveaux de gravité : la base est propre, toute nouvelle alerte est examinée.
+      # Une exception justifiée s'écrit « # nosec <test> » avec sa raison en commentaire.
+      - name: bandit -r src
+        run: uv run --locked --extra dev --python 3.12 bandit -r src
+
+  pip-audit:
+    name: Dépendances vulnérables (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: '0.12.13'
+
+      # Tout le fichier de verrouillage, extras compris (explain, embeddings, dev), avec les
+      # empreintes : on audite exactement ce que la CI et l'image installent.
+      - name: Export de uv.lock
+        run: |
+          uv export --locked --all-extras --no-emit-project --no-header \
+            --format requirements-txt -o "$RUNNER_TEMP/requirements.txt"
+
+      # pip-audit lui-même vient de uv.lock (extra dev), empreintes vérifiées.
+      - name: pip-audit
+        run: |
+          uv run --locked --extra dev --python 3.12 pip-audit --disable-pip --require-hashes \
+            --progress-spinner off -r "$RUNNER_TEMP/requirements.txt"
+
+  gitleaks:
+    name: Secrets (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Même version que .pre-commit-config.yaml. Binaire officiel vérifié par son
+      # empreinte SHA-256 (gitleaks_8.30.1_checksums.txt), plutôt qu'une action tierce.
+      GITLEAKS_VERSION: '8.30.1'
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # tout l'historique : un secret retiré reste dans les anciens commits
+          persist-credentials: false
+
+      - name: Installation de gitleaks
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+
+      - name: gitleaks git
+        run: |
+          "$RUNNER_TEMP/gitleaks" git . --redact --no-banner --verbose
