@@ -22,6 +22,7 @@ Le contrat de la **réponse** est ``phishguard.schema.AnalysisResponse`` (étape
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -178,6 +179,13 @@ class FeedbackRequest(_Request):
         return self
 
 
+class FeedbackAccepted(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: Literal["quarantined"] = "quarantined"
+    received_at: datetime
+
+
 # --------------------------------------------------------------------------- #
 # Méta
 # --------------------------------------------------------------------------- #
@@ -187,3 +195,27 @@ class Health(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     status: Literal["ok"] = "ok"
+
+
+class ModelOut(BaseModel):
+    """Un modèle déployé. ``sha256`` : empreinte du fichier chargé au démarrage."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    version: str
+    kind: Literal["lightgbm", "text", "rules"]
+    trained_at: str | None = None
+    sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    calibrated: bool = False
+    calibration_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+
+class ModelsInfo(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: str
+    fusion_version: str
+    normalization_version: str | None = Field(
+        default=None, description="Version de la normalisation des entrées (étape 3.8)"
+    )
+    models: dict[Literal["url", "text", "email"], ModelOut]

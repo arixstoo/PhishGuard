@@ -7,39 +7,18 @@ l'entrée** dans la réponse (ni la valeur fautive, ni un caractère de contrôl
 from __future__ import annotations
 
 import pytest
-from api_support import settings_for
-from fastapi import Depends
-from fastapi.testclient import TestClient
+from api_support import api_client, settings_for
 
-from phishguard.api.dependencies import require_json
-from phishguard.api.main import create_app
 from phishguard.api.middleware import _content_length
 from phishguard.api.schemas import FeedbackRequest, TextRequest, UrlRequest
-from phishguard.email.parser import EmailLimits
 
 SECRET = "MARQUEUR-ENTREE-A-NE-PAS-RENVOYER"  # ne doit jamais revenir dans une réponse
 
 
 @pytest.fixture(scope="module")
 def client(api_models_dir, tmp_path_factory):
-    """L'application avec ses vrais schémas, middleware et gestionnaires d'erreurs, et
-    des routes de sonde à la place des routes d'analyse de l'étape 4.3."""
-    app = create_app(settings_for(api_models_dir, tmp_path_factory.mktemp("api")))
-    json_only = [Depends(require_json)]
-
-    @app.post("/v1/analyze/url", dependencies=json_only)
-    async def url(body: UrlRequest) -> dict[str, str]:
-        return {"status": "accepted"}
-
-    @app.post("/v1/analyze/text", dependencies=json_only)
-    async def text(body: TextRequest) -> dict[str, str]:
-        return {"status": "accepted"}
-
-    @app.post("/v1/feedback", dependencies=json_only)
-    async def feedback(body: FeedbackRequest) -> dict[str, str]:
-        return {"status": "accepted"}
-
-    with TestClient(app) as client:
+    settings = settings_for(api_models_dir, tmp_path_factory.mktemp("api"))
+    with api_client(settings) as client:
         yield client
 
 
@@ -133,6 +112,7 @@ def test_text_keeps_tabs_newlines_and_invisible_evasion_characters(client):
     text = "Votre compte\test bloqué\r\nvérifiez\u200b ici \u202eexe.pdf"
     response = client.post("/v1/analyze/text", json={"text": text, "analyst": True})
     assert response.status_code == 200
+    assert response.json()["analyst"]["normalization"]["changed"] is True
 
 
 def test_text_over_5000_characters_is_refused(client):
@@ -199,20 +179,48 @@ def test_content_length_parsing():
 # --------------------------------------------------------------------------- #
 
 
-def test_email_body_over_the_route_limit_is_refused_before_reading(client):
-    # Content-Length annoncé : refus immédiat, même sans route pour lire le corps.
-    big = b"Subject: x\r\n\r\n" + b"a" * (1024 * 1024 + 32 * 1024)
+def test_email_over_one_mebibyte_is_refused(client):
+    big = b"Subject: x\r\n\r\n" + b"a" * (1024 * 1024 + 1)
+    response = client.post("/v1/analyze/email", files={"file": ("big.eml", big, "message/rfc822")})
+    assert_clean_error(response, 413, "payload_too_large")
+
+
+def test_email_just_under_the_route_limit_but_over_the_file_limit_is_refused(client):
+    # Le corps tient dans l'enveloppe multipart, mais le fichier dépasse 1 Mio.
+    content = b"Subject: x\r\n\r\n" + b"a" * (1024 * 1024 + 100 - 14)
     response = client.post(
-        "/v1/analyze/email", content=big, headers={"content-type": "multipart/form-data"}
+        "/v1/analyze/email", files={"file": ("big.eml", content, "message/rfc822")}
     )
     assert_clean_error(response, 413, "payload_too_large")
 
 
-def test_email_parser_limit_is_the_api_limit(api_models_dir, tmp_path):
-    settings = settings_for(api_models_dir, tmp_path, max_email_bytes=2048)
-    with TestClient(create_app(settings)) as client:
-        analyzers = client.app.state.phishguard.analyzers
-        assert analyzers.email.limits == EmailLimits(max_bytes=2048)
+@pytest.mark.parametrize("media_type", ["image/png", "application/pdf", "text/html", ""])
+def test_unexpected_email_content_types_are_refused(client, media_type):
+    response = client.post(
+        "/v1/analyze/email", files={"file": ("mail.eml", b"Subject: x\r\n\r\nhi", media_type)}
+    )
+    assert_clean_error(response, 415, "unsupported_media_type")
+
+
+def test_empty_email_is_refused(client):
+    response = client.post(
+        "/v1/analyze/email", files={"file": ("mail.eml", b"  \r\n", "message/rfc822")}
+    )
+    assert_clean_error(response, 422, "validation_error")
+
+
+def test_email_requires_a_file(client):
+    response = client.post("/v1/analyze/email", data={"language": "fr"})
+    assert_clean_error(response, 422, "validation_error")
+
+
+def test_email_options_are_validated(client):
+    response = client.post(
+        "/v1/analyze/email",
+        files={"file": ("mail.eml", b"Subject: x\r\n\r\nhi", "message/rfc822")},
+        data={"language": "klingon"},
+    )
+    assert_clean_error(response, 422, "validation_error")
 
 
 # --------------------------------------------------------------------------- #
