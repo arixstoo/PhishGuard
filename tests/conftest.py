@@ -77,3 +77,20 @@ def instant_retry_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
         return None
 
     monkeypatch.setattr("phishguard.enrichers.resilience._sleep", no_wait)
+
+
+@pytest.fixture(scope="session")
+def api_models_dir(split_dataset_path: Path, tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Petits modèles ``url_v2`` et ``text_v2`` enregistrés pour les tests de l'API."""
+    from api_support import train_models
+
+    return train_models(split_dataset_path, tmp_path_factory.mktemp("models"))
+
+
+@pytest.fixture(autouse=True)
+def _isolated_api_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Aucun test ne lit la configuration de l'API du poste (variables PHISHGUARD_API_*)."""
+    import os
+
+    for name in [n for n in os.environ if n.startswith("PHISHGUARD_API_")]:
+        monkeypatch.delenv(name)
