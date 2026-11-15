@@ -173,6 +173,10 @@ async def _validation_error(_request: Request, exc: Exception) -> JSONResponse:
     )
 
 
+# Message de FastAPI quand le corps ne se décode pas (fastapi.routing).
+_FASTAPI_BODY_ERROR = "There was an error parsing the body"
+
+
 async def _http_error(_request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, StarletteHTTPException):
         raise _miswired("HTTPException", exc)
@@ -180,6 +184,10 @@ async def _http_error(_request: Request, exc: Exception) -> JSONResponse:
     # Le détail des exceptions HTTP de Starlette et FastAPI est un texte fixe (« Not
     # Found ») ; une chaîne venue d'ailleurs serait tronquée.
     message = exc.detail if isinstance(exc.detail, str) else code
+    if exc.status_code == 400 and message == _FASTAPI_BODY_ERROR:
+        # Corps que FastAPI n'a pas pu décoder (octets qui ne sont pas de l'UTF-8 valide) :
+        # code et message propres à l'API plutôt que le texte anglais de FastAPI.
+        code, message = "invalid_body", "Corps illisible : JSON encodé en UTF-8 attendu."
     return error_response(exc.status_code, code, message[:200], headers=exc.headers)
 
 

@@ -22,7 +22,7 @@ EMAIL_SAMPLE_COUNT := 200
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
-	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify
+	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -226,3 +226,6 @@ docker-up: ## Lance l'API en conteneur (127.0.0.1:8000, modèles de ./models en 
 
 docker-down: ## Arrête le conteneur (le volume de la base est conservé)
 	docker compose down
+
+loadtest: ## Test de charge : 50 req/s pendant 60 s sur l'analyse d'URL, k6 en conteneur (étape 4.13)
+	bash scripts/loadtest/run.sh 50 60s

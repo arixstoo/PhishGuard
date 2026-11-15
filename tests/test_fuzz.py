@@ -399,6 +399,7 @@ def test_parse_eml_honours_tight_limits(raw, n):
 
 ERROR_CODES = {
     "bad_request",
+    "invalid_body",  # corps qui n'est pas de l'UTF-8 valide (étape 4.13)
     "invalid_input",
     "payload_too_large",
     "unsupported_media_type",
