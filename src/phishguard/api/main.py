@@ -13,9 +13,10 @@ qui le produit : mieux vaut un service qui ne démarre pas qu'un service qui ré
 Organisation :
 
 - ``settings.py``   configuration (``pydantic-settings``, préfixe ``PHISHGUARD_API_``) ;
-- ``schemas.py``    schémas de l'API ;
+- ``schemas.py``    schémas d'entrée stricts (étape 4.2) ;
 - ``routers/``      ``analyze.py``, ``feedback.py``, ``meta.py`` ;
-- ``errors.py``     enveloppe d'erreur commune, sans trace de pile.
+- ``errors.py``     enveloppe d'erreur commune, sans trace ni recopie de l'entrée ;
+- ``middleware.py`` limite de taille des corps de requête.
 """
 
 from __future__ import annotations
@@ -29,22 +30,29 @@ from starlette.concurrency import run_in_threadpool
 
 from phishguard.api.dependencies import AppState
 from phishguard.api.errors import install_error_handlers
+from phishguard.api.middleware import MULTIPART_OVERHEAD, BodySizeLimitMiddleware
 from phishguard.api.routers import analyze, feedback, meta
 from phishguard.api.settings import ApiSettings, get_api_settings
 from phishguard.api.version import api_version
 from phishguard.deployment import Analyzers, load_analyzers
+from phishguard.email.parser import EmailLimits
 from phishguard.enrichers.orchestrator import Orchestrator
 
 logger = logging.getLogger(__name__)
 
 API_PREFIX = "/v1"
+EMAIL_ROUTE = f"{API_PREFIX}/analyze/email"
 
 # Fabrique des analyseurs : les tests en injectent une qui construit de petits modèles.
 AnalyzersFactory = Callable[[ApiSettings, Orchestrator | None], Analyzers]
 
 
 def _deployed_analyzers(settings: ApiSettings, orchestrator: Orchestrator | None) -> Analyzers:
-    return load_analyzers(settings.models_dir, orchestrator=orchestrator)
+    return load_analyzers(
+        settings.models_dir,
+        orchestrator=orchestrator,
+        email_limits=EmailLimits(max_bytes=settings.max_email_bytes),
+    )
 
 
 def create_app(
@@ -86,6 +94,12 @@ def create_app(
     )
 
     install_error_handlers(app)
+
+    app.add_middleware(
+        BodySizeLimitMiddleware,
+        default_limit=settings.max_json_bytes,
+        route_limits={EMAIL_ROUTE: settings.max_email_bytes + MULTIPART_OVERHEAD},
+    )
 
     v1 = APIRouter(prefix=API_PREFIX)
     v1.include_router(analyze.router)
