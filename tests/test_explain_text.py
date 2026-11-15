@@ -4,6 +4,7 @@ import importlib.util
 import itertools
 import json
 import socket
+import time
 from pathlib import Path
 
 import numpy as np
@@ -202,6 +203,19 @@ def test_amount_numbers_are_money_words(svm_model):
     assert T.amount_numbers("Payez 1,99 € ou €5 ou 2,49 EUR, pas 15h") == {"1,99", "5", "2,49"}
     explanation = T.TextExplainer(svm_model).explain("vous avez un remboursement de 500 €")
     assert "500" in explanation.category_terms["money"]
+
+
+def test_long_amounts_are_kept_whole():
+    text = "Gagnez 1.000.000.000.000.000.000.000,00 €"
+    assert T.amount_numbers(text) == {"1.000.000.000.000.000.000.000,00"}
+
+
+@pytest.mark.parametrize("text", ["2" * 15_000, "20." * 5_000])
+def test_amount_numbers_is_linear_on_long_digit_runs(text):
+    start = time.perf_counter()
+    assert T.amount_numbers(text) == frozenset()
+    assert time.perf_counter() - start < 2
+    assert T.amount_numbers(text + " €") != frozenset()
 
 
 # --------------------------------------------------------------------------- #

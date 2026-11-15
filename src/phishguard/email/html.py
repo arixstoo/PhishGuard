@@ -18,6 +18,7 @@ l'arbre, rien n'est chargé ni exécuté.
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
@@ -207,8 +208,22 @@ def normalize_color(value: str | None) -> str | None:
         return value
     match = re.fullmatch(r"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*[\d.]+\s*)?\)", value)
     if match:
-        return "#" + "".join(f"{min(int(c), 255):02x}" for c in match.groups())
+        return "#" + "".join(f"{_clamp_channel(c):02x}" for c in match.groups())
     return None
+
+
+def _clamp_channel(digits: str) -> int:
+    """Composante RGB bornée à 255, même pour une suite de chiffres géante.
+
+    Au-delà de 4300 chiffres, ``int()`` lève ``ValueError`` (Python ≥ 3.11) : un style
+    piégé suffirait alors à interrompre toute l'analyse HTML. On retire les zéros de tête
+    (par valeur : ``\\d`` couvre aussi les chiffres non ASCII), puis on borne.
+    """
+    try:
+        return min(int(digits), 255)
+    except ValueError:
+        significant = digits.lstrip("".join(c for c in set(digits) if unicodedata.digit(c) == 0))
+        return 255 if len(significant) > 3 else min(int(significant or "0"), 255)
 
 
 def _tiny(value: str | None) -> bool:
