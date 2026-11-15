@@ -18,7 +18,7 @@ EMAIL_SAMPLES := data/raw/emails/phishing_pot/manifest.json
 EMAIL_SAMPLE_COUNT := 200
 
 .DEFAULT_GOAL := help
-.PHONY: help install lint format test \
+.PHONY: help install lint format test fuzz \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness 	api api-key
@@ -42,8 +42,14 @@ format: ## Corrige le style (ruff)
 	$(PYTHON) -m ruff check --fix .
 	$(PYTHON) -m ruff format .
 
-test: ## Lance les tests avec couverture
-	$(PYTHON) -m pytest --cov=phishguard
+# Seuil de couverture de la suite complète (cahier des charges : 70 % ; mesurée : 97 %).
+COVERAGE_MIN := 90
+
+test: ## Lance les tests avec couverture (échoue sous COVERAGE_MIN %)
+	$(PYTHON) -m pytest --cov=phishguard --cov-report=term --cov-fail-under=$(COVERAGE_MIN)
+
+fuzz: ## Fuzzing hypothesis des parseurs et de l'API, 1 000 exemples par propriété (étape 4.7)
+	$(PYTHON) -m pytest -m fuzz --hypothesis-profile=fuzz --hypothesis-show-statistics -q
 
 # --------------------------------------------------------------------------- #
 # Données (étapes 1.1 à 1.4)

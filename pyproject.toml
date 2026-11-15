@@ -71,3 +71,6 @@ force-exclude = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "fuzz: propriétés hypothesis des parseurs et de l'API (étape 4.7) ; make fuzz en lance 1 000 exemples",
+]

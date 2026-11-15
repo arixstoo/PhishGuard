@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends
 from starlette.concurrency import run_in_threadpool
 
 from phishguard.api.dependencies import AppState, app_state, require_json
-from phishguard.api.errors import ERROR_RESPONSES
+from phishguard.api.errors import JSON_ERROR_RESPONSES
 from phishguard.api.schemas import FeedbackAccepted, FeedbackRequest
 from phishguard.api.security import Client, authenticated_client
 
@@ -27,7 +27,7 @@ router = APIRouter(tags=["retours"])
     status_code=202,
     response_model=FeedbackAccepted,
     dependencies=[Depends(require_json)],
-    responses=ERROR_RESPONSES,
+    responses=JSON_ERROR_RESPONSES,
     summary="Signaler un faux positif ou un faux négatif",
 )
 async def feedback(
