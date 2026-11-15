@@ -29,8 +29,6 @@ from typing import Any
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from phishguard.deployment import model_files
-from phishguard.fusion.score import default_config
 from phishguard.registry import (
     PASSPHRASE_ENV,
     build_manifest,
@@ -42,9 +40,6 @@ from phishguard.registry import (
     write_public_key,
     write_signed_manifest,
 )
-from phishguard.schema import SCHEMA_VERSION
-from phishguard.security.normalize import NORMALIZATION_VERSION
-from phishguard.urls.features import FEATURE_EXTRACTOR_VERSION, reference_data_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 METRICS_DIR = ROOT / "docs/metrics"
@@ -61,7 +56,9 @@ def _metrics(version: str) -> dict[str, Any] | None:
 
 def _model_entry(kind: str, version: str, models_dir: Path) -> dict[str, Any]:
     """Métadonnées d'un modèle, lues dans son fichier (de confiance : c'est le nôtre)."""
+    from phishguard.deployment import model_files
     from phishguard.text.models import TextModel
+    from phishguard.urls.features import FEATURE_EXTRACTOR_VERSION, reference_data_sha256
     from phishguard.urls.model import UrlModel
 
     path = model_files(models_dir)[kind].model
@@ -84,6 +81,8 @@ def _model_entry(kind: str, version: str, models_dir: Path) -> dict[str, Any]:
 
 
 def artifacts_to_sign(models_dir: Path) -> list[tuple[str, str]]:
+    from phishguard.deployment import model_files
+
     artifacts: list[tuple[str, str]] = []
     for kind, files in model_files(models_dir).items():
         if not files.model.is_file():
@@ -98,6 +97,13 @@ def artifacts_to_sign(models_dir: Path) -> list[tuple[str, str]]:
 
 
 def sign(models_dir: Path, private_key: Ed25519PrivateKey, release: str) -> Path:
+    # Imports du pipeline ici seulement : keygen n'en a pas besoin et démarre en une
+    # seconde, au lieu d'une minute depuis /mnt/c sous WSL.
+    from phishguard.deployment import model_files
+    from phishguard.fusion.score import default_config
+    from phishguard.schema import SCHEMA_VERSION
+    from phishguard.security.normalize import NORMALIZATION_VERSION
+
     models = {
         kind: _model_entry(kind, files.version, models_dir)
         for kind, files in model_files(models_dir).items()
