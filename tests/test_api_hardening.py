@@ -108,7 +108,9 @@ def test_curl_head_on_health_shows_the_headers(api_models_dir, tmp_path):
 def test_hsts_is_sent_in_production_only(api_models_dir, tmp_path):
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
         assert "strict-transport-security" not in client.get("/v1/health").headers
-    production = settings_for(api_models_dir, tmp_path, environment="production")
+    production = settings_for(
+        api_models_dir, tmp_path, environment="production", allow_unsigned_models=True
+    )
     with api_client(production) as client:
         response = client.get("/v1/health")
     assert response.headers["strict-transport-security"] == "max-age=31536000"
@@ -120,7 +122,9 @@ def test_hsts_is_sent_in_production_only(api_models_dir, tmp_path):
 
 
 def test_production_serves_no_documentation_or_debug_page(api_models_dir, tmp_path):
-    settings = settings_for(api_models_dir, tmp_path, environment="production")
+    settings = settings_for(
+        api_models_dir, tmp_path, environment="production", allow_unsigned_models=True
+    )
     assert settings.docs_active is False
     with api_client(settings, raise_server_exceptions=False) as client:
         assert client.app.debug is False
@@ -277,6 +281,7 @@ def test_production_refuses_plain_http_origins_except_loopback():
     settings = ApiSettings(
         _env_file=None,
         environment="production",
+        allow_unsigned_models=True,
         cors_allowed_origins=["http://localhost:5173", "http://127.0.0.1", EXTENSION],
     )
     assert len(settings.cors_allowed_origins) == 3

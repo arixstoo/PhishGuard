@@ -30,7 +30,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 import joblib
 import numpy as np
@@ -458,9 +458,13 @@ class TextModel:
         return path
 
     @classmethod
-    def load(cls, path: Path) -> TextModel:
-        """Charge un modèle. **Exécute du code (pickle)** : fichier de confiance seulement."""
-        payload = joblib.load(Path(path))
+    def load(cls, path: Path | BinaryIO) -> TextModel:
+        """Charge un modèle. **Exécute du code (pickle)** : fichier de confiance seulement.
+
+        ``path`` peut être un flux d'octets déjà vérifiés (manifeste signé, étape 4.12) :
+        on désérialise alors exactement les octets dont l'empreinte a été contrôlée.
+        """
+        payload = joblib.load(path if hasattr(path, "read") else Path(path))
         if not isinstance(payload, dict) or payload.get("format_version") != FORMAT_VERSION:
             raise ValueError(f"{path} : format de modèle non reconnu")
         for lib, version in payload.get("library_versions", {}).items():

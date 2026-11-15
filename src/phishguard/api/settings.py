@@ -90,6 +90,12 @@ class ApiSettings(BaseSettings):
     models_dir: Path = Path("models")
     # Base SQLite des empreintes de clés d'API et des retours (jamais versionnée).
     database_path: Path = Path("data/api/phishguard.sqlite3")
+    # Clé publique Ed25519 (PEM) des modèles (étape 4.12). Renseignée : le manifeste signé
+    # de models_dir est vérifié avant de charger le moindre modèle, sinon pas de démarrage.
+    models_public_key: Path | None = None
+    # Production sans clé publique : démarrage refusé, sauf dérogation explicite (un
+    # modèle pickle non vérifié, c'est du code non vérifié exécuté par l'API).
+    allow_unsigned_models: bool = False
 
     # --- Environnement (étape 4.5) ------------------------------------------ #
     environment: Environment = "development"
@@ -207,6 +213,11 @@ class ApiSettings(BaseSettings):
             parts = urlsplit(origin)
             if parts.scheme == "http" and parts.netloc.rsplit(":", 1)[0] not in LOOPBACK_HOSTS:
                 raise ValueError(f"origine CORS en http refusée en production : {origin!r}")
+        if self.models_public_key is None and not self.allow_unsigned_models:
+            raise ValueError(
+                "modèles non signés refusés en production : PHISHGUARD_API_MODELS_PUBLIC_KEY "
+                "(docs/model-registry.md), ou PHISHGUARD_API_ALLOW_UNSIGNED_MODELS=true"
+            )
         return self
 
     @property

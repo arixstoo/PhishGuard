@@ -147,7 +147,8 @@ _PATHS = [
 
 def synthetic_urls(count: int, seed: int = SEED) -> list[str]:
     """``count`` URLs déterministes : les cas choisis, puis des combinaisons tirées."""
-    rng = random.Random(seed)  # nosec B311 : URLs de test, aucun usage cryptographique
+    # URLs de test : aucun usage cryptographique.
+    rng = random.Random(seed)  # nosec B311
     urls = list(dict.fromkeys(HANDPICKED))
     while len(urls) < count:
         kind = rng.randrange(5)

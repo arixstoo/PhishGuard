@@ -22,7 +22,7 @@ EMAIL_SAMPLE_COUNT := 200
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
-	api api-key docker-build docker-scan docker-up docker-down export
+	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -176,6 +176,20 @@ cards: ## Met à jour les chiffres des model cards et du README depuis docs/metr
 
 schema: ## Régénère le schéma JSON de la réponse d'analyse (étape 2.11 bis)
 	$(PYTHON) scripts/export_schema.py
+
+# Clé privée de signature : hors du dépôt (refusée dedans), chiffrée par
+# PHISHGUARD_SIGNING_PASSPHRASE (étape 4.12, docs/model-registry.md).
+SIGNING_KEY ?= $(HOME)/.config/phishguard/model-signing.key
+PUBLIC_KEY := keys/model-signing.pub
+
+keygen: ## Crée la paire de clés Ed25519 de signature des modèles (une seule fois)
+	$(PYTHON) scripts/sign_models.py keygen --private-key $(SIGNING_KEY) --public-key $(PUBLIC_KEY)
+
+sign: ## Écrit et signe models/manifest.json (modèles déployés, calibrations, export)
+	$(PYTHON) scripts/sign_models.py sign --private-key $(SIGNING_KEY)
+
+verify: ## Vérifie la signature du manifeste et l'empreinte de chaque modèle
+	$(PYTHON) scripts/verify_models.py --public-key $(PUBLIC_KEY)
 
 export: ## Modèle URL déployé (url_v2) en JSON pour l'extension et vecteurs de référence (étape 4.11)
 	$(PYTHON) scripts/export_model.py

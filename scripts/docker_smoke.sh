@@ -46,10 +46,14 @@ for field in '"verdict"' '"score"' '"schema_version"'; do
   grep -q "$field" "$TMP/b" || fail "réponse d'analyse sans $field"
 done
 
-# 5. Retour : la base SQLite du volume /data est inscriptible malgré read_only
+# 5. Modèles signés : publication vérifiée au démarrage (étape 4.12)
+curl -sS -o "$TMP/b" "$BASE/v1/model"
+grep -q '"key_id"' "$TMP/b" || fail "GET /v1/model : modèles non signés"
+
+# 6. Retour : la base SQLite du volume /data est inscriptible malgré read_only
 curl -sS -D "$TMP/h" -o "$TMP/b" -H 'Content-Type: application/json' \
   -d '{"domain": "example.com", "verdict": "phishing", "judgement": "false_positive"}' \
   "$BASE/v1/feedback"
 [ "$(status "$TMP/h")" = 202 ] || fail "POST /v1/feedback : $(status "$TMP/h")"
 
-echo "image : santé, en-têtes, documentation fermée, analyse et base SQLite vérifiés"
+echo "image : santé, en-têtes, documentation fermée, analyse, signature et base SQLite vérifiés"

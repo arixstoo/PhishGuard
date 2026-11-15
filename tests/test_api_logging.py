@@ -289,7 +289,10 @@ def test_annotate_accepts_only_whitelisted_fields():
 
 def test_console_format_in_development_json_in_production():
     assert ApiSettings(_env_file=None).log_json is False
-    assert ApiSettings(_env_file=None, environment="production").log_json is True
+    assert (
+        ApiSettings(_env_file=None, environment="production", allow_unsigned_models=True).log_json
+        is True
+    )
     assert ApiSettings(_env_file=None, log_format="json").log_json is True
     assert ApiSettings(_env_file=None, log_level="debug").log_level == "DEBUG"
 

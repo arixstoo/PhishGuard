@@ -7,7 +7,8 @@ délègue à la couche service. Toutes les analyses renvoient le contrat figé d
 
 Étapes couvertes ici : 4.1 (squelette), 4.2 (entrées), 4.3 (service et endpoints), 4.4
 (authentification et limites), 4.5 (durcissement HTTP), 4.6 (journalisation), 4.10
-(retours sans risque, [feedback.md](feedback.md)). Les exemples `curl`, la politique de confidentialité et
+(retours sans risque, [feedback.md](feedback.md)), 4.12 (modèles signés,
+[model-registry.md](model-registry.md)). Les exemples `curl`, la politique de confidentialité et
 les mesures de charge arrivent à l'étape 4.13.
 
 ## Lancement
@@ -38,6 +39,8 @@ invalide empêche le démarrage.
 |---|---|---|
 | `PHISHGUARD_API_MODELS_DIR` | `models` | dossier des modèles déployés |
 | `PHISHGUARD_API_DATABASE_PATH` | `data/api/phishguard.sqlite3` | base SQLite |
+| `PHISHGUARD_API_MODELS_PUBLIC_KEY` | vide | clé publique : manifeste signé vérifié avant tout chargement ([model-registry.md](model-registry.md)) |
+| `PHISHGUARD_API_ALLOW_UNSIGNED_MODELS` | `false` | dérogation : démarrer en production sans signature |
 | `PHISHGUARD_API_ENVIRONMENT` | `development` | `production` : documentation fermée, HSTS, origines `http://` refusées |
 | `PHISHGUARD_API_DOCS_ENABLED` | selon l'environnement | `/docs`, `/redoc`, `/openapi.json` ; `true` refusé en production |
 | `PHISHGUARD_API_CORS_ALLOWED_ORIGINS` | vide | origines exactes autorisées depuis un navigateur |
@@ -76,7 +79,9 @@ n'envoie l'URL à des tiers que si le serveur l'a aussi activé
 
 `GET /v1/model` donne l'empreinte SHA-256 de chaque fichier de modèle et de calibration
 **effectivement chargé**, calculée au démarrage : on peut ainsi vérifier quel artefact
-répond. La signature des modèles arrive à l'étape 4.12.
+répond. Avec des modèles signés (étape 4.12), `signature` donne la publication
+vérifiée au démarrage (`release`, `key_id`, `manifest_sha256`) ; en production, des
+modèles non signés empêchent le démarrage ([model-registry.md](model-registry.md)).
 
 ## Entrées (étape 4.2)
 
