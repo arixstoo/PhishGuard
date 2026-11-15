@@ -88,3 +88,94 @@ jobs:
       - name: gitleaks git
         run: |
           "$RUNNER_TEMP/gitleaks" git . --redact --no-banner --verbose
+
+  image:
+    # Étape 4.9 : l'image est construite, analysée, puis démarrée sur cette machine propre
+    # avec de petits modèles synthétiques (docs/docker.md).
+    name: Image Docker (trivy, démarrage)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      IMAGE: phishguard-api:ci
+      # Image officielle de trivy épinglée par version et par empreinte : une étiquette
+      # republiée (compromission de la chaîne de publication) ne change pas ce qui tourne.
+      TRIVY_IMAGE: ghcr.io/aquasecurity/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Construction de l'image
+        run: docker build --target runtime --tag "$IMAGE" .
+
+      # Bloquant : toute vulnérabilité HIGH ou CRITICAL qui a un correctif (paquets Debian
+      # et Python), et tout secret présent dans une couche. Les failles sans correctif
+      # publié sont listées par l'étape suivante, sans bloquer : il n'y a rien à appliquer.
+      - name: trivy image (bloquant)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" "$TRIVY_IMAGE" \
+            image --scanners vuln,secret --severity HIGH,CRITICAL --ignore-unfixed \
+            --exit-code 1 --no-progress "$IMAGE"
+
+      - name: trivy image (rapport complet)
+        if: always()
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" "$TRIVY_IMAGE" \
+            image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --skip-db-update \
+            --no-progress "$IMAGE"
+
+      # Mauvaises configurations du Dockerfile (utilisateur root, étiquette mobile, secrets
+      # en variables d'image…).
+      - name: trivy config
+        run: |
+          docker run --rm -v "$PWD:/src:ro" "$TRIVY_IMAGE" \
+            config --severity HIGH,CRITICAL --exit-code 1 /src
+
+      - name: Propriétés de l'image
+        run: |
+          test "$(docker image inspect --format '{{.Config.User}}' "$IMAGE")" = "10001:10001"
+          docker run --rm --entrypoint python "$IMAGE" -c '
+          import importlib.util, os, pathlib
+          assert os.getuid() == 10001 and os.getgid() == 10001, "utilisateur root"
+          assert importlib.util.find_spec("pip") is None, "pip présent"
+          for tool in ("uv", "curl", "wget"):
+              assert not pathlib.Path("/usr/bin", tool).exists(), tool
+          assert not list(pathlib.Path("/app/models").iterdir()), "modèle dans l image"
+          for name in (".env", ".env.docker"):
+              assert not pathlib.Path("/app", name).exists(), name
+          '
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: '0.12.13'
+
+      - name: Modèles de test (synthétiques)
+        run: |
+          uv run --locked --extra dev --python 3.12 \
+            python scripts/smoke_models.py --output-dir "$RUNNER_TEMP/models"
+          chmod -R a+rX "$RUNNER_TEMP/models"
+
+      - name: docker compose up
+        env:
+          PHISHGUARD_MODELS_HOST_DIR: ${{ runner.temp }}/models
+        run: |
+          docker tag "$IMAGE" phishguard-api:local
+          docker compose up --no-build --detach --wait --wait-timeout 120
+          bash scripts/docker_smoke.sh http://127.0.0.1:8000
+          # trivy config n'analyse pas le compose : durcissement vérifié sur le conteneur lancé.
+          cid="$(docker compose ps --quiet api)"
+          test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$cid")" = true
+          test "$(docker inspect --format '{{.HostConfig.CapDrop}}' "$cid")" = "[ALL]"
+          docker inspect --format '{{.HostConfig.SecurityOpt}}' "$cid" | grep -q 'no-new-privileges:true'
+          docker inspect --format '{{range .Mounts}}{{.Destination}}={{.RW}} {{end}}' "$cid" \
+            | grep -q '/app/models=false'
+
+      - name: Journal du conteneur
+        if: failure()
+        run: docker compose logs --no-color api
+
+      - name: docker compose down
+        if: always()
+        run: docker compose down --volumes

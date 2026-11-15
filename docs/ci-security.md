@@ -69,9 +69,11 @@ Les secrets (clés d'API) sont tirés par `secrets`, jamais par `random`.
 Les alertes de sécurité Dependabot (*Settings → Code security*) s'ajoutent à ces mises à
 jour planifiées et doivent être activées dans les réglages du dépôt.
 
-**npm** (extension, module 5) et **docker** (étape 4.9) s'ajouteront avec leur premier
-manifeste : un écosystème déclaré sans manifeste fait échouer chaque passage de
-Dependabot.
+- `docker` : images de base du `Dockerfile` (étape 4.9), étiquette et empreinte ensemble ;
+  Python reste en 3.12 (changement d'interpréteur fait à la main).
+
+**npm** (extension, module 5) s'ajoutera avec son premier manifeste : un écosystème
+déclaré sans manifeste fait échouer chaque passage de Dependabot.
 
 ## Vérification : la CI échoue sur une dépendance vulnérable
 
@@ -100,7 +102,9 @@ restauré à l'identique (`uv lock --check`).
 
 ## `trivy`
 
-Le cahier des charges cite `trivy image` pour l'image Docker : il arrive avec l'image, à
-l'étape 4.9. D'ici là, il n'y a pas d'image à analyser, et les dépendances Python sont
-déjà couvertes par `pip-audit`. Comme les autres outils, il sera épinglé (version et
-empreinte de l'image), jamais référencé par une étiquette mobile.
+L'image Docker (étape 4.9) a son job, `image`, dans `security.yml` : construction,
+`trivy image` (vulnérabilités corrigeables `HIGH`/`CRITICAL` et secrets, bloquant),
+rapport complet non bloquant, `trivy config` (Dockerfile et compose), propriétés de
+l'image, puis `docker compose up --wait` et test de démarrage. trivy 0.76.2 tourne depuis
+son image officielle, **épinglée par version et par empreinte**, jamais par une étiquette
+mobile. Détails et résultats : [docker.md](docker.md).

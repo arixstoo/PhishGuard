@@ -1,0 +1,15 @@
+# Contexte de construction de l'image (étape 4.9) : liste blanche.
+#
+# Tout est exclu, puis seuls les fichiers nécessaires à l'installation du paquet sont
+# réadmis. Un fichier ajouté au dépôt n'entre donc jamais dans l'image par accident :
+# ni .env (clés des sources), ni data/ (base SQLite, jeux de données), ni models/
+# (montés en lecture seule au lancement), ni .git (historique complet).
+*
+
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src/
+src/**/__pycache__
+src/*.egg-info

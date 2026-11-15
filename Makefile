@@ -21,7 +21,8 @@ EMAIL_SAMPLE_COUNT := 200
 .PHONY: help install sync lock audit lint format test fuzz \
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
-	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness 	api api-key
+	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
+	api api-key docker-build docker-scan docker-up docker-down
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -186,3 +187,25 @@ api: ## Lance l'API sur 127.0.0.1:8000, documentation sur /docs (étape 4.1)
 api-key: ## Crée une clé d'API, affichée une seule fois : make api-key NAME=extension-dev (étape 4.4)
 	@test -n "$(NAME)" || (echo "usage : make api-key NAME=<usage de la clé>" && exit 1)
 	$(PYTHON) -m phishguard.api.keys create --name "$(NAME)"
+
+# --------------------------------------------------------------------------- #
+# Image Docker (étape 4.9, docs/docker.md)
+# --------------------------------------------------------------------------- #
+
+IMAGE ?= phishguard-api:local
+# Même image épinglée que la CI (.github/workflows/security.yml).
+TRIVY_IMAGE := ghcr.io/aquasecurity/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+
+docker-build: ## Construit l'image durcie de l'API (sans modèle ni secret)
+	docker build --target runtime --tag $(IMAGE) .
+
+docker-scan: ## Analyse l'image et sa configuration avec trivy, comme la CI
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro $(TRIVY_IMAGE) 		image --scanners vuln,secret --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 $(IMAGE)
+	docker run --rm -v "$(CURDIR):/src:ro" $(TRIVY_IMAGE) 		config --severity HIGH,CRITICAL --exit-code 1 /src
+
+docker-up: ## Lance l'API en conteneur (127.0.0.1:8000, modèles de ./models en lecture seule)
+	docker compose up --build --detach --wait
+	bash scripts/docker_smoke.sh http://127.0.0.1:8000
+
+docker-down: ## Arrête le conteneur (le volume de la base est conservé)
+	docker compose down

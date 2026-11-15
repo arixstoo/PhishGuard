@@ -1,10 +1,13 @@
 # Dependabot (étape 4.8) : mises à jour de version, en plus des alertes de sécurité.
 #
 # - uv : uv.lock (dépendances Python, épinglées avec leurs empreintes) ;
-# - github-actions : actions épinglées par SHA, commentaire de version compris.
+# - github-actions : actions épinglées par SHA, commentaire de version compris ;
+# - docker : images de base du Dockerfile (python, uv), étiquette et empreinte ensemble
+#   (étape 4.9). Python reste en 3.12 : une version mineure de l'interpréteur se change
+#   à la main, avec uv.lock et la CI.
 #
-# npm (extension, module 5) et docker (image, étape 4.9) s'ajoutent avec leur premier
-# manifeste : un écosystème sans manifeste fait échouer chaque passage de Dependabot.
+# npm (extension, module 5) s'ajoutera avec son premier manifeste : un écosystème sans
+# manifeste fait échouer chaque passage de Dependabot.
 version: 2
 updates:
   - package-ecosystem: uv
@@ -34,3 +37,17 @@ updates:
     groups:
       actions:
         patterns: ['*']
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: deps
+    ignore:
+      # python:3.12-slim-trixie → 3.13 : changement d'interpréteur, pas une mise à jour.
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
