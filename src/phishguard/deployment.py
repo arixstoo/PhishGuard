@@ -81,13 +81,19 @@ def _calibrator(files: ModelFiles) -> ScoreCalibrator | None:
 
 
 def load_analyzers(
-    models_dir: Path = DEFAULT_MODELS_DIR, *, orchestrator: Orchestrator | None = None
+    models_dir: Path = DEFAULT_MODELS_DIR,
+    *,
+    orchestrator: Orchestrator | None = None,
+    trusted_authserv_ids: list[str] | None = None,
 ) -> Analyzers:
     """Les trois analyseurs, sur les modèles déployés.
 
     ``orchestrator`` : Threat Intelligence pour les URLs, utilisée seulement si
-    l'utilisateur l'active pour une analyse. Lève ``FileNotFoundError`` si un modèle
-    déployé manque, avec la commande qui le produit.
+    l'utilisateur l'active pour une analyse. ``trusted_authserv_ids`` : identifiants des
+    serveurs de réception de confiance (``mx.google.com``…) ; sans eux, un
+    ``Authentication-Results`` forgé par l'expéditeur peut encore fournir DKIM et DMARC
+    quand le serveur n'en écrit pas (docs/email-parser.md). Lève ``FileNotFoundError`` si
+    un modèle déployé manque, avec la commande qui le produit.
     """
     from phishguard.text.models import TextModel
     from phishguard.urls.model import UrlModel
@@ -111,5 +117,5 @@ def load_analyzers(
     return Analyzers(
         url=UrlAnalyzer(url_model, calibrator=_calibrator(files["url"]), orchestrator=orchestrator),
         text=TextAnalyzer(text_model, calibrator=_calibrator(files["text"])),
-        email=EmailAnalyzer(url_model),
+        email=EmailAnalyzer(url_model, trusted_authserv_ids=trusted_authserv_ids),
     )

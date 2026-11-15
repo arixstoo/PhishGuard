@@ -10,6 +10,16 @@ Le moteur devient un service HTTP : squelette FastAPI, modèles chargés une seu
 
 - Squelette FastAPI (`phishguard.api`) : `create_app()`, routeurs séparés (`analyze`, `feedback`, `meta`), configuration `pydantic-settings` préfixée `PHISHGUARD_API_` aux valeurs par défaut sûres (Threat Intelligence désactivée) ; une valeur invalide empêche le démarrage. Les modèles déployés sont chargés **une seule fois**, au démarrage (`lifespan`, hors de la boucle) ; un modèle manquant fait échouer le démarrage. `GET /v1/health` et documentation interactive `/docs`, désactivable. `python -m phishguard.api` (`make api`) lance uvicorn sur `127.0.0.1`, sans réécriture de l'IP par uvicorn ni en-tête `Server` (étape 4.1).
 
+### Sécurité
+
+Correctifs issus d'un audit de sécurité du dépôt (9 failles, 7 moyennes et 2 basses). Un email, une URL ou un SMS piégé ne peut plus faire échouer l'analyse ni la ralentir, et un artefact de PR ne peut plus empoisonner les données d'entraînement.
+
+- Email : un charset piégé (`undefined`, `idna`) ou une couleur `rgb()` de milliers de chiffres ne coupe plus l'analyse du corps ; chaque partie MIME est isolée (`part_failed:…`), le message n'est plus jugé sur ses seuls en-têtes.
+- Email : `Authentication-Results` lu selon la RFC 8601 (une valeur entre guillemets ne peut ni masquer ni inventer de résultat) ; un `Received-SPF` en échec placé en tête prime sur un SPF plus bas, sans jamais l'améliorer. `load_analyzers` accepte `trusted_authserv_ids`.
+- URL : un label de plus de 63 caractères ne passe plus par le codec Punycode de CPython, quadratique (déni de service) ; le lien n'est pas rejeté pour autant, il reste comparé et scoré.
+- SMS : la détection des montants (`amount_numbers`) est linéaire, avec les mêmes résultats (ReDoS).
+- `scripts/sync_feed_archives.py` : n'accepte que les archives produites par `fetch-feeds.yml` sur la branche par défaut (planifié ou manuel) ; une archive illisible est ignorée sans bloquer les suivantes ; réponses de l'API lues en UTF-8.
+
 ## [0.3.0] : module 3, explicabilité et robustesse adversariale
 
 Le moteur explique maintenant chaque verdict, en trois phrases pour l'utilisateur et en valeurs SHAP pour l'analyste, et il a été attaqué méthodiquement : dix techniques d'évasion mesurées sur les vrais jeux de test, deux défenses (normalisation, entraînement adversarial) mesurées avant et après, et un test sur du phishing rédigé par un LLM qui montre honnêtement où le texte seul ne suffit plus. Les modèles robustes (`url_v2`, `text_v2`) sont déployés, et les trois canaux (URL, message, email) passent par le même pipeline et le même contrat de réponse. Rien n'est encore exposé à l'utilisateur : l'API arrive au module 4.

@@ -74,8 +74,12 @@ CURRENCY_WORDS = ("eur", "euro", "euros", "usd", "gbp", "dzd", "dinar", "dinars"
 _CURRENCY_RE = re.compile(r"[£$€]|\d")
 _CURRENCY = r"(?:[£$€]|eur(?:os?)?\b|usd\b|gbp\b|dzd\b|dinars?\b|دج|دينار)"
 # Nombre collé à une devise, avant ou après : « 500 € », « €1,99 », « 2,49 EUR ».
+# La seconde branche ne démarre qu'au début d'une suite de [\d.,] : sinon, une longue
+# suite de chiffres sans devise était reparcourue depuis chaque chiffre (coût
+# quadratique, ReDoS). Seul le premier chiffre d'une suite pouvait de toute façon réussir.
 _AMOUNT_NUMBER_RE = re.compile(
-    rf"(?:{_CURRENCY}\s?(\d[\d.,]*))|(?:(\d[\d.,]*)\s?{_CURRENCY})", re.IGNORECASE
+    rf"(?:{_CURRENCY}\s?(\d[\d.,]*))|(?:(?<![\d.,])[.,]*(\d[\d.,]*)\s?{_CURRENCY})",
+    re.IGNORECASE,
 )
 _WHITE_SPACES_RE = re.compile(r"\s\s+")  # même règle que scikit-learn pour char_wb
 
