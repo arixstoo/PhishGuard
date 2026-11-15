@@ -65,6 +65,7 @@ logger = logging.getLogger(__name__)
 
 API_PREFIX = "/v1"
 EMAIL_ROUTE = f"{API_PREFIX}/analyze/email"
+FEEDBACK_ROUTE = f"{API_PREFIX}{feedback.FEEDBACK_ROUTE}"
 HEALTH_ROUTE = f"{API_PREFIX}/health"
 
 # Fabrique des analyseurs : les tests en injectent une qui construit de petits modèles.
@@ -150,7 +151,7 @@ def create_app(
     routes = frozenset(app.openapi()["paths"])
     app.add_middleware(
         RateLimitMiddleware,
-        limiter=RateLimiter(settings),
+        limiter=RateLimiter(settings, route_limits={FEEDBACK_ROUTE: settings.rate_limit_feedback}),
         routes=routes,
         exempt_paths=[HEALTH_ROUTE],
     )

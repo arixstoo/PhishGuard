@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from fastapi import Request
 
 from phishguard.api.errors import ApiError
+from phishguard.api.pseudonym import ReporterPseudonyms
 from phishguard.api.schemas import ModelsInfo
 from phishguard.api.service import AnalysisService
 from phishguard.api.settings import ApiSettings
@@ -21,6 +22,8 @@ class AppState:
     database: Database
     service: AnalysisService
     models: ModelsInfo
+    # Pseudonymes des rapporteurs de retours, clé en mémoire du jour (étape 4.10).
+    pseudonyms: ReporterPseudonyms = field(default_factory=ReporterPseudonyms)
 
 
 def app_state(request: Request) -> AppState:

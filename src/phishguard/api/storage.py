@@ -11,7 +11,9 @@ Une fuite de la base ne donne donc aucune clé utilisable. Une clé se révoque 
 supprimée (``revoked_at``) : l'historique reste, la clé ne passe plus.
 
 Les **retours** des utilisateurs vont dans une table de quarantaine que rien ne relit
-automatiquement : aucun réentraînement n'en dépend (empoisonnement, étape 4.10).
+automatiquement : aucun réentraînement n'en dépend (empoisonnement, étape 4.10). Ils sont
+relus à la main, par lots (``python -m phishguard.api.feedback``), puis acceptés ou
+rejetés ; la table est bornée et purgée (voir :meth:`Database.quarantine_feedback`).
 
 Une connexion par opération : SQLite l'ouvre en quelques dizaines de microsecondes, et
 l'API l'appelle depuis plusieurs threads. Le mode WAL laisse lire pendant une écriture.
@@ -27,9 +29,9 @@ import re
 import secrets
 import sqlite3
 import stat
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -39,7 +41,7 @@ KEY_TOKEN_BYTES = 32  # 256 bits
 KEY_PATTERN = re.compile(r"^pg_[A-Za-z0-9_-]{43}$")
 KEY_ID_PATTERN = re.compile(r"^[0-9a-f]{12}$")
 MAX_NAME_LENGTH = 64
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS api_keys (
@@ -59,6 +61,29 @@ CREATE TABLE IF NOT EXISTS feedback_quarantine (
     reviewed    INTEGER NOT NULL DEFAULT 0
 );
 """
+
+# Version 2 (étape 4.10) : pseudonyme du rapporteur, niveau du client et décision de
+# relecture. ALTER TABLE ajoute les colonnes sans toucher aux lignes existantes.
+_MIGRATIONS: dict[int, str] = {
+    2: """
+ALTER TABLE feedback_quarantine ADD COLUMN reporter TEXT;
+ALTER TABLE feedback_quarantine ADD COLUMN client_tier TEXT
+    CHECK (client_tier IN ('anonymous', 'authenticated'));
+ALTER TABLE feedback_quarantine ADD COLUMN decision TEXT
+    CHECK (decision IN ('accepted', 'rejected'));
+ALTER TABLE feedback_quarantine ADD COLUMN reviewed_at TEXT;
+CREATE INDEX IF NOT EXISTS feedback_dedup
+    ON feedback_quarantine (reporter, domain, judgement, received_at);
+CREATE INDEX IF NOT EXISTS feedback_pending ON feedback_quarantine (decision, id);
+""",
+}
+
+FeedbackDecision = Literal["accepted", "rejected"]
+
+
+class QuarantineFullError(RuntimeError):
+    """La quarantaine a atteint sa taille maximale de retours en attente."""
+
 
 ClientTier = Literal["anonymous", "authenticated"]
 
@@ -111,7 +136,16 @@ class Database:
         db = sqlite3.connect(self.path, timeout=5.0)
         try:
             db.execute("PRAGMA journal_mode=WAL")
+            found = int(db.execute("PRAGMA user_version").fetchone()[0])
+            if found > SCHEMA_VERSION:
+                raise RuntimeError(
+                    f"{self.path} : schéma {found}, plus récent que ce code ({SCHEMA_VERSION})"
+                )
             db.executescript(_SCHEMA)
+            # Migrations dans l'ordre, chacune une seule fois. Une base neuve
+            # (user_version 0) reçoit le schéma initial puis toutes les migrations.
+            for version in range(max(found, 1) + 1, SCHEMA_VERSION + 1):
+                db.executescript(_MIGRATIONS[version])
             db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
             db.commit()
         finally:
@@ -122,11 +156,13 @@ class Database:
                 os.chmod(self.path, 0o600)
 
     @contextlib.contextmanager
-    def _connect(self) -> Iterator[sqlite3.Connection]:
+    def _connect(self, *, immediate: bool = False) -> Iterator[sqlite3.Connection]:
+        """Une transaction. ``immediate`` : verrou d'écriture pris dès le début, pour une
+        lecture suivie d'une écriture qui dépend de ce qui a été lu (plafond, doublon)."""
         db = sqlite3.connect(self.path, timeout=5.0, isolation_level=None)
         try:
             db.execute("PRAGMA foreign_keys=ON")
-            db.execute("BEGIN")
+            db.execute("BEGIN IMMEDIATE" if immediate else "BEGIN")
             yield db
             db.execute("COMMIT")
         except BaseException:
@@ -197,18 +233,150 @@ class Database:
     # ------------------------------------------------------------------ #
 
     def quarantine_feedback(
-        self, *, domain: str, verdict: str, judgement: str, key_id: str | None
+        self,
+        *,
+        domain: str,
+        verdict: str,
+        judgement: str,
+        key_id: str | None,
+        reporter: str | None = None,
+        client_tier: ClientTier | None = None,
+        max_pending: int | None = None,
+        dedup_seconds: int = 0,
     ) -> datetime:
-        """Range un retour en quarantaine ; renvoie l'heure de réception (serveur)."""
+        """Range un retour en quarantaine ; renvoie l'heure de réception (serveur).
+
+        - ``reporter`` : pseudonyme du client (jamais son IP ni sa clé), qui permet de
+          repérer, à la relecture, un lot venu d'une seule source ;
+        - ``dedup_seconds`` : un même rapporteur qui signale le même domaine avec le même
+          jugement dans ce délai n'ajoute rien. La réponse est la même : rien à apprendre ;
+        - ``max_pending`` : au-delà de ce nombre de retours en attente de relecture,
+          :class:`QuarantineFullError`. La quarantaine ne grossit pas sans limite.
+
+        Lecture et écriture dans la même transaction (``BEGIN IMMEDIATE``) : deux requêtes
+        simultanées ne peuvent pas dépasser le plafond ni contourner la déduplication.
+        """
         received = datetime.now(UTC).replace(microsecond=0)
-        with self._connect() as db:
+        with self._connect(immediate=True) as db:
+            if reporter is not None and dedup_seconds > 0:
+                since = (received - timedelta(seconds=dedup_seconds)).isoformat()
+                duplicate = db.execute(
+                    "SELECT 1 FROM feedback_quarantine WHERE reporter = ? AND domain = ? "
+                    "AND judgement = ? AND received_at >= ? LIMIT 1",
+                    (reporter, domain, judgement, since),
+                ).fetchone()
+                if duplicate is not None:
+                    return received
+            if max_pending is not None:
+                pending = db.execute(
+                    "SELECT COUNT(*) FROM feedback_quarantine WHERE decision IS NULL"
+                ).fetchone()[0]
+                if pending >= max_pending:
+                    raise QuarantineFullError(f"{pending} retours en attente de relecture")
             db.execute(
-                "INSERT INTO feedback_quarantine (domain, verdict, judgement, received_at, key_id)"
-                " VALUES (?, ?, ?, ?, ?)",
-                (domain, verdict, judgement, received.isoformat(), key_id),
+                "INSERT INTO feedback_quarantine (domain, verdict, judgement, received_at, "
+                "key_id, reporter, client_tier) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (domain, verdict, judgement, received.isoformat(), key_id, reporter, client_tier),
             )
         return received
 
-    def count_feedback(self) -> int:
+    def count_feedback(self, *, pending_only: bool = False) -> int:
+        query = "SELECT COUNT(*) FROM feedback_quarantine"
+        if pending_only:
+            query += " WHERE decision IS NULL"
         with self._connect() as db:
-            return int(db.execute("SELECT COUNT(*) FROM feedback_quarantine").fetchone()[0])
+            return int(db.execute(query).fetchone()[0])
+
+    def pending_feedback(self, limit: int = 100, after_id: int = 0) -> list[FeedbackRecord]:
+        """Retours en attente de relecture, les plus anciens d'abord (un lot)."""
+        if limit < 1:
+            raise ValueError("limit doit être positif")
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT id, domain, verdict, judgement, received_at, key_id, reporter, "
+                "client_tier, decision FROM feedback_quarantine "
+                "WHERE decision IS NULL AND id > ? ORDER BY id LIMIT ?",
+                (after_id, limit),
+            ).fetchall()
+        return [FeedbackRecord(*row) for row in rows]
+
+    def feedback_summary(self) -> list[DomainSummary]:
+        """Retours en attente regroupés par domaine et jugement, du plus signalé au moins.
+
+        ``reporters`` : nombre de sources distinctes. Cent signalements d'un seul
+        rapporteur ne valent pas cent signalements de cent rapporteurs : c'est le premier
+        indice d'une tentative d'empoisonnement.
+        """
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT domain, judgement, COUNT(*), "
+                "COUNT(DISTINCT COALESCE(reporter, key_id, '')), "
+                "MIN(received_at), MAX(received_at) FROM feedback_quarantine "
+                "WHERE decision IS NULL GROUP BY domain, judgement "
+                "ORDER BY COUNT(*) DESC, domain"
+            ).fetchall()
+        return [DomainSummary(*row) for row in rows]
+
+    def decide_feedback(self, ids: Iterable[int], decision: FeedbackDecision) -> int:
+        """Accepte ou rejette des retours en attente ; renvoie le nombre de lignes décidées.
+
+        Un retour déjà décidé n'est pas modifié : la décision d'un relecteur ne s'écrase pas.
+        """
+        if decision not in ("accepted", "rejected"):
+            raise ValueError(f"décision inconnue : {decision!r}")
+        selected = sorted({int(i) for i in ids})
+        if not selected:
+            return 0
+        now = _now()
+        changed = 0
+        with self._connect() as db:
+            for feedback_id in selected:
+                cursor = db.execute(
+                    "UPDATE feedback_quarantine SET decision = ?, reviewed = 1, reviewed_at = ? "
+                    "WHERE id = ? AND decision IS NULL",
+                    (decision, now, feedback_id),
+                )
+                changed += cursor.rowcount
+        return changed
+
+    def purge_feedback(self, older_than_days: int, *, include_pending: bool = False) -> int:
+        """Supprime les retours décidés (et, au besoin, en attente) plus vieux que le délai.
+
+        Rétention bornée : un retour relu n'a plus de raison d'être gardé.
+        """
+        if older_than_days < 0:
+            raise ValueError("older_than_days doit être positif ou nul")
+        cutoff = (datetime.now(UTC) - timedelta(days=older_than_days)).isoformat()
+        query = "DELETE FROM feedback_quarantine WHERE received_at < ?"
+        if not include_pending:
+            query += " AND decision IS NOT NULL"
+        with self._connect() as db:
+            cursor = db.execute(query, (cutoff,))
+        return cursor.rowcount
+
+
+@dataclass(frozen=True)
+class FeedbackRecord:
+    """Un retour de la quarantaine, tel qu'il est relu."""
+
+    id: int
+    domain: str
+    verdict: str
+    judgement: str
+    received_at: str
+    key_id: str | None
+    reporter: str | None
+    client_tier: str | None
+    decision: str | None
+
+
+@dataclass(frozen=True)
+class DomainSummary:
+    """Retours en attente pour un domaine et un jugement."""
+
+    domain: str
+    judgement: str
+    reports: int
+    reporters: int
+    first_at: str
+    last_at: str

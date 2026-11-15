@@ -6,7 +6,8 @@ délègue à la couche service. Toutes les analyses renvoient le contrat figé d
 2.11 bis ([response-schema.md](response-schema.md)).
 
 Étapes couvertes ici : 4.1 (squelette), 4.2 (entrées), 4.3 (service et endpoints), 4.4
-(authentification et limites), 4.5 (durcissement HTTP), 4.6 (journalisation). Les exemples `curl`, la politique de confidentialité et
+(authentification et limites), 4.5 (durcissement HTTP), 4.6 (journalisation), 4.10
+(retours sans risque, [feedback.md](feedback.md)). Les exemples `curl`, la politique de confidentialité et
 les mesures de charge arrivent à l'étape 4.13.
 
 ## Lancement
@@ -51,6 +52,9 @@ invalide empêche le démarrage.
 | `PHISHGUARD_API_RATE_LIMIT_ANONYMOUS` | `30/minute` | quota sans clé, par IP |
 | `PHISHGUARD_API_RATE_LIMIT_AUTHENTICATED` | `300/minute` | quota par clé |
 | `PHISHGUARD_API_RATE_LIMIT_REJECTED` | `10/minute` | quota des clés refusées, par IP |
+| `PHISHGUARD_API_RATE_LIMIT_FEEDBACK` | `20/hour` | quota propre aux retours, en plus du niveau |
+| `PHISHGUARD_API_FEEDBACK_MAX_PENDING` | `10000` | retours en attente au-delà desquels 503 |
+| `PHISHGUARD_API_FEEDBACK_DEDUP_SECONDS` | `86400` | délai de déduplication d'un même signalement |
 | `PHISHGUARD_API_RATE_LIMIT_STORAGE_URI` | `memory://` | stockage des compteurs |
 | `PHISHGUARD_API_TRUSTED_PROXIES` | vide | réseaux dont `X-Forwarded-For` est cru |
 
@@ -63,7 +67,7 @@ invalide empêche le démarrage.
 | POST | `/v1/analyze/url` | JSON `UrlRequest` | `AnalysisResponse` |
 | POST | `/v1/analyze/text` | JSON `TextRequest` | `AnalysisResponse` |
 | POST | `/v1/analyze/email` | multipart : `file` (`.eml`), `language`, `analyst` | `AnalysisResponse` |
-| POST | `/v1/feedback` | JSON `FeedbackRequest` | 202, retour mis en quarantaine |
+| POST | `/v1/feedback` | JSON `FeedbackRequest` | 202, retour mis en quarantaine ([feedback.md](feedback.md)) |
 
 Options communes aux analyses : `language` (`fr`, `en`, `ar` ; défaut `fr`) et `analyst`
 (vue « Détails techniques », défaut `false`). `use_threat_intel` (URL, défaut `false`)
@@ -120,6 +124,7 @@ Une seule enveloppe, un `code` stable :
 | 429 | `rate_limited` | limite de débit atteinte (`Retry-After`) |
 | 500 | `internal_error` | défaut du serveur, sans aucun détail |
 | 503 | `service_unavailable` | base des clés indisponible |
+| 503 | `feedback_unavailable` | quarantaine des retours pleine, relecture en attente (`Retry-After`) |
 | 503 | `timeout` | traitement plus long que le délai par requête (`Retry-After`) |
 
 **L'entrée n'est jamais renvoyée** : FastAPI recopie par défaut la valeur fautive

@@ -26,6 +26,10 @@ Un compteur par route : la clé de stockage est le **modèle de la route**
 (``/v1/analyze/url``), jamais le chemin brut. Les chemins inconnus partagent un seul
 compteur, sans quoi des URLs aléatoires créeraient autant d'entrées en mémoire.
 
+**Quotas propres à une route** (``route_limits``) : comptés en plus de ceux du niveau,
+sous un compteur distinct. ``POST /v1/feedback`` en a un, bas (étape 4.10) : un client
+qui a encore 290 analyses dans son quota n'a pas pour autant 290 retours à envoyer.
+
 Fenêtre glissante (``moving-window``) : pas de rafale double à la frontière de deux
 fenêtres fixes. Au-delà : 429 avec ``Retry-After`` ; toujours : ``X-RateLimit-Limit``,
 ``X-RateLimit-Remaining`` et ``X-RateLimit-Reset``.
@@ -40,7 +44,7 @@ from __future__ import annotations
 import logging
 import math
 import time
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from limits import RateLimitItem, parse_many
@@ -69,7 +73,9 @@ class Decision:
 class RateLimiter:
     """Politique de limite par niveau de client, sur un stockage ``limits`` asynchrone."""
 
-    def __init__(self, settings: ApiSettings) -> None:
+    def __init__(
+        self, settings: ApiSettings, *, route_limits: Mapping[str, str] | None = None
+    ) -> None:
         self.enabled = settings.rate_limit_enabled
         uri = settings.rate_limit_storage_uri
         storage = storage_from_string(uri if uri.startswith("async+") else f"async+{uri}")
@@ -80,6 +86,9 @@ class RateLimiter:
             "rejected": parse_many(settings.rate_limit_rejected),
             "unavailable": parse_many(settings.rate_limit_rejected),
         }
+        self._route_limits: dict[str, list[RateLimitItem]] = {
+            route: parse_many(limit) for route, limit in (route_limits or {}).items()
+        }
 
     @property
     def storage(self) -> StorageTypes:
@@ -88,9 +97,13 @@ class RateLimiter:
     async def hit(self, kind: ClientKind, key: str, route: str) -> Decision:
         """Compte une requête ; refusée dès qu'une des limites du niveau est atteinte."""
         decision: Decision | None = None
-        for item in self._limits[kind]:
-            allowed = await self._strategy.hit(item, key, route)
-            reset_at, remaining = await self._strategy.get_window_stats(item, key, route)
+        # Compteur distinct pour les quotas de route : une limite de même valeur que celle
+        # du niveau ne partage pas son compteur.
+        checks = [(item, (key, route)) for item in self._limits[kind]]
+        checks += [(item, (key, route, "route")) for item in self._route_limits.get(route, [])]
+        for item, identifiers in checks:
+            allowed = await self._strategy.hit(item, *identifiers)
+            reset_at, remaining = await self._strategy.get_window_stats(item, *identifiers)
             current = Decision(allowed, item, max(0, remaining), reset_at)
             if not allowed:
                 return current

@@ -134,6 +134,9 @@ class ApiSettings(BaseSettings):
     rate_limit_authenticated: str = "300/minute"
     # Clé présentée mais inconnue ou révoquée : très bas, contre la recherche de clés.
     rate_limit_rejected: str = "10/minute"
+    # Retours (étape 4.10) : en plus du quota de son niveau, chaque client a un quota de
+    # retours, bas. Un utilisateur honnête signale quelques erreurs par jour, pas cent.
+    rate_limit_feedback: str = "20/hour"
     # URI de stockage de la bibliothèque ``limits`` (mode asynchrone, préfixe ``async+``
     # ajouté au besoin). ``memory://`` : un compteur par processus ; avec plusieurs
     # workers, un stockage partagé (``redis://…``), sinon chaque worker accorde le quota.
@@ -154,8 +157,20 @@ class ApiSettings(BaseSettings):
             return tuple(ip_network(str(item), strict=True) for item in value)
         return value
 
+    # --- Retours en quarantaine (étape 4.10) ------------------------------- #
+    # Au-delà de ce nombre de retours en attente de relecture, les nouveaux sont refusés
+    # (503) : la quarantaine ne peut pas remplir le disque.
+    feedback_max_pending: int = Field(default=10_000, ge=1, le=1_000_000)
+    # Un même rapporteur qui signale le même domaine avec le même jugement dans ce délai
+    # n'ajoute pas de ligne (0 : aucune déduplication).
+    feedback_dedup_seconds: int = Field(default=86_400, ge=0, le=30 * 86_400)
+
     @field_validator(
-        "rate_limit_anonymous", "rate_limit_authenticated", "rate_limit_rejected", mode="after"
+        "rate_limit_anonymous",
+        "rate_limit_authenticated",
+        "rate_limit_rejected",
+        "rate_limit_feedback",
+        mode="after",
     )
     @classmethod
     def _valid_limit(cls, value: str) -> str:
