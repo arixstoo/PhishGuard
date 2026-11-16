@@ -9,6 +9,11 @@ on:
       - "scripts/export_extension_data.py"
       - "src/phishguard/urls/**"
       - "src/phishguard/security/normalize.py"
+      - "src/phishguard/email/html.py"
+      - "src/phishguard/email/parser.py"
+      - "src/phishguard/explain/templates.*.yml"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/extension.yml"
   pull_request:
     paths:
@@ -17,6 +22,11 @@ on:
       - "scripts/export_extension_data.py"
       - "src/phishguard/urls/**"
       - "src/phishguard/security/normalize.py"
+      - "src/phishguard/email/html.py"
+      - "src/phishguard/email/parser.py"
+      - "src/phishguard/explain/templates.*.yml"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/extension.yml"
 
 # Moindre privilège : le jeton GITHUB_TOKEN ne peut que lire le dépôt.
@@ -66,3 +76,34 @@ jobs:
 
       - name: Build (sans modèle)
         run: node build.mjs --allow-missing-model
+
+  data:
+    # Les données et les cas de parité de l'extension (src/generated, python-parity.json)
+    # doivent être ceux que produit le code Python actuel : sinon les tests TypeScript
+    # passeraient contre des cas périmés. Python 3.13 : la version d'Unicode des fichiers
+    # (15.1) ; sous une autre version, --check sauterait la comparaison.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installation d'uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.8'
+
+      - name: Installation des dépendances (uv.lock)
+        run: |
+          uv sync --locked --extra dev --python 3.13
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Données de l'extension à jour (make extension-data)
+        run: |
+          python -c "import unicodedata, sys; assert unicodedata.unidata_version == '15.1.0', unicodedata.unidata_version"
+          python scripts/export_extension_data.py --check

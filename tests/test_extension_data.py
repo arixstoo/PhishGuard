@@ -52,3 +52,34 @@ def test_fuzz_corpus_is_deterministic() -> None:
     script = _script()
     assert script.fuzz_urls(50) == script.fuzz_urls(50)
     assert len(set(script.fuzz_urls(200))) == 200
+
+
+# Textes de l'extension repris de l'API (étapes 5.5, 5.6, 5.8) : un client ne doit pas
+# donner un autre conseil, ni expliquer autrement la même règle, que l'API.
+_SHARED_WITH_API = {
+    "advice_url_safe": ("advice", "url.safe"),
+    "advice_url_suspicious": ("advice", "url.suspicious"),
+    "advice_url_phishing": ("advice", "url.phishing"),
+    "advice_email_safe": ("advice", "email.safe"),
+    "advice_email_suspicious": ("advice", "email.suspicious"),
+    "advice_email_phishing": ("advice", "email.phishing"),
+    "reason_text_domain_mismatch": ("reason", "email.mismatched_link"),
+    "reason_non_web_link": ("reason", "email.non_web_link"),
+    "reason_display_name_spoof": ("reason", "email.display_name_spoof"),
+}
+
+
+def test_extension_texts_match_the_api_templates() -> None:
+    from phishguard.explain.reasons import load_templates
+
+    for language in ("fr", "en", "ar"):
+        templates = load_templates(language)
+        path = ROOT / "extension" / "static" / "_locales" / language / "messages.json"
+        catalog = json.loads(path.read_text(encoding="utf-8"))
+        for key, (kind, code) in _SHARED_WITH_API.items():
+            if kind == "advice":
+                channel, verdict = code.split(".")
+                expected = templates.advice_for(channel, verdict)
+            else:
+                expected = templates.reason(code)
+            assert catalog[key]["message"] == expected, f"{language}.{key} ≠ API {code}"

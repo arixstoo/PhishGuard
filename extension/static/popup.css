@@ -1,40 +1,53 @@
-:root {
-  color-scheme: light dark;
-  --fg: #1b1b1f;
-  --bg: #ffffff;
-  --muted: #55555f;
-  --safe: #1e7b34;
-  --suspicious: #a35400;
-  --phishing: #c62828;
-  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fg: #ececf1;
-    --bg: #1d1d22;
-    --muted: #b0b0bb;
-    --safe: #5fd17f;
-    --suspicious: #ffb35c;
-    --phishing: #ff8a80;
-  }
-}
+/* Fenêtre contextuelle (étape 5.5). Couleurs : theme.css. Propriétés logiques (inline) :
+   la mise en page se retourne d'elle-même en arabe (dir="rtl"). */
 
 body {
-  margin: 0;
-  min-width: 300px;
-  max-width: 360px;
-  color: var(--fg);
-  background: var(--bg);
+  min-width: 320px;
+  max-width: 380px;
 }
 
 main {
-  padding: 14px 16px;
+  padding: 12px 16px 14px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 8px;
 }
 
 h1 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 15px;
+}
+
+.card {
+  padding: 10px 12px;
+  border-inline-start: 5px solid var(--tone);
+  border-radius: 8px;
+  background: var(--tone-bg);
+}
+
+.card.safe {
+  --tone: var(--safe);
+  --tone-bg: var(--safe-bg);
+}
+
+.card.suspicious {
+  --tone: var(--suspicious);
+  --tone-bg: var(--suspicious-bg);
+}
+
+.card.phishing {
+  --tone: var(--phishing);
+  --tone-bg: var(--phishing-bg);
+}
+
+.kicker {
+  margin: 0 0 2px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .verdict {
@@ -42,40 +55,130 @@ h1 {
   gap: 8px;
   align-items: center;
   margin: 0;
-  font-size: 17px;
-  font-weight: 650;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tone);
+}
+
+.verdict:focus {
+  outline: none;
+}
+
+.verdict:focus-visible {
+  outline: 3px solid var(--focus);
 }
 
 .verdict .icon {
   font-size: 20px;
 }
 
-.verdict-safe {
-  color: var(--safe);
-}
-
-.verdict-suspicious {
-  color: var(--suspicious);
-}
-
-.verdict-phishing {
-  color: var(--phishing);
-}
-
 .host {
-  margin: 4px 0 8px;
-  overflow-wrap: anywhere;
-  color: var(--muted);
-  unicode-bidi: plaintext;
+  margin: 2px 0 8px;
+  font-weight: 600;
+}
+
+.card p {
+  margin: 6px 0 0;
+}
+
+.advice {
+  font-weight: 600;
+}
+
+h3 {
+  margin: 10px 0 0;
+  font-size: 13px;
 }
 
 ul {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   padding-inline-start: 18px;
 }
 
+.online {
+  margin-block-start: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.online h2 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.online p {
+  margin: 4px 0 0;
+}
+
+.disclosure {
+  margin-block-start: 10px;
+}
+
+/* Flèche décorative : texte de remplacement vide (« / "" »), le lecteur d'écran lit
+   l'état par aria-expanded. */
+.disclosure button[aria-expanded]::before {
+  content: "▸ " / "";
+}
+
+.disclosure button[aria-expanded="true"]::before {
+  content: "▾ " / "";
+}
+
+:root[dir="rtl"] .disclosure button[aria-expanded="false"]::before {
+  content: "◂ " / "";
+}
+
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 12.5px;
+}
+
+dt {
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 12px;
+}
+
+.panel {
+  margin-block-start: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.panel p {
+  margin: 6px 0 0;
+}
+
+.warning {
+  color: var(--phishing);
+  font-weight: 600;
+}
+
 .meta {
-  margin-top: 10px;
+  margin: 10px 0 0;
   font-size: 12px;
   color: var(--muted);
 }

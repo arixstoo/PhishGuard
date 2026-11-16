@@ -4,15 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PhishGuard</title>
+    <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <main>
-      <h1 data-i18n="extName">PhishGuard</h1>
-      <!-- Zone annoncée par les lecteurs d'écran à chaque nouveau verdict. -->
-      <section id="result" role="status" aria-live="polite" aria-atomic="true">
-        <p id="status" data-i18n="popupAnalyzing"></p>
+      <header class="top">
+        <h1 data-i18n="extName">PhishGuard</h1>
+        <button id="open-options" class="link" type="button" data-i18n="popupOptions">Options</button>
+      </header>
+      <!-- Verdict, détails et actions ; reconstruit à chaque analyse (textContent seulement). -->
+      <section id="result" aria-labelledby="verdict-title">
+        <p data-i18n="popupAnalyzing">…</p>
       </section>
+      <!-- Annonces courtes pour les lecteurs d'écran (verdict, résultat d'une action). -->
+      <p id="announce" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     </main>
     <script type="module" src="popup.js"></script>
   </body>

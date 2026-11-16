@@ -47,7 +47,7 @@ export async function addToAllowlist(input: string): Promise<string> {
   const domain = allowlistKey(input);
   const current = await getAllowlist();
   if (!current.includes(domain)) {
-    if (current.length >= MAX_ALLOWLIST) throw new Error("liste blanche pleine");
+    if (current.length >= MAX_ALLOWLIST) throw new RangeError("liste blanche pleine");
     await chrome.storage.local.set({ [ALLOWLIST_KEY]: [...current, domain].sort() });
   }
   return domain;

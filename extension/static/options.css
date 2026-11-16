@@ -1,0 +1,129 @@
+/* Page d'options (étape 5.7). Couleurs : theme.css ; propriétés logiques pour l'arabe. */
+
+main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.lead {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+section {
+  margin-block-end: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.field {
+  margin-block-end: 12px;
+}
+
+.field label {
+  display: block;
+  margin-block-end: 4px;
+  font-weight: 600;
+}
+
+input[type="url"],
+input[type="password"],
+input[type="text"],
+select {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 460px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--phishing);
+  border-width: 2px;
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-block-start: 12px;
+  font-weight: 600;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+}
+
+/* « Quelles données partent où » : sous chaque réglage. */
+.data {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+/* Aligné sur le libellé de la case qu'il explique. */
+.check + .data {
+  padding-inline-start: 26px;
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.error {
+  margin: 4px 0 0;
+  color: var(--phishing);
+  font-weight: 600;
+}
+
+.status {
+  margin: 10px 0 0;
+  font-weight: 600;
+}
+
+.status:empty {
+  display: none;
+}
+
+.inline {
+  display: flex;
+  gap: 8px;
+  margin-block-start: 10px;
+}
+
+.domains {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.domains li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  border-block-end: 1px solid var(--surface);
+}
+
+.domains .empty {
+  color: var(--muted);
+}

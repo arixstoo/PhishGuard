@@ -1,21 +1,21 @@
 {
   "extName": {
-    "message": "PhishGuard",
-    "description": "Nom de l'extension (Chrome Web Store et chrome://extensions)."
+    "message": "PhishGuard"
   },
   "extDescription": {
     "message": "يكشف روابط التصيد الاحتيالي مباشرة في متصفحك. تحليل محلي: روابطك لا تغادر جهازك."
+  },
+  "langCode": {
+    "message": "ar"
   },
   "actionTitle": {
     "message": "PhishGuard: انقر لفحص هذه الصفحة"
   },
   "contextMenuAnalyzeLink": {
-    "message": "افحص هذا الرابط باستخدام PhishGuard",
-    "description": "Entrée du menu clic droit sur un lien."
+    "message": "افحص هذا الرابط باستخدام PhishGuard"
   },
   "badgeTitleSafe": {
-    "message": "PhishGuard: لا توجد علامات تصيد على $HOST$",
-    "description": "Infobulle de l'icône : verdict sûr pour un hôte.",
+    "message": "PhishGuard: لا توجد علامات تصيد على ‏$HOST$",
     "placeholders": {
       "host": {
         "content": "$1",
@@ -44,34 +44,59 @@
   "popupAnalyzing": {
     "message": "جارٍ الفحص…"
   },
+  "popupOptions": {
+    "message": "الإعدادات"
+  },
   "popupLinkResult": {
     "message": "الرابط الذي تم فحصه"
   },
-  "popupMeta": {
-    "message": "النتيجة $SCORE$/100 · $MS$ م.ث · النموذج $MODEL$",
-    "placeholders": {
-      "score": {
-        "content": "$1",
-        "example": "12"
-      },
-      "ms": {
-        "content": "$2",
-        "example": "3.2"
-      },
-      "model": {
-        "content": "$3",
-        "example": "url_v2"
-      }
-    }
-  },
-  "verdictSafe": {
+  "verdict_safe": {
     "message": "لا توجد علامات تصيد"
   },
-  "verdictSuspicious": {
+  "verdict_suspicious": {
     "message": "مشبوه: توخَّ الحذر"
   },
-  "verdictPhishing": {
+  "verdict_phishing": {
     "message": "تصيد احتيالي محتمل"
+  },
+  "explain_safe": {
+    "message": "لم يجد PhishGuard أي علامة تصيد في هذا العنوان."
+  },
+  "explain_suspicious": {
+    "message": "يحمل هذا العنوان علامات تُرى كثيرًا في التصيد الاحتيالي."
+  },
+  "explain_phishing": {
+    "message": "يشبه هذا العنوان كثيرًا عناوين مواقع التصيد الاحتيالي."
+  },
+  "explain_allowlist": {
+    "message": "هذا الموقع موجود في قائمة مواقعك الموثوقة: لا يفحصه PhishGuard."
+  },
+  "explain_lookalike": {
+    "message": "يمزج العنوان بين أبجديات لتقليد اسم معروف. تنطبق هذه العلامة حتى على المواقع الموثوقة."
+  },
+  "explain_url_too_long": {
+    "message": "عنوان طويل بشكل غير طبيعي: لا يفحصه PhishGuard كاملًا، توخَّ الحذر."
+  },
+  "advice_url_safe": {
+    "message": "لا توجد علامات مقلقة. ابقَ متيقظًا إذا طلبت الصفحة كلمة مرور أو دفعًا."
+  },
+  "advice_url_suspicious": {
+    "message": "احذر: لا تكتب شيئًا في هذه الصفحة. عند الشك، افتح الموقع الرسمي بكتابة عنوانه بنفسك."
+  },
+  "advice_url_phishing": {
+    "message": "لا تُدخل أي كلمة مرور أو بيانات مصرفية. افتح الموقع بكتابة عنوانه بنفسك."
+  },
+  "advice_email_safe": {
+    "message": "لا توجد علامات مقلقة. ابقَ متيقظًا إذا طلبت الرسالة كلمة مرور أو رمزًا أو دفعًا."
+  },
+  "advice_email_suspicious": {
+    "message": "احذر: لا تفتح الروابط أو المرفقات قبل التحقق من المرسل بطريقة أخرى."
+  },
+  "advice_email_phishing": {
+    "message": "لا تفتح أي رابط أو مرفق ولا ترد. تواصل مع الجهة عبر بياناتها الرسمية."
+  },
+  "popupReasonsTitle": {
+    "message": "لماذا؟"
   },
   "reason_lookalike_host": {
     "message": "العنوان يقلّد الحروف اللاتينية بأبجدية أخرى."
@@ -91,6 +116,218 @@
   "reason_url_too_long": {
     "message": "عنوان طويل بشكل غير طبيعي."
   },
+  "reason_text_domain_mismatch": {
+    "message": "الرابط الظاهر لا يؤدي إلى المكان المعلن."
+  },
+  "reason_non_web_link": {
+    "message": "يشغّل أحد الروابط شيفرة بدلًا من فتح صفحة."
+  },
+  "reason_display_name_spoof": {
+    "message": "الاسم الظاهر يقلّد عنوانًا غير العنوان الحقيقي للمرسل."
+  },
+  "reason_display_name_domain": {
+    "message": "يذكر الاسم الظاهر نطاقًا غير نطاق عنوان المرسل."
+  },
+  "reason_sender_lookalike": {
+    "message": "عنوان المرسل يقلّد الحروف اللاتينية بأبجدية أخرى."
+  },
+  "popupOnlineTitle": {
+    "message": "الفحص عبر الإنترنت"
+  },
+  "popupOnlinePending": {
+    "message": "جارٍ الفحص عبر الإنترنت…"
+  },
+  "popupOnlineFailed": {
+    "message": "الفحص عبر الإنترنت غير متاح: يُطبَّق الحكم المحلي."
+  },
+  "popupOnlineResult": {
+    "message": "الخادم: $VERDICT$ ($SCORE$/100)",
+    "placeholders": {
+      "verdict": {
+        "content": "$1",
+        "example": "Suspect"
+      },
+      "score": {
+        "content": "$2",
+        "example": "42"
+      }
+    }
+  },
+  "popupOnlineStrictest": {
+    "message": "الحكم المعروض هو الأكثر حذرًا بين الفحصين."
+  },
+  "popupOnlineAnnounce": {
+    "message": "انتهى الفحص عبر الإنترنت: $VERDICT$",
+    "placeholders": {
+      "verdict": {
+        "content": "$1",
+        "example": "Suspect"
+      }
+    }
+  },
+  "popupDetails": {
+    "message": "التفاصيل التقنية"
+  },
+  "detailScore": {
+    "message": "النتيجة"
+  },
+  "detailScoreValue": {
+    "message": "$SCORE$ / 100",
+    "placeholders": {
+      "score": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "detailDomain": {
+    "message": "النطاق المسجَّل"
+  },
+  "detailProbability": {
+    "message": "الاحتمال (النموذج)"
+  },
+  "detailRawScore": {
+    "message": "النتيجة الخام"
+  },
+  "detailRule": {
+    "message": "القاعدة المطبَّقة"
+  },
+  "detailNone": {
+    "message": "لا شيء"
+  },
+  "rule_allowlist": {
+    "message": "موقع موثوق"
+  },
+  "rule_lookalike_host": {
+    "message": "أبجديات ممزوجة"
+  },
+  "rule_url_too_long": {
+    "message": "عنوان طويل جدًا"
+  },
+  "detailModel": {
+    "message": "النموذج"
+  },
+  "detailDuration": {
+    "message": "مدة الفحص"
+  },
+  "detailDurationValue": {
+    "message": "$MS$ م.ث",
+    "placeholders": {
+      "ms": {
+        "content": "$1",
+        "example": "3,2"
+      }
+    }
+  },
+  "detailOnline": {
+    "message": "الفحص عبر الإنترنت"
+  },
+  "detailOnlineModel": {
+    "message": "نموذج الخادم"
+  },
+  "popupTrust": {
+    "message": "الوثوق بهذا الموقع دائمًا"
+  },
+  "popupUntrust": {
+    "message": "التوقف عن الوثوق بهذا الموقع"
+  },
+  "popupReport": {
+    "message": "الإبلاغ عن خطأ"
+  },
+  "popupTrustConfirmTitle": {
+    "message": "هل تثق بـ ‏$DOMAIN$؟",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupTrustConfirmBody": {
+    "message": "لن يحذّر PhishGuard بعد الآن من هذا النطاق ولا من نطاقاته الفرعية. يمكنك التراجع عن ذلك في الإعدادات."
+  },
+  "popupTrustWarning_suspicious": {
+    "message": "يحمل هذا الموقع علامات مشبوهة. لا تثق به إلا إذا كنت تعرفه."
+  },
+  "popupTrustWarning_phishing": {
+    "message": "تنبيه: يرى PhishGuard أن هذا الموقع يقلّد خدمة معروفة. لا تثق به إلا إذا كنت متأكدًا."
+  },
+  "popupConfirm": {
+    "message": "تأكيد"
+  },
+  "popupCancel": {
+    "message": "إلغاء"
+  },
+  "popupClose": {
+    "message": "إغلاق"
+  },
+  "popupTrusted": {
+    "message": "‏$DOMAIN$ أصبح الآن من مواقعك الموثوقة.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupUntrusted": {
+    "message": "‏$DOMAIN$ لم يعد من مواقعك الموثوقة.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupLinkReanalyze": {
+    "message": "لم يعد هذا النطاق موثوقًا. افحص الرابط من جديد (النقر بزر الفأرة الأيمن) للحصول على حكمه."
+  },
+  "popupReportTitle": {
+    "message": "ما الخطأ؟"
+  },
+  "popupReportDisabled": {
+    "message": "إرسال البلاغات معطَّل. فعِّله في الإعدادات: يُرسَل اسم النطاق فقط، ولا يُرسَل العنوان الكامل أبدًا."
+  },
+  "popupOpenOptions": {
+    "message": "فتح الإعدادات"
+  },
+  "popupReportFalsePositive": {
+    "message": "هذا الموقع شرعي"
+  },
+  "popupReportFalseNegative": {
+    "message": "هذا الموقع احتيالي"
+  },
+  "popupReportPrivacy": {
+    "message": "سيُرسَل فقط النطاق ‏$DOMAIN$ والحكم الذي ظهر وإجابتك.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupReportSending": {
+    "message": "جارٍ الإرسال…"
+  },
+  "popupReportSent": {
+    "message": "شكرًا! أُرسل النطاق ‏$DOMAIN$ فقط إلى ‏$SERVER$.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      },
+      "server": {
+        "content": "$2",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "popupReportNotReportable": {
+    "message": "لا يمكن الإبلاغ عن هذا الموقع: يمكن الإبلاغ عن اسم نطاق فقط، لا عن عنوان IP."
+  },
+  "popupReportFailed": {
+    "message": "تعذّر إرسال البلاغ. أعد المحاولة لاحقًا."
+  },
   "errorNotAnalyzable": {
     "message": "هذه الصفحة ليست موقع ويب (http أو https): لا شيء للفحص."
   },
@@ -102,5 +339,347 @@
   },
   "errorInternal": {
     "message": "خطأ غير متوقع أثناء الفحص."
+  },
+  "errorInvalidDomain": {
+    "message": "هذا ليس عنوان موقع صالحًا."
+  },
+  "errorAllowlistFull": {
+    "message": "قائمة مواقعك الموثوقة ممتلئة (1000 موقع)."
+  },
+  "gmailTitleSuspicious_one": {
+    "message": "PhishGuard: رابط مشبوه واحد في هذه الرسالة"
+  },
+  "gmailTitleSuspicious_two": {
+    "message": "PhishGuard: رابطان مشبوهان في هذه الرسالة"
+  },
+  "gmailTitleSuspicious_few": {
+    "message": "PhishGuard: $COUNT$ روابط مشبوهة في هذه الرسالة",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitleSuspicious_many": {
+    "message": "PhishGuard: $COUNT$ رابطًا مشبوهًا في هذه الرسالة",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitleSuspicious_zero": {
+    "message": "PhishGuard: لا توجد روابط مشبوهة في هذه الرسالة"
+  },
+  "gmailTitleSuspicious_other": {
+    "message": "PhishGuard: $COUNT$ رابط مشبوه في هذه الرسالة",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitlePhishing_one": {
+    "message": "PhishGuard: تبدو هذه الرسالة تصيدًا احتياليًا (رابط خطير واحد)"
+  },
+  "gmailTitlePhishing_two": {
+    "message": "PhishGuard: تبدو هذه الرسالة تصيدًا احتياليًا (رابطان خطيران)"
+  },
+  "gmailTitlePhishing_few": {
+    "message": "PhishGuard: تبدو هذه الرسالة تصيدًا احتياليًا ($COUNT$ روابط خطيرة)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitlePhishing_many": {
+    "message": "PhishGuard: تبدو هذه الرسالة تصيدًا احتياليًا ($COUNT$ رابطًا خطيرًا)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitlePhishing_zero": {
+    "message": "PhishGuard: تبدو هذه الرسالة تصيدًا احتياليًا"
+  },
+  "gmailTitlePhishing_other": {
+    "message": "PhishGuard: تبدو هذه الرسالة تصيدًا احتياليًا ($COUNT$ رابط مريب)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitleSenderSuspicious": {
+    "message": "PhishGuard: مرسل هذه الرسالة مشبوه"
+  },
+  "gmailTitleSenderPhishing": {
+    "message": "PhishGuard: مرسل هذه الرسالة يقلّد عنوانًا آخر"
+  },
+  "gmailLeadsTo": {
+    "message": "يؤدي إلى"
+  },
+  "gmailMoreLinks_one": {
+    "message": "… ورابط آخر"
+  },
+  "gmailMoreLinks_two": {
+    "message": "… ورابطان آخران"
+  },
+  "gmailMoreLinks_few": {
+    "message": "… و$COUNT$ روابط أخرى",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailMoreLinks_many": {
+    "message": "… و$COUNT$ رابطًا آخر",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailMoreLinks_zero": {
+    "message": "…"
+  },
+  "gmailMoreLinks_other": {
+    "message": "… و$COUNT$ رابط آخر",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTruncated": {
+    "message": "تحتوي هذه الرسالة على روابط كثيرة جدًا: لم يُفحص بعضها."
+  },
+  "gmailDismiss": {
+    "message": "إخفاء"
+  },
+  "gmailDismissLabel": {
+    "message": "إخفاء تنبيه PhishGuard"
+  },
+  "gmailMarkSuspicious": {
+    "message": "PhishGuard: رابط مشبوه"
+  },
+  "gmailMarkPhishing": {
+    "message": "PhishGuard: رابط خطير"
+  },
+  "optionsTitle": {
+    "message": "إعدادات PhishGuard"
+  },
+  "optionsIntro": {
+    "message": "افتراضيًا، يفحص PhishGuard كل شيء على جهازك ولا يرسل شيئًا. يوضّح كل إعداد البيانات التي تُرسَل ووجهتها."
+  },
+  "optLanguageTitle": {
+    "message": "اللغة"
+  },
+  "optLanguage": {
+    "message": "لغة PhishGuard"
+  },
+  "optLanguageAuto": {
+    "message": "لغة المتصفح"
+  },
+  "optNoData": {
+    "message": "لا تُرسَل أي بيانات."
+  },
+  "optLocalTitle": {
+    "message": "الفحص على جهازك"
+  },
+  "optGmail": {
+    "message": "فحص الرسائل المفتوحة في Gmail"
+  },
+  "optGmailHelp": {
+    "message": "تُفحص روابط الرسالة التي تفتحها ومرسلها على جهازك. لا تُقرأ الرسائل الأخرى أبدًا، ولا يُخزَّن أو يُرسَل أي شيء. يسري على تبويبات Gmail التي تُفتح أو يُعاد تحميلها بعد ذلك."
+  },
+  "optAuto": {
+    "message": "فحص كل صفحة أزورها تلقائيًا"
+  },
+  "optAutoHelp": {
+    "message": "سيطلب منك المتصفح السماح لـ PhishGuard «بقراءة سجل التصفح»: هذا ما يمنحه عنوان كل صفحة. يبقى الفحص على جهازك، ولا يُرسَل أي عنوان ولا يُحتفَظ به."
+  },
+  "optOnlineTitle": {
+    "message": "الفحص عبر الإنترنت والبلاغات (اختياري)"
+  },
+  "optOnlineIntro": {
+    "message": "معطَّلان افتراضيًا. يستخدمان خادم PhishGuard تختاره: خادمك أو خادم خدمة تثق بها."
+  },
+  "optServer": {
+    "message": "عنوان الخادم"
+  },
+  "optServerHelp": {
+    "message": "مثال: https://phishguard.example.org. يجب استخدام https (يُسمح بـ http فقط لـ localhost أو 127.0.0.1)."
+  },
+  "optApiKey": {
+    "message": "مفتاح API شخصي (اختياري)"
+  },
+  "optApiKeyHelp": {
+    "message": "يُرسَل إلى هذا الخادم فقط. يُخزَّن على هذا الجهاز دون تشفير: لا تستخدم مفتاحًا مشتركًا."
+  },
+  "optSave": {
+    "message": "حفظ الخادم"
+  },
+  "optYourServer": {
+    "message": "خادمك"
+  },
+  "optEnrichment": {
+    "message": "تفعيل الفحص عبر الإنترنت"
+  },
+  "optEnrichmentHelp": {
+    "message": "عند النقر على أيقونة PhishGuard، يُرسَل العنوان الكامل للصفحة (دون ما يلي «#») إلى ‏$SERVER$، الذي قد ينقله إلى خدمات تحليل (VirusTotal وurlscan وGoogle Safe Browsing…). لا يحدث ذلك أبدًا للفحص التلقائي ولا لـ Gmail. يمكن للخادم تشديد التنبيه، لا إلغاؤه.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "optFeedback": {
+    "message": "إرسال بلاغاتي عن الأخطاء"
+  },
+  "optFeedbackHelp": {
+    "message": "عند الإبلاغ عن خطأ، يُرسَل فقط اسم النطاق والحكم الذي ظهر وإجابتك إلى ‏$SERVER$، ولا يُرسَل العنوان الكامل أبدًا. يراجع شخصٌ البلاغات، ولا تغيّر النموذج تلقائيًا أبدًا.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "optAllowlistTitle": {
+    "message": "المواقع الموثوقة"
+  },
+  "optAllowlistHelp": {
+    "message": "تُخزَّن على هذا الجهاز فقط. لا يُنبَّه إلى الموقع الموثوق بعد الآن، إلا إذا كان عنوانه يقلّد حروفًا من أبجدية أخرى."
+  },
+  "optAllowlistInput": {
+    "message": "الموقع المراد إضافته"
+  },
+  "optAllowlistPlaceholder": {
+    "message": "example.com"
+  },
+  "optAllowlistAdd": {
+    "message": "إضافة"
+  },
+  "optAllowlistEmpty": {
+    "message": "لا توجد مواقع موثوقة."
+  },
+  "optAllowlistRemove": {
+    "message": "إزالة"
+  },
+  "optAllowlistRemoveLabel": {
+    "message": "إزالة ‏$DOMAIN$",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "optAllowlistInvalid": {
+    "message": "هذا ليس عنوان موقع صالحًا."
+  },
+  "optAllowlistAdded": {
+    "message": "تمت إضافة ‏$DOMAIN$.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "optAllowlistRemoved": {
+    "message": "تمت إزالة ‏$DOMAIN$.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "optNeverTitle": {
+    "message": "ما لا يفعله PhishGuard أبدًا"
+  },
+  "optNever1": {
+    "message": "الاحتفاظ بسجل للصفحات التي تزورها."
+  },
+  "optNever2": {
+    "message": "منحك معرّفًا أو تتبّع نشاطك."
+  },
+  "optNever3": {
+    "message": "قراءة رسائل Gmail غير التي تفتحها."
+  },
+  "optNever4": {
+    "message": "تنزيل شيفرة من الإنترنت أو تشغيلها."
+  },
+  "optSaved": {
+    "message": "تم الحفظ."
+  },
+  "optGmailOn": {
+    "message": "تم تفعيل فحص Gmail."
+  },
+  "optGmailOff": {
+    "message": "تم تعطيل فحص Gmail."
+  },
+  "optAutoOn": {
+    "message": "تم تفعيل الفحص التلقائي."
+  },
+  "optAutoOff": {
+    "message": "تم تعطيل الفحص التلقائي، وأُعيد الإذن."
+  },
+  "optPermissionDenied": {
+    "message": "رُفض الإذن: يبقى الإعداد معطَّلًا."
+  },
+  "optNeedServer": {
+    "message": "احفظ عنوان خادم أولًا."
+  },
+  "optServerInvalid": {
+    "message": "رُفض العنوان: يجب استخدام https (يُسمح بـ http فقط لـ localhost أو 127.0.0.1)، دون بيانات دخول أو معاملات أو «#»."
+  },
+  "optApiKeyInvalid": {
+    "message": "رُفض المفتاح: يبدأ بـ «pg_» متبوعًا بـ 43 حرفًا."
+  },
+  "opt_enrichment_on": {
+    "message": "تم تفعيل الفحص عبر الإنترنت مع ‏$SERVER$.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "opt_enrichment_off": {
+    "message": "تم تعطيل الفحص عبر الإنترنت."
+  },
+  "opt_feedback_on": {
+    "message": "تُرسَل البلاغات إلى ‏$SERVER$.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "opt_feedback_off": {
+    "message": "تم تعطيل إرسال البلاغات."
+  },
+  "optServerSavedOff": {
+    "message": "تم حفظ الخادم. فعِّل الفحص عبر الإنترنت أو البلاغات لاستخدامه."
+  },
+  "optServerCleared": {
+    "message": "تمت إزالة الخادم: لا يمكن إرسال أي شيء بعد الآن."
   }
 }

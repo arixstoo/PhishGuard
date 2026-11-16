@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="optionsTitle">PhishGuard</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1 data-i18n="optionsTitle"></h1>
+      <p class="lead" data-i18n="optionsIntro"></p>
+
+      <!-- Langue -->
+      <section aria-labelledby="language-title">
+        <h2 id="language-title" data-i18n="optLanguageTitle"></h2>
+        <div class="field">
+          <label for="language" data-i18n="optLanguage"></label>
+          <select id="language" aria-describedby="language-help">
+            <option value="auto" data-i18n="optLanguageAuto"></option>
+            <option value="fr" lang="fr">Français</option>
+            <option value="en" lang="en">English</option>
+            <option value="ar" lang="ar" dir="rtl">العربية</option>
+          </select>
+        </div>
+        <p id="language-help" class="data" data-i18n="optNoData"></p>
+      </section>
+
+      <!-- Analyses sur l'appareil -->
+      <section aria-labelledby="local-title">
+        <h2 id="local-title" data-i18n="optLocalTitle"></h2>
+        <div class="check">
+          <input type="checkbox" id="gmail" aria-describedby="gmail-help" />
+          <label for="gmail" data-i18n="optGmail"></label>
+        </div>
+        <p id="gmail-help" class="data" data-i18n="optGmailHelp"></p>
+
+        <div class="check">
+          <input type="checkbox" id="auto" aria-describedby="auto-help" />
+          <label for="auto" data-i18n="optAuto"></label>
+        </div>
+        <p id="auto-help" class="data" data-i18n="optAutoHelp"></p>
+        <p id="local-status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- Analyse en ligne et signalements -->
+      <section aria-labelledby="online-title">
+        <h2 id="online-title" data-i18n="optOnlineTitle"></h2>
+        <p class="data" data-i18n="optOnlineIntro"></p>
+        <form id="server-form" novalidate>
+          <div class="field">
+            <label for="server" data-i18n="optServer"></label>
+            <input id="server" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+              dir="ltr" aria-describedby="server-help server-error" />
+            <p id="server-help" class="hint" data-i18n="optServerHelp"></p>
+            <p id="server-error" class="error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="api-key" data-i18n="optApiKey"></label>
+            <input id="api-key" type="password" autocomplete="off" spellcheck="false" dir="ltr"
+              aria-describedby="api-key-help api-key-error" />
+            <p id="api-key-help" class="hint" data-i18n="optApiKeyHelp"></p>
+            <p id="api-key-error" class="error" hidden></p>
+          </div>
+          <button type="submit" class="primary" data-i18n="optSave"></button>
+        </form>
+
+        <div class="check">
+          <input type="checkbox" id="enrichment" aria-describedby="enrichment-help" />
+          <label for="enrichment" data-i18n="optEnrichment"></label>
+        </div>
+        <p id="enrichment-help" class="data"></p>
+
+        <div class="check">
+          <input type="checkbox" id="feedback" aria-describedby="feedback-help" />
+          <label for="feedback" data-i18n="optFeedback"></label>
+        </div>
+        <p id="feedback-help" class="data"></p>
+        <p id="online-status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- Sites de confiance -->
+      <section aria-labelledby="allowlist-title">
+        <h2 id="allowlist-title" data-i18n="optAllowlistTitle"></h2>
+        <p class="data" data-i18n="optAllowlistHelp"></p>
+        <form id="allowlist-form" class="inline" novalidate>
+          <label for="allowlist-input" class="sr-only" data-i18n="optAllowlistInput"></label>
+          <input id="allowlist-input" type="text" autocomplete="off" spellcheck="false" dir="ltr"
+            data-i18n-placeholder="optAllowlistPlaceholder" aria-describedby="allowlist-error" />
+          <button type="submit" data-i18n="optAllowlistAdd"></button>
+        </form>
+        <p id="allowlist-error" class="error" hidden></p>
+        <ul id="allowlist" class="domains"></ul>
+        <p id="allowlist-status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- Engagements -->
+      <section aria-labelledby="never-title">
+        <h2 id="never-title" data-i18n="optNeverTitle"></h2>
+        <ul>
+          <li data-i18n="optNever1"></li>
+          <li data-i18n="optNever2"></li>
+          <li data-i18n="optNever3"></li>
+          <li data-i18n="optNever4"></li>
+        </ul>
+      </section>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
