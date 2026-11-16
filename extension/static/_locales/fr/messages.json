@@ -1,0 +1,106 @@
+{
+  "extName": {
+    "message": "PhishGuard",
+    "description": "Nom de l'extension (Chrome Web Store et chrome://extensions)."
+  },
+  "extDescription": {
+    "message": "Détecte les liens de phishing directement dans votre navigateur. Analyse locale : vos URLs ne quittent pas votre appareil."
+  },
+  "actionTitle": {
+    "message": "PhishGuard : cliquez pour analyser cette page"
+  },
+  "contextMenuAnalyzeLink": {
+    "message": "Analyser ce lien avec PhishGuard",
+    "description": "Entrée du menu clic droit sur un lien."
+  },
+  "badgeTitleSafe": {
+    "message": "PhishGuard : aucun signe de phishing sur $HOST$",
+    "description": "Infobulle de l'icône : verdict sûr pour un hôte.",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "badgeTitleSuspicious": {
+    "message": "PhishGuard : $HOST$ est suspect, prudence",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "badgeTitlePhishing": {
+    "message": "PhishGuard : $HOST$ ressemble à du phishing",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupAnalyzing": {
+    "message": "Analyse en cours…"
+  },
+  "popupLinkResult": {
+    "message": "Lien analysé"
+  },
+  "popupMeta": {
+    "message": "Score $SCORE$/100 · $MS$ ms · modèle $MODEL$",
+    "placeholders": {
+      "score": {
+        "content": "$1",
+        "example": "12"
+      },
+      "ms": {
+        "content": "$2",
+        "example": "3.2"
+      },
+      "model": {
+        "content": "$3",
+        "example": "url_v2"
+      }
+    }
+  },
+  "verdictSafe": {
+    "message": "Aucun signe de phishing"
+  },
+  "verdictSuspicious": {
+    "message": "Suspect : prudence"
+  },
+  "verdictPhishing": {
+    "message": "Phishing probable"
+  },
+  "reason_lookalike_host": {
+    "message": "L'adresse imite des lettres latines avec un autre alphabet."
+  },
+  "reason_host_is_ip": {
+    "message": "L'adresse est un numéro IP, pas un nom de site."
+  },
+  "reason_brand_impersonation": {
+    "message": "Le nom d'une marque connue apparaît hors de son site officiel."
+  },
+  "reason_has_userinfo": {
+    "message": "L'adresse contient « @ », qui peut cacher le vrai site."
+  },
+  "reason_is_shortener": {
+    "message": "Lien raccourci : sa vraie destination est cachée."
+  },
+  "reason_url_too_long": {
+    "message": "Adresse anormalement longue."
+  },
+  "errorNotAnalyzable": {
+    "message": "Cette page n'est pas un site web (http ou https) : rien à analyser."
+  },
+  "errorNoAccess": {
+    "message": "Impossible de lire l'adresse de cet onglet."
+  },
+  "errorModelUnavailable": {
+    "message": "Le modèle de détection est indisponible. Réinstallez l'extension."
+  },
+  "errorInternal": {
+    "message": "Erreur inattendue pendant l'analyse."
+  }
+}

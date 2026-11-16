@@ -1,0 +1,24 @@
+{
+  "name": "phishguard-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Extension PhishGuard (Chrome MV3) : analyse locale des URLs, sans envoi de données.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.3.7",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}

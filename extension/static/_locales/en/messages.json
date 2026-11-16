@@ -1,0 +1,106 @@
+{
+  "extName": {
+    "message": "PhishGuard",
+    "description": "Nom de l'extension (Chrome Web Store et chrome://extensions)."
+  },
+  "extDescription": {
+    "message": "Detects phishing links right in your browser. Local analysis: your URLs never leave your device."
+  },
+  "actionTitle": {
+    "message": "PhishGuard: click to check this page"
+  },
+  "contextMenuAnalyzeLink": {
+    "message": "Check this link with PhishGuard",
+    "description": "Entrée du menu clic droit sur un lien."
+  },
+  "badgeTitleSafe": {
+    "message": "PhishGuard: no sign of phishing on $HOST$",
+    "description": "Infobulle de l'icône : verdict sûr pour un hôte.",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "badgeTitleSuspicious": {
+    "message": "PhishGuard: $HOST$ looks suspicious, be careful",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "badgeTitlePhishing": {
+    "message": "PhishGuard: $HOST$ looks like phishing",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupAnalyzing": {
+    "message": "Checking…"
+  },
+  "popupLinkResult": {
+    "message": "Checked link"
+  },
+  "popupMeta": {
+    "message": "Score $SCORE$/100 · $MS$ ms · model $MODEL$",
+    "placeholders": {
+      "score": {
+        "content": "$1",
+        "example": "12"
+      },
+      "ms": {
+        "content": "$2",
+        "example": "3.2"
+      },
+      "model": {
+        "content": "$3",
+        "example": "url_v2"
+      }
+    }
+  },
+  "verdictSafe": {
+    "message": "No sign of phishing"
+  },
+  "verdictSuspicious": {
+    "message": "Suspicious: be careful"
+  },
+  "verdictPhishing": {
+    "message": "Likely phishing"
+  },
+  "reason_lookalike_host": {
+    "message": "The address imitates Latin letters using another alphabet."
+  },
+  "reason_host_is_ip": {
+    "message": "The address is an IP number, not a site name."
+  },
+  "reason_brand_impersonation": {
+    "message": "A well-known brand name appears outside its official site."
+  },
+  "reason_has_userinfo": {
+    "message": "The address contains “@”, which can hide the real site."
+  },
+  "reason_is_shortener": {
+    "message": "Shortened link: its real destination is hidden."
+  },
+  "reason_url_too_long": {
+    "message": "Abnormally long address."
+  },
+  "errorNotAnalyzable": {
+    "message": "This page is not a website (http or https): nothing to check."
+  },
+  "errorNoAccess": {
+    "message": "Cannot read this tab's address."
+  },
+  "errorModelUnavailable": {
+    "message": "The detection model is unavailable. Reinstall the extension."
+  },
+  "errorInternal": {
+    "message": "Unexpected error during the check."
+  }
+}
