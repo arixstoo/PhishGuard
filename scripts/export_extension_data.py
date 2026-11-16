@@ -1079,7 +1079,30 @@ def _stale(path: Path, expected: str) -> bool:
     ):
         print(f"{path.name} : Unicode {unicodedata.unidata_version} ici, comparaison sautée")
         return False
+    old, new = json.loads(current), json.loads(expected)
+    # La version exacte de l'interpréteur est informative : seuls les résultats comptent.
+    old.pop("python", None)
+    new.pop("python", None)
+    if old == new:
+        return False
+    _report_differences(path, old, new)
     return True
+
+
+def _report_differences(path: Path, old: dict[str, Any], new: dict[str, Any]) -> None:
+    """Ce qui diffère, pour corriger sans deviner (CI)."""
+    for key in sorted(set(old) | set(new)):
+        before, after = old.get(key), new.get(key)
+        if before == after:
+            continue
+        if isinstance(before, list) and isinstance(after, list) and len(before) == len(after):
+            changed = [(b, a) for b, a in zip(before, after, strict=True) if b != a]
+            print(f"{path.name} : {key}, {len(changed)} cas sur {len(after)} diffèrent")
+            for b, a in changed[:3]:
+                print(f"  fichier : {json.dumps(b, ensure_ascii=True)[:300]}")
+                print(f"  Python  : {json.dumps(a, ensure_ascii=True)[:300]}")
+        else:
+            print(f"{path.name} : {key} diffère")
 
 
 def main(argv: list[str] | None = None) -> int:
