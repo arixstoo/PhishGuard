@@ -11,12 +11,13 @@
   "scripts": {
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
     "@types/chrome": "0.3.7",
+    "@types/node": "24.19.2",
     "esbuild": "0.28.2",
     "typescript": "7.0.2",
     "vitest": "5.0.5"
