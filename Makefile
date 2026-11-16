@@ -229,3 +229,21 @@ docker-down: ## Arrête le conteneur (le volume de la base est conservé)
 
 loadtest: ## Test de charge : 50 req/s pendant 60 s sur l'analyse d'URL, k6 en conteneur (étape 4.13)
 	bash scripts/loadtest/run.sh 50 60s
+
+# --------------------------------------------------------------------------- #
+# Extension navigateur (module 5, docs/extension-design.md)
+# --------------------------------------------------------------------------- #
+
+NPM ?= npm
+
+extension-data: ## Données de l'extension depuis Python : marques, suffixes publics, Unicode, cas de parité (étape 5.3)
+	$(PYTHON) scripts/export_extension_data.py
+
+extension-install: ## Dépendances de l'extension, exactement celles de package-lock.json, sans script d'installation
+	cd extension && $(NPM) ci
+
+extension-test: ## Types, tests de parité avec Python et vecteurs de référence (étape 5.3)
+	cd extension && $(NPM) run typecheck && $(NPM) test
+
+extension-build: ## Construit extension/dist (modèle signé vérifié) : à charger dans chrome://extensions
+	cd extension && $(NPM) run build

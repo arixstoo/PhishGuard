@@ -1,0 +1,68 @@
+name: extension
+
+# Extension navigateur (module 5) : types, parité avec Python, build et audit npm.
+on:
+  push:
+    paths:
+      - "extension/**"
+      - "tests/golden/**"
+      - "scripts/export_extension_data.py"
+      - "src/phishguard/urls/**"
+      - "src/phishguard/security/normalize.py"
+      - ".github/workflows/extension.yml"
+  pull_request:
+    paths:
+      - "extension/**"
+      - "tests/golden/**"
+      - "scripts/export_extension_data.py"
+      - "src/phishguard/urls/**"
+      - "src/phishguard/security/normalize.py"
+      - ".github/workflows/extension.yml"
+
+# Moindre privilège : le jeton GITHUB_TOKEN ne peut que lire le dépôt.
+permissions:
+  contents: read
+
+concurrency:
+  group: extension-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: extension
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installation de Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      # npm ci : exactement package-lock.json (versions et empreintes) ; .npmrc interdit
+      # les scripts d'installation.
+      - name: Installation des dépendances (package-lock.json)
+        run: npm ci
+
+      - name: Audit des dépendances npm
+        run: npm audit --audit-level=moderate
+
+      - name: Vérification des types
+        run: npm run typecheck
+
+      # Sans le modèle (non versionné) : parité composant par composant, fuzzing
+      # différentiel, 24 des 25 features des vecteurs de référence, modèles synthétiques.
+      - name: Tests de parité avec Python
+        run: npm test
+
+      - name: Build (sans modèle)
+        run: node build.mjs --allow-missing-model

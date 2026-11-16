@@ -1,0 +1,106 @@
+{
+  "extName": {
+    "message": "PhishGuard",
+    "description": "Nom de l'extension (Chrome Web Store et chrome://extensions)."
+  },
+  "extDescription": {
+    "message": "يكشف روابط التصيد الاحتيالي مباشرة في متصفحك. تحليل محلي: روابطك لا تغادر جهازك."
+  },
+  "actionTitle": {
+    "message": "PhishGuard: انقر لفحص هذه الصفحة"
+  },
+  "contextMenuAnalyzeLink": {
+    "message": "افحص هذا الرابط باستخدام PhishGuard",
+    "description": "Entrée du menu clic droit sur un lien."
+  },
+  "badgeTitleSafe": {
+    "message": "PhishGuard: لا توجد علامات تصيد على $HOST$",
+    "description": "Infobulle de l'icône : verdict sûr pour un hôte.",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "badgeTitleSuspicious": {
+    "message": "PhishGuard: ‏$HOST$ مشبوه، توخَّ الحذر",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "badgeTitlePhishing": {
+    "message": "PhishGuard: ‏$HOST$ يبدو موقع تصيد احتيالي",
+    "placeholders": {
+      "host": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupAnalyzing": {
+    "message": "جارٍ الفحص…"
+  },
+  "popupLinkResult": {
+    "message": "الرابط الذي تم فحصه"
+  },
+  "popupMeta": {
+    "message": "النتيجة $SCORE$/100 · $MS$ م.ث · النموذج $MODEL$",
+    "placeholders": {
+      "score": {
+        "content": "$1",
+        "example": "12"
+      },
+      "ms": {
+        "content": "$2",
+        "example": "3.2"
+      },
+      "model": {
+        "content": "$3",
+        "example": "url_v2"
+      }
+    }
+  },
+  "verdictSafe": {
+    "message": "لا توجد علامات تصيد"
+  },
+  "verdictSuspicious": {
+    "message": "مشبوه: توخَّ الحذر"
+  },
+  "verdictPhishing": {
+    "message": "تصيد احتيالي محتمل"
+  },
+  "reason_lookalike_host": {
+    "message": "العنوان يقلّد الحروف اللاتينية بأبجدية أخرى."
+  },
+  "reason_host_is_ip": {
+    "message": "العنوان رقم IP وليس اسم موقع."
+  },
+  "reason_brand_impersonation": {
+    "message": "يظهر اسم علامة تجارية معروفة خارج موقعها الرسمي."
+  },
+  "reason_has_userinfo": {
+    "message": "يحتوي العنوان على «@» الذي قد يخفي الموقع الحقيقي."
+  },
+  "reason_is_shortener": {
+    "message": "رابط مختصر: وجهته الحقيقية مخفية."
+  },
+  "reason_url_too_long": {
+    "message": "عنوان طويل بشكل غير طبيعي."
+  },
+  "errorNotAnalyzable": {
+    "message": "هذه الصفحة ليست موقع ويب (http أو https): لا شيء للفحص."
+  },
+  "errorNoAccess": {
+    "message": "تعذّرت قراءة عنوان هذا التبويب."
+  },
+  "errorModelUnavailable": {
+    "message": "نموذج الكشف غير متاح. أعد تثبيت الإضافة."
+  },
+  "errorInternal": {
+    "message": "خطأ غير متوقع أثناء الفحص."
+  }
+}

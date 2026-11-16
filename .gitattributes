@@ -1,3 +1,7 @@
 # Scripts shell exécutés dans des conteneurs et sur la CI Linux : toujours en LF.
 *.sh text eol=lf
 Dockerfile text eol=lf
+
+# Données exportées depuis Python (make extension-data) : ne pas modifier à la main.
+extension/src/generated/*.json linguist-generated=true
+extension/test/fixtures/python-parity.json linguist-generated=true

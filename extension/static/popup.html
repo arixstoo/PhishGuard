@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhishGuard</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1 data-i18n="extName">PhishGuard</h1>
+      <!-- Zone annoncée par les lecteurs d'écran à chaque nouveau verdict. -->
+      <section id="result" role="status" aria-live="polite" aria-atomic="true">
+        <p id="status" data-i18n="popupAnalyzing"></p>
+      </section>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
