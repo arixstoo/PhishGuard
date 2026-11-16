@@ -29,7 +29,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: '0.12.13'
+          version: '0.13.8'
 
       # Tous niveaux de gravité : la base est propre, toute nouvelle alerte est examinée.
       # Une exception justifiée s'écrit « # nosec <test> » avec sa raison en commentaire.
@@ -47,7 +47,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: '0.12.13'
+          version: '0.13.8'
 
       # Tout le fichier de verrouillage, extras compris (explain, embeddings, dev), avec les
       # empreintes : on audite exactement ce que la CI et l'image installent.
@@ -149,7 +149,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: '0.12.13'
+          version: '0.13.8'
 
       # Modèles synthétiques signés par une clé éphémère, créée et jetée dans ce job :
       # la chaîne complète (manifeste, signature, vérification au démarrage) est testée

@@ -33,7 +33,7 @@ calibrations, voir `phishguard.deployment`), produits par `make train train-adve
   `uv.lock`, empreintes SHA-256 vérifiées, et échoue si le verrou est périmé. Aucun extra :
   ni les outils de développement, ni `shap`, ni `sentence-transformers` (plusieurs Go).
 - **Images de base épinglées par empreinte** (`python:3.12-slim-trixie@sha256:…`,
-  `ghcr.io/astral-sh/uv:0.12.13@sha256:…`). Une étiquette peut être republiée vers un
+  `ghcr.io/astral-sh/uv:0.13.8@sha256:…`). Une étiquette peut être republiée vers un
   autre contenu ; une empreinte, non. Dependabot (écosystème `docker`) propose chaque
   semaine la nouvelle empreinte, étiquette comprise.
 - **`pip` retiré** de l'image finale : rien ne s'installe après la construction, et
