@@ -42,7 +42,7 @@ dependencies = [
 dev = [
     "pytest",
     "pytest-cov",
-    "ruff==0.17.1",  # même version que .pre-commit-config.yaml
+    "ruff==0.17.5",  # même version que .pre-commit-config.yaml
     "pre-commit",
     "hypothesis",
     "respx",  # réponses HTTP simulées pour les enrichisseurs (module 2)
