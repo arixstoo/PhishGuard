@@ -2626,7 +2626,7 @@ requires-dist = [
     { name = "structlog", specifier = ">=24.1" },
     { name = "tenacity", specifier = ">=8.2" },
     { name = "tldextract" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
 provides-extras = ["dev", "explain", "embeddings"]
 
