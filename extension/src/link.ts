@@ -2,8 +2,9 @@
  * Dernier lien analysé par le menu contextuel, transmis à la fenêtre contextuelle.
  *
  * `chrome.storage.session` : en mémoire seulement, effacé à la fermeture du navigateur.
- * Seul l'hôte est gardé, jamais l'URL entière, et l'entrée est effacée dès sa lecture.
- * Module séparé de `storage.ts` : la fenêtre contextuelle n'embarque pas l'extracteur.
+ * Seuls l'hôte et le domaine enregistré sont gardés, jamais l'URL entière, et l'entrée
+ * est effacée dès sa lecture. Module séparé de `storage.ts` : la fenêtre contextuelle
+ * n'embarque pas l'extracteur.
  */
 
 const LINK_KEY = "lastLinkAnalysis";
@@ -15,6 +16,8 @@ export interface LinkAnalysis {
   at: number;
   /** Hôte affichable, jamais l'URL entière. */
   host: string;
+  /** Domaine enregistré (forme ASCII) : liste blanche et signalement. */
+  registeredDomain: string;
   verdict: string;
   score: number;
   reasons: string[];

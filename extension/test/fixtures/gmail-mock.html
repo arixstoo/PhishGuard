@@ -1,0 +1,151 @@
+<!doctype html>
+<!--
+  Maquette de Gmail (étape 5.6) : même structure que celle que lit src/gmail/selectors.ts.
+  À modifier en même temps que ce fichier.
+
+  - la liste des messages (div[role="main"] > table) ne contient aucun corps : le script
+    de contenu ne doit rien y lire ;
+  - « ouvrir » un message remplace la liste par la conversation, puis insère le corps
+    (div.a3s) après un délai, comme Gmail qui charge le message à la demande.
+
+  Servie sous https://mail.google.com/ par le test de bout en bout (requêtes interceptées) :
+  aucune page réelle, aucune URL de phishing réelle (domaines .example, IP de
+  documentation 192.0.2.0/24, homographe construit).
+
+  Messages 1 à 5 : légitimes, aucune bannière attendue. Messages 6 à 10 : piégés.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Boîte de réception - Gmail (maquette)</title>
+    <style>
+      body { font: 14px sans-serif; margin: 0; }
+      .adn { padding: 12px 16px; border-bottom: 1px solid #ddd; }
+      .gD { font-weight: bold; }
+      tr { cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div role="navigation">Boîte de réception</div>
+    <div role="main" id="main"></div>
+
+    <template id="inbox">
+      <table>
+        <tbody>
+          <tr data-open="1"><td>Le Monde</td><td>La lettre du matin</td></tr>
+          <tr data-open="2"><td>impots.gouv.fr</td><td>Un nouveau document est disponible</td></tr>
+          <tr data-open="3"><td>GitHub</td><td>[arixstoo/PhishGuard] Nouvelle issue</td></tr>
+          <tr data-open="4"><td>Google Docs</td><td>Document partagé avec vous</td></tr>
+          <tr data-open="5"><td>Service informatique</td><td>Lien protégé par Safe Links</td></tr>
+          <tr data-open="6"><td>PayPal</td><td>Votre compte est limité</td></tr>
+          <tr data-open="7"><td>Support</td><td>Action requise</td></tr>
+          <tr data-open="8"><td>Apple</td><td>Votre identifiant Apple</td></tr>
+          <tr data-open="9"><td>service@paypal.com</td><td>Paiement en attente</td></tr>
+          <tr data-open="10"><td>Apple ID</td><td>Vérification nécessaire</td></tr>
+        </tbody>
+      </table>
+    </template>
+
+    <!-- 1. Lettre d'information légitime, beaucoup de liens vers le même site. -->
+    <template id="m1" data-name="Le Monde" data-email="newsletters@lemonde.fr">
+      <p>Bonjour,</p>
+      <p><a href="https://www.lemonde.fr/international/">Lire l'article</a></p>
+      <p><a href="https://www.lemonde.fr/international/">International</a> · <a href="https://www.lemonde.fr/">lemonde.fr</a></p>
+      <p><a href="mailto:courrier@lemonde.fr">Nous écrire</a></p>
+    </template>
+
+    <!-- 2. Administration : texte affiché = domaine de la cible. -->
+    <template id="m2" data-name="impots.gouv.fr" data-email="ne-pas-repondre@dgfip.finances.gouv.fr">
+      <p>Un nouveau document est disponible dans votre espace particulier.</p>
+      <p><a href="https://www.impots.gouv.fr/accueil">www.impots.gouv.fr</a></p>
+    </template>
+
+    <!-- 3. Notification GitHub. -->
+    <template id="m3" data-name="GitHub" data-email="notifications@github.com">
+      <p><a href="https://github.com/arixstoo">github.com/arixstoo</a> a ouvert une issue.</p>
+    </template>
+
+    <!-- 4. Redirection de Google (Docs) vers un site légitime. -->
+    <template id="m4" data-name="Google Docs" data-email="drive-shares-noreply@google.com">
+      <p>Un document a été partagé avec vous.</p>
+      <p><a href="https://www.google.com/url?q=https://www.wikipedia.org/&amp;sa=D&amp;source=docs">Ouvrir</a></p>
+    </template>
+
+    <!-- 5. Passerelle Safe Links : le texte affiché correspond à la cible d'origine. -->
+    <template id="m5" data-name="Service informatique" data-email="it@entreprise.fr">
+      <p>Merci de mettre à jour vos coordonnées sur
+        <a href="https://eur01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.amazon.fr%2Fgp%2Fcart%2Fview.html&amp;data=05">www.amazon.fr</a>.</p>
+    </template>
+
+    <!-- 6. Le texte affiche www.paypal.com, le lien mène ailleurs. -->
+    <template id="m6" data-name="PayPal" data-email="service@paypa1-secure-login.example">
+      <p>Votre compte est limité. Confirmez vos informations :</p>
+      <p><a href="http://paypa1-secure-login.example/verify/account">www.paypal.com</a></p>
+    </template>
+
+    <!-- 7. Adresse IP en guise de site. -->
+    <template id="m7" data-name="Support" data-email="support@mail-notice.example">
+      <p><a href="http://192.0.2.10/paypal/login.php">Connexion sécurisée</a></p>
+    </template>
+
+    <!-- 8. Homographe : « а » cyrillique dans apple.com. -->
+    <template id="m8" data-name="Apple" data-email="no_reply@id-apple.example">
+      <p><a href="http://xn--pple-43d.com/">Vérifier mon identifiant Apple</a></p>
+    </template>
+
+    <!-- 9. Nom affiché qui imite une adresse PayPal ; lien anodin. -->
+    <template id="m9" data-name="service@paypal.com" data-email="alerts@notice-mail.co.uk">
+      <p>Un paiement est en attente.</p>
+      <p><a href="https://www.wikipedia.org/">Conditions</a></p>
+    </template>
+
+    <!-- 10. Redirection de Google qui cache la vraie cible, texte trompeur. -->
+    <template id="m10" data-name="Apple ID" data-email="appleid@verify-account.example">
+      <p>Votre identifiant doit être vérifié :
+        <a href="https://www.google.com/url?q=https://appleid.apple.com.verify-account.example/signin&amp;sa=D">appleid.apple.com</a></p>
+    </template>
+
+    <script>
+      // Code de la maquette elle-même (pas de l'extension) : simule l'application Gmail.
+      const main = document.getElementById("main");
+
+      function showInbox() {
+        main.replaceChildren(document.getElementById("inbox").content.cloneNode(true));
+      }
+
+      function openMessage(n) {
+        const template = document.getElementById(`m${n}`);
+        const message = document.createElement("div");
+        message.className = "adn ads";
+        message.dataset.messageId = `#msg-f:${1000 + n}`;
+        const header = document.createElement("h3");
+        const sender = document.createElement("span");
+        sender.className = "gD";
+        sender.setAttribute("email", template.dataset.email);
+        sender.setAttribute("name", template.dataset.name);
+        sender.textContent = template.dataset.name;
+        header.append(sender);
+        message.append(header);
+        main.replaceChildren(message);
+        // Le corps arrive après coup, comme dans Gmail.
+        setTimeout(() => {
+          const body = document.createElement("div");
+          body.className = "a3s aiL";
+          body.append(template.content.cloneNode(true));
+          message.append(body);
+        }, 150);
+      }
+
+      main.addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-open]");
+        if (row) openMessage(Number(row.dataset.open));
+      });
+      window.addEventListener("hashchange", () => {
+        const match = location.hash.match(/^#inbox\/(\d+)$/);
+        if (match) openMessage(Number(match[1]));
+        else showInbox();
+      });
+      showInbox();
+    </script>
+  </body>
+</html>

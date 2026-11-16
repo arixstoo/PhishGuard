@@ -11,15 +11,17 @@
  *    (`keys/model-signing.pub`, étape 4.12), et `models/url_v2.json` exactement la taille et
  *    l'empreinte signées. Sinon, le build échoue : l'extension n'embarque jamais un modèle
  *    non signé. `--allow-missing-model` (CI) construit sans modèle ; l'extension l'affiche.
- * 2. **Code** : esbuild regroupe le service worker et la fenêtre contextuelle, sans
- *    minification (le Chrome Web Store exige un code lisible), puis vérifie qu'aucun
- *    bundle n'emploie `eval`, `new Function` ou `importScripts` (code distant interdit).
+ * 2. **Code** : esbuild regroupe le service worker, les pages (fenêtre contextuelle,
+ *    options) et le script Gmail, sans minification (le Chrome Web Store exige un code
+ *    lisible), puis vérifie qu'aucun bundle n'emploie `eval`, `new Function`,
+ *    `importScripts` (code distant interdit), une injection HTML, ni un canal réseau ;
+ *    `fetch` n'est admis que dans `api.ts` et le chargement du modèle.
  * 3. **Fichiers statiques** : manifeste (version reprise de package.json), pages, langues,
  *    icônes générées ici (aucun binaire dans le dépôt).
  */
 
 import { createHash, createPublicKey, verify } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
@@ -169,16 +171,40 @@ const FORBIDDEN = [
   [/\beval\s*\(/, "eval("],
   [/\bnew\s+Function\s*\(/, "new Function("],
   [/\bimportScripts\s*\(/, "importScripts("],
-  [/\.innerHTML\s*=|insertAdjacentHTML|document\.write/, "injection HTML"],
+  [/\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write|createContextualFragment/, "injection HTML"],
+  // Autres canaux réseau : aucun n'est employé, aucun ne doit apparaître (étape 5.7).
+  [/\bXMLHttpRequest\b|\bnew\s+WebSocket\b|\bEventSource\b|\bsendBeacon\b/,"canal réseau (XHR, WebSocket, EventSource, sendBeacon)"],
 ];
+const BUNDLES = ["background.js", "popup.js", "options.js", "gmail.js"];
+// `fetch` n'est permis que dans le service worker (modèle du paquet, api.ts). La CSP
+// autorise https: pour le serveur choisi par l'utilisateur : ce contrôle et api.ts
+// (réglage + permission d'hôte) sont ce qui empêche tout autre envoi.
+const NO_FETCH = ["popup.js", "options.js", "gmail.js"];
+const FETCH_ALLOWED_SOURCES = new Set(["src/api.ts", "src/background.ts"]);
+
+/** Sources TypeScript qui appellent `fetch` : seules celles de la liste sont admises. */
+function checkSources(dir = join(here, "src")) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) checkSources(path);
+    else if (entry.name.endsWith(".ts")) {
+      const relative = path.slice(here.length + 1).replaceAll("\\", "/");
+      const code = readFileSync(path, "utf-8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+      if (/\bfetch\s*\(/.test(code) && !FETCH_ALLOWED_SOURCES.has(relative)) {
+        fail(`${relative} appelle fetch : seuls ${[...FETCH_ALLOWED_SOURCES].join(", ")} le peuvent`);
+      }
+    }
+  }
+}
 
 function checkBundles() {
-  for (const name of ["background.js", "popup.js"]) {
+  for (const name of BUNDLES) {
     const code = readFileSync(join(dist, name), "utf-8");
     if (!testBuild && code.includes("phishguardTest")) fail(`${name} contient les crochets de test`);
     for (const [pattern, label] of FORBIDDEN) {
-      if (pattern.test(code)) fail(`${name} contient ${label} : interdit (MV3, XSS)`);
+      if (pattern.test(code)) fail(`${name} contient ${label} : interdit (MV3, XSS, réseau)`);
     }
+    if (NO_FETCH.includes(name) && /\bfetch\s*\(/.test(code)) fail(`${name} appelle fetch : interdit hors du service worker`);
   }
 }
 
@@ -201,14 +227,11 @@ if (!model) console.warn("build : AUCUN modèle embarqué (--allow-missing-model
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
 
-const options = {
-  entryPoints: {
-    background: join(here, testBuild ? "src/background-test.ts" : "src/background.ts"),
-    popup: join(here, "src/popup/popup.ts"),
-  },
+checkSources();
+
+const common = {
   outdir: dist,
   bundle: true,
-  format: "esm",
   platform: "browser",
   target: "chrome127",
   charset: "utf8",
@@ -221,17 +244,29 @@ const options = {
     __MODEL_SHA256__: JSON.stringify(model ? model.sha256 : ""),
   },
 };
+// Pages et service worker : modules ES.
+const pages = {
+  ...common,
+  format: "esm",
+  entryPoints: {
+    background: join(here, testBuild ? "src/background-test.ts" : "src/background.ts"),
+    popup: join(here, "src/popup/popup.ts"),
+    options: join(here, "src/options/options.ts"),
+  },
+};
+// Script de contenu : script classique (les scripts de contenu ne sont pas des modules),
+// enveloppé dans une fonction pour ne rien laisser dans la portée globale.
+const contentScript = { ...common, format: "iife", entryPoints: { gmail: join(here, "src/gmail/gmail.ts") } };
 
 if (args.has("--watch")) {
   writeStatic(model);
-  const context = await esbuild.context(options);
-  await context.watch();
+  for (const options of [pages, contentScript]) await (await esbuild.context(options)).watch();
   console.log("build : surveillance de src/ (Ctrl+C pour arrêter)");
 } else {
-  await esbuild.build(options);
+  await Promise.all([esbuild.build(pages), esbuild.build(contentScript)]);
   checkBundles();
   writeStatic(model);
-  for (const name of ["background.js", "popup.js"]) {
+  for (const name of BUNDLES) {
     console.log(`${name} : ${(statSync(join(dist, name)).size / 1024).toFixed(0)} Kio`);
   }
   console.log(`extension prête : ${dist}`);

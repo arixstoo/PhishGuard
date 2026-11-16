@@ -6,6 +6,10 @@
   "extDescription": {
     "message": "Détecte les liens de phishing directement dans votre navigateur. Analyse locale : vos URLs ne quittent pas votre appareil."
   },
+  "langCode": {
+    "message": "fr",
+    "description": "Code de la langue de ce catalogue (ne pas traduire) : sert à savoir lequel Chrome a choisi."
+  },
   "actionTitle": {
     "message": "PhishGuard : cliquez pour analyser cette page"
   },
@@ -44,34 +48,60 @@
   "popupAnalyzing": {
     "message": "Analyse en cours…"
   },
+  "popupOptions": {
+    "message": "Options"
+  },
   "popupLinkResult": {
     "message": "Lien analysé"
   },
-  "popupMeta": {
-    "message": "Score $SCORE$/100 · $MS$ ms · modèle $MODEL$",
-    "placeholders": {
-      "score": {
-        "content": "$1",
-        "example": "12"
-      },
-      "ms": {
-        "content": "$2",
-        "example": "3.2"
-      },
-      "model": {
-        "content": "$3",
-        "example": "url_v2"
-      }
-    }
-  },
-  "verdictSafe": {
+  "verdict_safe": {
     "message": "Aucun signe de phishing"
   },
-  "verdictSuspicious": {
+  "verdict_suspicious": {
     "message": "Suspect : prudence"
   },
-  "verdictPhishing": {
+  "verdict_phishing": {
     "message": "Phishing probable"
+  },
+  "explain_safe": {
+    "message": "PhishGuard n'a trouvé aucun signe de phishing dans cette adresse."
+  },
+  "explain_suspicious": {
+    "message": "Cette adresse présente des signes souvent vus dans le phishing."
+  },
+  "explain_phishing": {
+    "message": "Cette adresse ressemble fortement à celles des sites de phishing."
+  },
+  "explain_allowlist": {
+    "message": "Ce site figure dans votre liste de sites de confiance : PhishGuard ne l'analyse pas."
+  },
+  "explain_lookalike": {
+    "message": "L'adresse mélange des alphabets pour imiter un nom connu. Ce signal s'applique même aux sites de confiance."
+  },
+  "explain_url_too_long": {
+    "message": "Adresse anormalement longue : PhishGuard ne l'analyse pas en entier, prudence."
+  },
+  "advice_url_safe": {
+    "message": "Aucun signal inquiétant. Restez attentif si la page vous demande un mot de passe ou un paiement.",
+    "description": "Conseil de l'API (templates.*.yml, advice.url.safe) : identique, vérifié par tests/test_extension_data.py."
+  },
+  "advice_url_suspicious": {
+    "message": "Prudence : ne saisissez rien sur cette page. En cas de doute, ouvrez le site officiel en tapant vous-même son adresse."
+  },
+  "advice_url_phishing": {
+    "message": "N'entrez aucun mot de passe ni aucune information bancaire. Ouvrez le site en tapant vous-même son adresse."
+  },
+  "advice_email_safe": {
+    "message": "Aucun signal inquiétant. Restez attentif si l'email demande un mot de passe, un code ou un paiement."
+  },
+  "advice_email_suspicious": {
+    "message": "Prudence : n'ouvrez ni lien ni pièce jointe avant d'avoir vérifié l'expéditeur par un autre moyen."
+  },
+  "advice_email_phishing": {
+    "message": "N'ouvrez aucun lien ni aucune pièce jointe et ne répondez pas. Contactez l'organisme par ses coordonnées officielles."
+  },
+  "popupReasonsTitle": {
+    "message": "Pourquoi ?"
   },
   "reason_lookalike_host": {
     "message": "L'adresse imite des lettres latines avec un autre alphabet."
@@ -91,6 +121,221 @@
   "reason_url_too_long": {
     "message": "Adresse anormalement longue."
   },
+  "reason_text_domain_mismatch": {
+    "message": "Le lien affiché ne mène pas à l'endroit annoncé.",
+    "description": "Raison de l'API (email.mismatched_link)."
+  },
+  "reason_non_web_link": {
+    "message": "Un lien lance du code au lieu d'ouvrir une page.",
+    "description": "Raison de l'API (email.non_web_link)."
+  },
+  "reason_display_name_spoof": {
+    "message": "Le nom affiché imite une autre adresse que l'adresse réelle de l'expéditeur.",
+    "description": "Raison de l'API (email.display_name_spoof)."
+  },
+  "reason_display_name_domain": {
+    "message": "Le nom affiché cite un autre domaine que celui de l'adresse de l'expéditeur."
+  },
+  "reason_sender_lookalike": {
+    "message": "L'adresse de l'expéditeur imite des lettres latines avec un autre alphabet."
+  },
+  "popupOnlineTitle": {
+    "message": "Analyse en ligne"
+  },
+  "popupOnlinePending": {
+    "message": "Analyse en ligne en cours…"
+  },
+  "popupOnlineFailed": {
+    "message": "Analyse en ligne indisponible : le verdict local s'applique."
+  },
+  "popupOnlineResult": {
+    "message": "Serveur : $VERDICT$ ($SCORE$/100)",
+    "placeholders": {
+      "verdict": {
+        "content": "$1",
+        "example": "Suspect"
+      },
+      "score": {
+        "content": "$2",
+        "example": "42"
+      }
+    }
+  },
+  "popupOnlineStrictest": {
+    "message": "Le verdict affiché est le plus prudent des deux analyses."
+  },
+  "popupOnlineAnnounce": {
+    "message": "Analyse en ligne terminée : $VERDICT$",
+    "placeholders": {
+      "verdict": {
+        "content": "$1",
+        "example": "Suspect"
+      }
+    }
+  },
+  "popupDetails": {
+    "message": "Détails techniques"
+  },
+  "detailScore": {
+    "message": "Score"
+  },
+  "detailScoreValue": {
+    "message": "$SCORE$ / 100",
+    "placeholders": {
+      "score": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "detailDomain": {
+    "message": "Domaine enregistré"
+  },
+  "detailProbability": {
+    "message": "Probabilité (modèle)"
+  },
+  "detailRawScore": {
+    "message": "Score brut"
+  },
+  "detailRule": {
+    "message": "Règle appliquée"
+  },
+  "detailNone": {
+    "message": "aucune"
+  },
+  "rule_allowlist": {
+    "message": "site de confiance"
+  },
+  "rule_lookalike_host": {
+    "message": "alphabets mélangés"
+  },
+  "rule_url_too_long": {
+    "message": "adresse trop longue"
+  },
+  "detailModel": {
+    "message": "Modèle"
+  },
+  "detailDuration": {
+    "message": "Durée de l'analyse"
+  },
+  "detailDurationValue": {
+    "message": "$MS$ ms",
+    "placeholders": {
+      "ms": {
+        "content": "$1",
+        "example": "3,2"
+      }
+    }
+  },
+  "detailOnline": {
+    "message": "Analyse en ligne"
+  },
+  "detailOnlineModel": {
+    "message": "Modèle du serveur"
+  },
+  "popupTrust": {
+    "message": "Toujours faire confiance à ce site"
+  },
+  "popupUntrust": {
+    "message": "Ne plus faire confiance à ce site"
+  },
+  "popupReport": {
+    "message": "Signaler une erreur"
+  },
+  "popupTrustConfirmTitle": {
+    "message": "Faire confiance à $DOMAIN$ ?",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupTrustConfirmBody": {
+    "message": "PhishGuard n'alertera plus pour ce domaine ni ses sous-domaines. Vous pourrez revenir en arrière dans les options."
+  },
+  "popupTrustWarning_suspicious": {
+    "message": "Ce site présente des signes suspects. Ne lui faites confiance que si vous le connaissez."
+  },
+  "popupTrustWarning_phishing": {
+    "message": "Attention : PhishGuard pense que ce site imite un service connu. Ne lui faites confiance que si vous en êtes certain."
+  },
+  "popupConfirm": {
+    "message": "Confirmer"
+  },
+  "popupCancel": {
+    "message": "Annuler"
+  },
+  "popupClose": {
+    "message": "Fermer"
+  },
+  "popupTrusted": {
+    "message": "$DOMAIN$ fait maintenant partie de vos sites de confiance.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupUntrusted": {
+    "message": "$DOMAIN$ ne fait plus partie de vos sites de confiance.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupLinkReanalyze": {
+    "message": "Ce domaine n'est plus de confiance. Analysez de nouveau le lien (clic droit) pour obtenir son verdict."
+  },
+  "popupReportTitle": {
+    "message": "Qu'est-ce qui ne va pas ?"
+  },
+  "popupReportDisabled": {
+    "message": "L'envoi des signalements est désactivé. Activez-le dans les options : seul le nom de domaine serait envoyé, jamais l'adresse complète."
+  },
+  "popupOpenOptions": {
+    "message": "Ouvrir les options"
+  },
+  "popupReportFalsePositive": {
+    "message": "Ce site est légitime"
+  },
+  "popupReportFalseNegative": {
+    "message": "Ce site est une arnaque"
+  },
+  "popupReportPrivacy": {
+    "message": "Seuls le domaine $DOMAIN$, le verdict reçu et votre réponse seront envoyés.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "popupReportSending": {
+    "message": "Envoi…"
+  },
+  "popupReportSent": {
+    "message": "Merci ! Seul le domaine $DOMAIN$ a été envoyé à $SERVER$.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      },
+      "server": {
+        "content": "$2",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "popupReportNotReportable": {
+    "message": "Ce site ne peut pas être signalé : seul un nom de domaine peut l'être, pas une adresse IP."
+  },
+  "popupReportFailed": {
+    "message": "Le signalement n'a pas pu être envoyé. Réessayez plus tard."
+  },
   "errorNotAnalyzable": {
     "message": "Cette page n'est pas un site web (http ou https) : rien à analyser."
   },
@@ -102,5 +347,321 @@
   },
   "errorInternal": {
     "message": "Erreur inattendue pendant l'analyse."
+  },
+  "errorInvalidDomain": {
+    "message": "Ce n'est pas une adresse de site valide."
+  },
+  "errorAllowlistFull": {
+    "message": "Votre liste de sites de confiance est pleine (1 000 sites)."
+  },
+  "gmailTitleSuspicious_one": {
+    "message": "PhishGuard : $COUNT$ lien suspect dans ce message",
+    "description": "Titre de la bannière Gmail ; pluriel selon Intl.PluralRules (one, two, few, many, other…).",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitleSuspicious_many": {
+    "message": "PhishGuard : $COUNT$ de liens suspects dans ce message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitleSuspicious_other": {
+    "message": "PhishGuard : $COUNT$ liens suspects dans ce message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitlePhishing_one": {
+    "message": "PhishGuard : ce message ressemble à du phishing ($COUNT$ lien dangereux)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitlePhishing_many": {
+    "message": "PhishGuard : ce message ressemble à du phishing ($COUNT$ de liens douteux)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitlePhishing_other": {
+    "message": "PhishGuard : ce message ressemble à du phishing ($COUNT$ liens douteux)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTitleSenderSuspicious": {
+    "message": "PhishGuard : l'expéditeur de ce message est suspect"
+  },
+  "gmailTitleSenderPhishing": {
+    "message": "PhishGuard : l'expéditeur de ce message imite une autre adresse"
+  },
+  "gmailLeadsTo": {
+    "message": "mène à"
+  },
+  "gmailMoreLinks_one": {
+    "message": "… et $COUNT$ autre lien",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailMoreLinks_many": {
+    "message": "… et $COUNT$ d'autres liens",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailMoreLinks_other": {
+    "message": "… et $COUNT$ autres liens",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "gmailTruncated": {
+    "message": "Ce message contient trop de liens : certains n'ont pas été analysés."
+  },
+  "gmailDismiss": {
+    "message": "Masquer"
+  },
+  "gmailDismissLabel": {
+    "message": "Masquer l'alerte PhishGuard"
+  },
+  "gmailMarkSuspicious": {
+    "message": "PhishGuard : lien suspect"
+  },
+  "gmailMarkPhishing": {
+    "message": "PhishGuard : lien dangereux"
+  },
+  "optionsTitle": {
+    "message": "Options de PhishGuard"
+  },
+  "optionsIntro": {
+    "message": "Par défaut, PhishGuard analyse tout sur votre appareil et n'envoie rien. Chaque réglage indique quelles données partent, et vers où."
+  },
+  "optLanguageTitle": {
+    "message": "Langue"
+  },
+  "optLanguage": {
+    "message": "Langue de PhishGuard"
+  },
+  "optLanguageAuto": {
+    "message": "Langue du navigateur"
+  },
+  "optNoData": {
+    "message": "Aucune donnée envoyée."
+  },
+  "optLocalTitle": {
+    "message": "Analyses sur votre appareil"
+  },
+  "optGmail": {
+    "message": "Analyser les emails ouverts dans Gmail"
+  },
+  "optGmailHelp": {
+    "message": "Les liens et l'expéditeur du message que vous ouvrez sont analysés sur votre appareil. Les autres messages ne sont jamais lus ; rien n'est stocké ni envoyé. S'applique aux onglets Gmail ouverts ou rechargés ensuite."
+  },
+  "optAuto": {
+    "message": "Analyser automatiquement chaque page visitée"
+  },
+  "optAutoHelp": {
+    "message": "Le navigateur vous demandera d'autoriser PhishGuard à « lire votre historique de navigation » : c'est ce qui lui donne l'adresse de chaque page. L'analyse reste sur votre appareil ; aucune adresse n'est envoyée ni conservée."
+  },
+  "optOnlineTitle": {
+    "message": "Analyse en ligne et signalements (facultatifs)"
+  },
+  "optOnlineIntro": {
+    "message": "Désactivés par défaut. Ils utilisent un serveur PhishGuard que vous choisissez : le vôtre ou celui d'un service de confiance."
+  },
+  "optServer": {
+    "message": "Adresse du serveur"
+  },
+  "optServerHelp": {
+    "message": "Exemple : https://phishguard.exemple.org. https obligatoire (http seulement pour localhost ou 127.0.0.1)."
+  },
+  "optApiKey": {
+    "message": "Clé d'API personnelle (facultative)"
+  },
+  "optApiKeyHelp": {
+    "message": "Envoyée seulement à ce serveur. Elle est stockée sur cet appareil, sans chiffrement : n'utilisez pas une clé partagée."
+  },
+  "optSave": {
+    "message": "Enregistrer le serveur"
+  },
+  "optYourServer": {
+    "message": "votre serveur"
+  },
+  "optEnrichment": {
+    "message": "Activer l'analyse en ligne"
+  },
+  "optEnrichmentHelp": {
+    "message": "Quand vous cliquez sur l'icône de PhishGuard, l'adresse complète de la page (sans ce qui suit « # ») est envoyée à $SERVER$, qui peut la transmettre à des services d'analyse (VirusTotal, urlscan, Google Safe Browsing…). Jamais pour l'analyse automatique ni pour Gmail. Le serveur peut renforcer une alerte, jamais l'effacer.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "optFeedback": {
+    "message": "Envoyer mes signalements d'erreur"
+  },
+  "optFeedbackHelp": {
+    "message": "Quand vous signalez une erreur, seuls le nom de domaine, le verdict reçu et votre réponse sont envoyés à $SERVER$. Jamais l'adresse complète. Les signalements sont relus par une personne ; ils ne modifient jamais le modèle automatiquement.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "optAllowlistTitle": {
+    "message": "Sites de confiance"
+  },
+  "optAllowlistHelp": {
+    "message": "Stockés sur cet appareil uniquement. Un site de confiance n'est plus signalé, sauf si son adresse imite des lettres d'un autre alphabet."
+  },
+  "optAllowlistInput": {
+    "message": "Site à ajouter"
+  },
+  "optAllowlistPlaceholder": {
+    "message": "exemple.fr"
+  },
+  "optAllowlistAdd": {
+    "message": "Ajouter"
+  },
+  "optAllowlistEmpty": {
+    "message": "Aucun site de confiance."
+  },
+  "optAllowlistRemove": {
+    "message": "Retirer"
+  },
+  "optAllowlistRemoveLabel": {
+    "message": "Retirer $DOMAIN$",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "optAllowlistInvalid": {
+    "message": "Ce n'est pas une adresse de site valide."
+  },
+  "optAllowlistAdded": {
+    "message": "$DOMAIN$ ajouté.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "optAllowlistRemoved": {
+    "message": "$DOMAIN$ retiré.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "exemple.fr"
+      }
+    }
+  },
+  "optNeverTitle": {
+    "message": "Ce que PhishGuard ne fait jamais"
+  },
+  "optNever1": {
+    "message": "Conserver un historique des pages visitées."
+  },
+  "optNever2": {
+    "message": "Vous attribuer un identifiant, ou suivre votre activité."
+  },
+  "optNever3": {
+    "message": "Lire d'autres messages Gmail que celui que vous ouvrez."
+  },
+  "optNever4": {
+    "message": "Télécharger ou exécuter du code depuis Internet."
+  },
+  "optSaved": {
+    "message": "Enregistré."
+  },
+  "optGmailOn": {
+    "message": "Analyse de Gmail activée."
+  },
+  "optGmailOff": {
+    "message": "Analyse de Gmail désactivée."
+  },
+  "optAutoOn": {
+    "message": "Analyse automatique activée."
+  },
+  "optAutoOff": {
+    "message": "Analyse automatique désactivée ; l'autorisation a été rendue."
+  },
+  "optPermissionDenied": {
+    "message": "Autorisation refusée : le réglage reste désactivé."
+  },
+  "optNeedServer": {
+    "message": "Enregistrez d'abord l'adresse d'un serveur."
+  },
+  "optServerInvalid": {
+    "message": "Adresse refusée : https obligatoire (http seulement pour localhost ou 127.0.0.1), sans identifiant, paramètres ni « # »."
+  },
+  "optApiKeyInvalid": {
+    "message": "Clé refusée : elle commence par « pg_ », suivi de 43 caractères."
+  },
+  "opt_enrichment_on": {
+    "message": "Analyse en ligne activée avec $SERVER$.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "opt_enrichment_off": {
+    "message": "Analyse en ligne désactivée."
+  },
+  "opt_feedback_on": {
+    "message": "Signalements envoyés à $SERVER$.",
+    "placeholders": {
+      "server": {
+        "content": "$1",
+        "example": "phishguard.exemple.org"
+      }
+    }
+  },
+  "opt_feedback_off": {
+    "message": "Envoi des signalements désactivé."
+  },
+  "optServerSavedOff": {
+    "message": "Serveur enregistré. Activez l'analyse en ligne ou les signalements pour l'utiliser."
+  },
+  "optServerCleared": {
+    "message": "Serveur retiré : plus rien ne peut être envoyé."
   }
 }
