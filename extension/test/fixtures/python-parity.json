@@ -43411,5 +43411,7377 @@
    "normalize_url": null,
    "parsed": null
   }
- ]
+ ],
+ "mail": {
+  "links": [
+   {
+    "href": "https://www.paypal.com/signin",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/signin"
+   },
+   {
+    "href": "https://www.paypal.com/signin",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/signin"
+   },
+   {
+    "href": "https://www.paypal.com/signin",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/signin"
+   },
+   {
+    "href": "https://paypal.com",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://paypal.com"
+   },
+   {
+    "href": "https://paypal.com",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://paypal.com"
+   },
+   {
+    "href": "https://paypal.com",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://paypal.com"
+   },
+   {
+    "href": "http://paypa1-secure.example/login",
+    "text": "",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://paypa1-secure.example/login"
+   },
+   {
+    "href": "http://paypa1-secure.example/login",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://paypa1-secure.example/login"
+   },
+   {
+    "href": "http://paypa1-secure.example/login",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://paypa1-secure.example/login"
+   },
+   {
+    "href": "https://evil.example/www.paypal.com",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/www.paypal.com"
+   },
+   {
+    "href": "https://evil.example/www.paypal.com",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/www.paypal.com"
+   },
+   {
+    "href": "https://evil.example/www.paypal.com",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/www.paypal.com"
+   },
+   {
+    "href": "  https://www.impots.gouv.fr/  ",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "impots.gouv.fr",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.impots.gouv.fr/"
+   },
+   {
+    "href": "  https://www.impots.gouv.fr/  ",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "impots.gouv.fr",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.impots.gouv.fr/"
+   },
+   {
+    "href": "  https://www.impots.gouv.fr/  ",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "impots.gouv.fr",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.impots.gouv.fr/"
+   },
+   {
+    "href": "HTTPS://WWW.EXAMPLE.CO.UK/x",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "example.co.uk",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "HTTPS://WWW.EXAMPLE.CO.UK/x"
+   },
+   {
+    "href": "HTTPS://WWW.EXAMPLE.CO.UK/x",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "example.co.uk",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "HTTPS://WWW.EXAMPLE.CO.UK/x"
+   },
+   {
+    "href": "HTTPS://WWW.EXAMPLE.CO.UK/x",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "example.co.uk",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "HTTPS://WWW.EXAMPLE.CO.UK/x"
+   },
+   {
+    "href": "//cdn.example.com/a",
+    "text": "",
+    "scheme": "",
+    "href_domain": "example.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "//cdn.example.com/a"
+   },
+   {
+    "href": "//cdn.example.com/a",
+    "text": "www.paypal.com",
+    "scheme": "",
+    "href_domain": "example.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "//cdn.example.com/a"
+   },
+   {
+    "href": "//cdn.example.com/a",
+    "text": "Cliquez ici",
+    "scheme": "",
+    "href_domain": "example.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "//cdn.example.com/a"
+   },
+   {
+    "href": "www.example.org/page",
+    "text": "",
+    "scheme": "",
+    "href_domain": "example.org",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.example.org/page"
+   },
+   {
+    "href": "www.example.org/page",
+    "text": "www.paypal.com",
+    "scheme": "",
+    "href_domain": "example.org",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "www.example.org/page"
+   },
+   {
+    "href": "www.example.org/page",
+    "text": "Cliquez ici",
+    "scheme": "",
+    "href_domain": "example.org",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.example.org/page"
+   },
+   {
+    "href": "/relative/path",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "/relative/path"
+   },
+   {
+    "href": "/relative/path",
+    "text": "www.paypal.com",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "/relative/path"
+   },
+   {
+    "href": "/relative/path",
+    "text": "Cliquez ici",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "/relative/path"
+   },
+   {
+    "href": "page.html",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "page.html"
+   },
+   {
+    "href": "page.html",
+    "text": "www.paypal.com",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "page.html"
+   },
+   {
+    "href": "page.html",
+    "text": "Cliquez ici",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "page.html"
+   },
+   {
+    "href": "#ancre",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "#ancre"
+   },
+   {
+    "href": "#ancre",
+    "text": "www.paypal.com",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "#ancre"
+   },
+   {
+    "href": "#ancre",
+    "text": "Cliquez ici",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "#ancre"
+   },
+   {
+    "href": "mailto:support@paypal.com",
+    "text": "",
+    "scheme": "mailto",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "mailto:support@paypal.com"
+   },
+   {
+    "href": "mailto:support@paypal.com",
+    "text": "www.paypal.com",
+    "scheme": "mailto",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "mailto:support@paypal.com"
+   },
+   {
+    "href": "mailto:support@paypal.com",
+    "text": "Cliquez ici",
+    "scheme": "mailto",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "mailto:support@paypal.com"
+   },
+   {
+    "href": "tel:+33123456789",
+    "text": "",
+    "scheme": "tel",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "tel:+33123456789"
+   },
+   {
+    "href": "tel:+33123456789",
+    "text": "www.paypal.com",
+    "scheme": "tel",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "tel:+33123456789"
+   },
+   {
+    "href": "tel:+33123456789",
+    "text": "Cliquez ici",
+    "scheme": "tel",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "tel:+33123456789"
+   },
+   {
+    "href": "javascript:alert(1)",
+    "text": "",
+    "scheme": "javascript",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "javascript:alert(1)"
+   },
+   {
+    "href": "javascript:alert(1)",
+    "text": "www.paypal.com",
+    "scheme": "javascript",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "javascript:alert(1)"
+   },
+   {
+    "href": "javascript:alert(1)",
+    "text": "Cliquez ici",
+    "scheme": "javascript",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "javascript:alert(1)"
+   },
+   {
+    "href": " JavaScript:void(0)",
+    "text": "",
+    "scheme": "javascript",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "JavaScript:void(0)"
+   },
+   {
+    "href": " JavaScript:void(0)",
+    "text": "www.paypal.com",
+    "scheme": "javascript",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "JavaScript:void(0)"
+   },
+   {
+    "href": " JavaScript:void(0)",
+    "text": "Cliquez ici",
+    "scheme": "javascript",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "JavaScript:void(0)"
+   },
+   {
+    "href": "data:text/html;base64,PHNjcmlwdD4=",
+    "text": "",
+    "scheme": "data",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "data:text/html;base64,PHNjcmlwdD4="
+   },
+   {
+    "href": "data:text/html;base64,PHNjcmlwdD4=",
+    "text": "www.paypal.com",
+    "scheme": "data",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "data:text/html;base64,PHNjcmlwdD4="
+   },
+   {
+    "href": "data:text/html;base64,PHNjcmlwdD4=",
+    "text": "Cliquez ici",
+    "scheme": "data",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "data:text/html;base64,PHNjcmlwdD4="
+   },
+   {
+    "href": "vbscript:msgbox",
+    "text": "",
+    "scheme": "vbscript",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "vbscript:msgbox"
+   },
+   {
+    "href": "vbscript:msgbox",
+    "text": "www.paypal.com",
+    "scheme": "vbscript",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "vbscript:msgbox"
+   },
+   {
+    "href": "vbscript:msgbox",
+    "text": "Cliquez ici",
+    "scheme": "vbscript",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "vbscript:msgbox"
+   },
+   {
+    "href": "file:///C:/Windows/notepad.exe",
+    "text": "",
+    "scheme": "file",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "file:///C:/Windows/notepad.exe"
+   },
+   {
+    "href": "file:///C:/Windows/notepad.exe",
+    "text": "www.paypal.com",
+    "scheme": "file",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "file:///C:/Windows/notepad.exe"
+   },
+   {
+    "href": "file:///C:/Windows/notepad.exe",
+    "text": "Cliquez ici",
+    "scheme": "file",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "file:///C:/Windows/notepad.exe"
+   },
+   {
+    "href": "ftp://files.example.com/a",
+    "text": "",
+    "scheme": "ftp",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "ftp://files.example.com/a"
+   },
+   {
+    "href": "ftp://files.example.com/a",
+    "text": "www.paypal.com",
+    "scheme": "ftp",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "ftp://files.example.com/a"
+   },
+   {
+    "href": "ftp://files.example.com/a",
+    "text": "Cliquez ici",
+    "scheme": "ftp",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "ftp://files.example.com/a"
+   },
+   {
+    "href": "http://192.0.2.10/paypal/",
+    "text": "",
+    "scheme": "http",
+    "href_domain": "192.0.2.10",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://192.0.2.10/paypal/"
+   },
+   {
+    "href": "http://192.0.2.10/paypal/",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": "192.0.2.10",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "http://192.0.2.10/paypal/"
+   },
+   {
+    "href": "http://192.0.2.10/paypal/",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": "192.0.2.10",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://192.0.2.10/paypal/"
+   },
+   {
+    "href": "http://[2001:db8::1]/login",
+    "text": "",
+    "scheme": "http",
+    "href_domain": "2001:db8::1",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://[2001:db8::1]/login"
+   },
+   {
+    "href": "http://[2001:db8::1]/login",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": "2001:db8::1",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "http://[2001:db8::1]/login"
+   },
+   {
+    "href": "http://[2001:db8::1]/login",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": "2001:db8::1",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://[2001:db8::1]/login"
+   },
+   {
+    "href": "http://[::1",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://[::1"
+   },
+   {
+    "href": "http://[::1",
+    "text": "www.paypal.com",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://[::1"
+   },
+   {
+    "href": "http://[::1",
+    "text": "Cliquez ici",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://[::1"
+   },
+   {
+    "href": "http://xn--pple-43d.com/",
+    "text": "",
+    "scheme": "http",
+    "href_domain": "xn--pple-43d.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://xn--pple-43d.com/"
+   },
+   {
+    "href": "http://xn--pple-43d.com/",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": "xn--pple-43d.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "http://xn--pple-43d.com/"
+   },
+   {
+    "href": "http://xn--pple-43d.com/",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": "xn--pple-43d.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://xn--pple-43d.com/"
+   },
+   {
+    "href": "http://\u0430pple.com/",
+    "text": "",
+    "scheme": "http",
+    "href_domain": "xn--pple-43d.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://\u0430pple.com/"
+   },
+   {
+    "href": "http://\u0430pple.com/",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": "xn--pple-43d.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "http://\u0430pple.com/"
+   },
+   {
+    "href": "http://\u0430pple.com/",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": "xn--pple-43d.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://\u0430pple.com/"
+   },
+   {
+    "href": "https://user@evil.example/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://user@evil.example/"
+   },
+   {
+    "href": "https://user@evil.example/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://user@evil.example/"
+   },
+   {
+    "href": "https://user@evil.example/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://user@evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com@evil.example/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com@evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com@evil.example/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com@evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com@evil.example/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com@evil.example/"
+   },
+   {
+    "href": "https://someone.github.io/page",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "someone.github.io",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://someone.github.io/page"
+   },
+   {
+    "href": "https://someone.github.io/page",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "someone.github.io",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://someone.github.io/page"
+   },
+   {
+    "href": "https://someone.github.io/page",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "someone.github.io",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://someone.github.io/page"
+   },
+   {
+    "href": "https://github.io",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "github.io",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://github.io"
+   },
+   {
+    "href": "https://github.io",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "github.io",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://github.io"
+   },
+   {
+    "href": "https://github.io",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "github.io",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://github.io"
+   },
+   {
+    "href": "http://localhost:8000/",
+    "text": "",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://localhost:8000/"
+   },
+   {
+    "href": "http://localhost:8000/",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://localhost:8000/"
+   },
+   {
+    "href": "http://localhost:8000/",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://localhost:8000/"
+   },
+   {
+    "href": "https://bradesco.recompensas/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://bradesco.recompensas/"
+   },
+   {
+    "href": "https://bradesco.recompensas/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://bradesco.recompensas/"
+   },
+   {
+    "href": "https://bradesco.recompensas/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://bradesco.recompensas/"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.paypal.com%2Fsignin&data=x",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://www.paypal.com/signin"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.paypal.com%2Fsignin&data=x",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://www.paypal.com/signin"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.paypal.com%2Fsignin&data=x",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://www.paypal.com/signin"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevil.example%2F&data=x",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevil.example%2F&data=x",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevil.example%2F&data=x",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?data=x",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://nam12.safelinks.protection.outlook.com/?data=x"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?data=x",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://nam12.safelinks.protection.outlook.com/?data=x"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?data=x",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://nam12.safelinks.protection.outlook.com/?data=x"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=&url=https%3A%2F%2Fa.example%2F",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://a.example/"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=&url=https%3A%2F%2Fa.example%2F",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://a.example/"
+   },
+   {
+    "href": "https://nam12.safelinks.protection.outlook.com/?url=&url=https%3A%2F%2Fa.example%2F",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://a.example/"
+   },
+   {
+    "href": "https://NAM12.SAFELINKS.PROTECTION.OUTLOOK.COM/?url=https://b.example/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://b.example/"
+   },
+   {
+    "href": "https://NAM12.SAFELINKS.PROTECTION.OUTLOOK.COM/?url=https://b.example/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://b.example/"
+   },
+   {
+    "href": "https://NAM12.SAFELINKS.PROTECTION.OUTLOOK.COM/?url=https://b.example/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "safelinks",
+    "target": "https://b.example/"
+   },
+   {
+    "href": "https://safelinks.protection.outlook.com/?url=https://c.example/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://safelinks.protection.outlook.com/?url=https://c.example/"
+   },
+   {
+    "href": "https://safelinks.protection.outlook.com/?url=https://c.example/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://safelinks.protection.outlook.com/?url=https://c.example/"
+   },
+   {
+    "href": "https://safelinks.protection.outlook.com/?url=https://c.example/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "outlook.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://safelinks.protection.outlook.com/?url=https://c.example/"
+   },
+   {
+    "href": "https://clicktime.symantec.com/a/1/x?u=https%3A%2F%2Fevil.example%2Fpay",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "symantec",
+    "target": "https://evil.example/pay"
+   },
+   {
+    "href": "https://clicktime.symantec.com/a/1/x?u=https%3A%2F%2Fevil.example%2Fpay",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "symantec",
+    "target": "https://evil.example/pay"
+   },
+   {
+    "href": "https://clicktime.symantec.com/a/1/x?u=https%3A%2F%2Fevil.example%2Fpay",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "symantec",
+    "target": "https://evil.example/pay"
+   },
+   {
+    "href": "https://clicktime.symantec.com/a/1/x?u=",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "symantec.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://clicktime.symantec.com/a/1/x?u="
+   },
+   {
+    "href": "https://clicktime.symantec.com/a/1/x?u=",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "symantec.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://clicktime.symantec.com/a/1/x?u="
+   },
+   {
+    "href": "https://clicktime.symantec.com/a/1/x?u=",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "symantec.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://clicktime.symantec.com/a/1/x?u="
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v2/url?u=https-3A__evil.example_login&d=x",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v2/url?u=https-3A__evil.example_login&d=x",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v2/url?u=https-3A__evil.example_login&d=x",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v2/url?u=https-3A__www.paypal.com_&d=x",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v2/url?u=https-3A__www.paypal.com_&d=x",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v2/url?u=https-3A__www.paypal.com_&d=x",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "proofpoint.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "proofpoint.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_"
+   },
+   {
+    "href": "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "proofpoint.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_"
+   },
+   {
+    "href": "https://urldefense.com/v3/__https://evil.example/login__;!!abc",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.com/v3/__https://evil.example/login__;!!abc",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.com/v3/__https://evil.example/login__;!!abc",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": "proofpoint",
+    "target": "https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.com/v3/__https://evil.example/login",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "urldefense.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://urldefense.com/v3/__https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.com/v3/__https://evil.example/login",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "urldefense.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://urldefense.com/v3/__https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.com/v3/__https://evil.example/login",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "urldefense.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://urldefense.com/v3/__https://evil.example/login"
+   },
+   {
+    "href": "https://urldefense.com/v3/__javascript:alert(1)__;!!abc",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "urldefense.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://urldefense.com/v3/__javascript:alert(1)__;!!abc"
+   },
+   {
+    "href": "https://urldefense.com/v3/__javascript:alert(1)__;!!abc",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "urldefense.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://urldefense.com/v3/__javascript:alert(1)__;!!abc"
+   },
+   {
+    "href": "https://urldefense.com/v3/__javascript:alert(1)__;!!abc",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "urldefense.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://urldefense.com/v3/__javascript:alert(1)__;!!abc"
+   },
+   {
+    "href": "https://www.google.com/url?q=https://evil.example/&sa=D",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "google.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.google.com/url?q=https://evil.example/&sa=D"
+   },
+   {
+    "href": "https://www.google.com/url?q=https://evil.example/&sa=D",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "google.com",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.google.com/url?q=https://evil.example/&sa=D"
+   },
+   {
+    "href": "https://www.google.com/url?q=https://evil.example/&sa=D",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "google.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.google.com/url?q=https://evil.example/&sa=D"
+   },
+   {
+    "href": "https://exemple.fr/?a=1&a=2&b=%41+c",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "exemple.fr",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://exemple.fr/?a=1&a=2&b=%41+c"
+   },
+   {
+    "href": "https://exemple.fr/?a=1&a=2&b=%41+c",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "exemple.fr",
+    "text_domain": "paypal.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://exemple.fr/?a=1&a=2&b=%41+c"
+   },
+   {
+    "href": "https://exemple.fr/?a=1&a=2&b=%41+c",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "exemple.fr",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://exemple.fr/?a=1&a=2&b=%41+c"
+   },
+   {
+    "href": "https://exemple.fr:99999/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://exemple.fr:99999/"
+   },
+   {
+    "href": "https://exemple.fr:99999/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://exemple.fr:99999/"
+   },
+   {
+    "href": "https://exemple.fr:99999/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://exemple.fr:99999/"
+   },
+   {
+    "href": "http://example.com\t/tab",
+    "text": "",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://example.com\t/tab"
+   },
+   {
+    "href": "http://example.com\t/tab",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://example.com\t/tab"
+   },
+   {
+    "href": "http://example.com\t/tab",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://example.com\t/tab"
+   },
+   {
+    "href": "http://exa\nmple.com/",
+    "text": "",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://exa\nmple.com/"
+   },
+   {
+    "href": "http://exa\nmple.com/",
+    "text": "www.paypal.com",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://exa\nmple.com/"
+   },
+   {
+    "href": "http://exa\nmple.com/",
+    "text": "Cliquez ici",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://exa\nmple.com/"
+   },
+   {
+    "href": "https://b\u00fccher.example/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://b\u00fccher.example/"
+   },
+   {
+    "href": "https://b\u00fccher.example/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://b\u00fccher.example/"
+   },
+   {
+    "href": "https://b\u00fccher.example/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://b\u00fccher.example/"
+   },
+   {
+    "href": "https://\u4f8b\u3048.\u30c6\u30b9\u30c8/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://\u4f8b\u3048.\u30c6\u30b9\u30c8/"
+   },
+   {
+    "href": "https://\u4f8b\u3048.\u30c6\u30b9\u30c8/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://\u4f8b\u3048.\u30c6\u30b9\u30c8/"
+   },
+   {
+    "href": "https://\u4f8b\u3048.\u30c6\u30b9\u30c8/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://\u4f8b\u3048.\u30c6\u30b9\u30c8/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "Cliquez ici",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "WWW.PAYPAL.COM",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "WWW.PAYPAL.COM",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "https://www.paypal.com/signin",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "https://www.paypal.com/signin",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "http://paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "http://paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "<https://www.paypal.com>",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "<https://www.paypal.com>",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "(www.paypal.com).",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "(www.paypal.com).",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "\"paypal.com\";",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "\"paypal.com\";",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "  www.paypal.com  ",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "  www.paypal.com  ",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "www.\u00a0paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "www.\u00a0paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "Visitez www.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "Visitez www.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "paypal.com/login?x=1#y",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "paypal.com/login?x=1#y",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "paypal.com:443",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "paypal.com:443",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "paypal.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "evil.example",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "evil.example",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "www.impots.gouv.fr",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "impots.gouv.fr",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "www.impots.gouv.fr",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "impots.gouv.fr",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "impots.gouv.fr",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "impots.gouv.fr",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "impots.gouv.fr",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "impots.gouv.fr",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "support@paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "support@paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "192.0.2.10",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "192.0.2.10",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "localhost",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "localhost",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "Bradesco.recompensas",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "Bradesco.recompensas",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "fichier.pdf",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "fichier.pdf",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "v2.0",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "v2.0",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "a.b",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "a.b",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "exemple.fr",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "exemple.fr",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "exemple.fr",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "exemple.fr",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "EXEMPLE.FR",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "exemple.fr",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "EXEMPLE.FR",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "exemple.fr",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "exemple.\u017fr",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "exemple.sr",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "exemple.\u017fr",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "exemple.sr",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "exemple.\u212az",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "exemple.kz",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "exemple.\u212az",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "exemple.kz",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "exemple.\u0130o",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "exemple.\u0130o",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "exemple.f",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "exemple.f",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "exemple.aaaaaaaaaaaaaaaaaaaaaaaa",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "exemple.aaaaaaaaaaaaaaaaaaaaaaaa",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "exemple.aaaaaaaaaaaaaaaaaaaaaaaaa",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "exemple.aaaaaaaaaaaaaaaaaaaaaaaaa",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "\u0430pple.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "xn--pple-43d.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "\u0430pple.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "xn--pple-43d.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "xn--pple-43d.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "xn--pple-43d.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "xn--pple-43d.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "xn--pple-43d.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "b\u00fccher.example",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "b\u00fccher.example",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "\u4f8b\u3048.\u30c6\u30b9\u30c8",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "\u4f8b\u3048.\u30c6\u30b9\u30c8",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "\u043f\u0440\u0438\u043c\u0435\u0440.\u0440\u0444",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "\u043f\u0440\u0438\u043c\u0435\u0440.\u0440\u0444",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "someone.github.io",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "someone.github.io",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "someone.github.io",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "someone.github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "github.io",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "github.io",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "github.io",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "https://",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "https://",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "www.",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "www.",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "www.x",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "www.x",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "http\u017f://paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "http\u017f://paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "www\u200b.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "www\u200b.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "paypal\u3002com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "paypal\u3002com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "under_score.example.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "example.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "under_score.example.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "example.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "-tiret.example.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": "example.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "-tiret.example.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "example.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "\u202epaypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "\u202epaypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "https://www.paypal.com/",
+    "text": "multi\nligne\twww.paypal.com",
+    "scheme": "https",
+    "href_domain": "paypal.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://www.paypal.com/"
+   },
+   {
+    "href": "https://evil.example/",
+    "text": "multi\nligne\twww.paypal.com",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil.example/"
+   },
+   {
+    "href": "paypal.com",
+    "text": ".fr@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal.com"
+   },
+   {
+    "href": "evilhttp://]!/- \u00e9K-\u200b__;\u200b\u043e\u043e\u0430",
+    "text": "0",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evilhttp://]!/- \u00e9K-\u200b__;\u200b\u043e\u043e\u0430"
+   },
+   {
+    "href": "http://https://~\u0440\u0130\u043e.com%2F",
+    "text": ".com",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://https://~\u0440\u0130\u043e.com%2F"
+   },
+   {
+    "href": ".co.ukhttps://",
+    "text": "\u043e *?.github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.ukhttps://"
+   },
+   {
+    "href": "urldefense.com/v3/__%3A\u3048a#\u043e/",
+    "text": "$/\u00e9_$@http://safelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__%3A\u3048a#\u043e/"
+   },
+   {
+    "href": ".comevil@\u043e*\u00a0*9!\u0130:",
+    "text": "0\u3002!<,,",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".comevil@\u043e*\u00a0*9!\u0130:"
+   },
+   {
+    "href": "\u3048z&<]\u043e:\u4f8b_+ahttps://@",
+    "text": "A\"[&\u3002\"%3A\u200b*'",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048z&<]\u043e:\u4f8b_+ahttps://@"
+   },
+   {
+    "href": ":\u3002\u0130\u017f9_",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ":\u3002\u0130\u017f9_"
+   },
+   {
+    "href": "=evil>",
+    "text": "evil\".$ \u017f@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "=evil>"
+   },
+   {
+    "href": "www._/",
+    "text": "%\u017f%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www._/"
+   },
+   {
+    "href": "?9_\u017f]Zz-.'\u00e9##:*evil",
+    "text": "evil.com",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "evil.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "?9_\u017f]Zz-.'\u00e9##:*evil"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=evil!%.frz[,<A\u0440",
+    "text": "evila\u3048\u4f8b?.\u043e",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=evil!%.frz[,<A\u0440"
+   },
+   {
+    "href": "-\u017f..github.iourldefense.com/v3/__\u200b=",
+    "text": "*\u4f8b&%_a%\u200b=-?@\uff0eA.github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "-\u017f..github.iourldefense.com/v3/__\u200b="
+   },
+   {
+    "href": ".fr%2F",
+    "text": "urldefense.com/v3/__+(%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr%2F"
+   },
+   {
+    "href": ",>'Z&safelinks.protection.outlook.com/?url=paypal",
+    "text": "?\u200b&\uff0e\u200b&;]*",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ",>'Z&safelinks.protection.outlook.com/?url=paypal"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=urldefense.com/v3/__0*\u0130!=.co.uk",
+    "text": "@.fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=urldefense.com/v3/__0*\u0130!=.co.uk"
+   },
+   {
+    "href": "http://",
+    "text": "@",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://"
+   },
+   {
+    "href": "\"].Z/)/[~evil",
+    "text": ".github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\"].Z/)/[~evil"
+   },
+   {
+    "href": "_safelinks.protection.outlook.com/?url=\u043e\u200b\u00e9\u0430\u3002/safelinks.protection.outlook.com/?url=",
+    "text": "safelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "_safelinks.protection.outlook.com/?url=\u043e\u200b\u00e9\u0430\u3002/safelinks.protection.outlook.com/?url="
+   },
+   {
+    "href": "\uff0e \u0131.com\u0130A_Z\u0430-=0/\u200b%.github.io",
+    "text": ".a$A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\uff0e \u0131.com\u0130A_Z\u0430-=0/\u200b%.github.io"
+   },
+   {
+    "href": ".com.\uff0e<\u0435?0\u4f8b\u4f8b<__;\u0430 Z",
+    "text": "urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com.\uff0e<\u0435?0\u4f8b\u4f8b<__;\u0430 Z"
+   },
+   {
+    "href": ".\u0440>urldefense.com/v3/__",
+    "text": "\u4f8b\u0440\u3002paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".\u0440>urldefense.com/v3/__"
+   },
+   {
+    "href": "%2F@z?\u00a0<,",
+    "text": "\uff0e;\u0435\u00e9evilpaypal\u200bA",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2F@z?\u00a0<,"
+   },
+   {
+    "href": ",.;&%2F*\u043e",
+    "text": "+?:A\u3048#__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ",.;&%2F*\u043e"
+   },
+   {
+    "href": "K/a=(\u0435",
+    "text": "]<;%\u0130,=\u00e9\u0131-_\u0440paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "K/a=(\u0435"
+   },
+   {
+    "href": "__;evilhttps://Z-",
+    "text": "=~';\u0440z?Ahttps://urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;evilhttps://Z-"
+   },
+   {
+    "href": ".github.io",
+    "text": ".fr.comhttp://;--]\u0130",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io"
+   },
+   {
+    "href": "]\u3002?\u043e%2F,\u0430A0\u3002",
+    "text": ".[/",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "]\u3002?\u043e%2F,\u0430A0\u3002"
+   },
+   {
+    "href": "@safelinks.protection.outlook.com/?url=]\u0430\u043e=A'%3A",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@safelinks.protection.outlook.com/?url=]\u0430\u043e=A'%3A"
+   },
+   {
+    "href": "Z\u017f$ :9__%3A(z[%\u200b\u043e0!",
+    "text": "safelinks.protection.outlook.com/?url=#,\u0435]",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "Z\u017f$ :9__%3A(z[%\u200b\u043e0!"
+   },
+   {
+    "href": "evil.fr.github.io",
+    "text": "\u0435.com%3Aurldefense.com/v3/__ :\u200b!\"[",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil.fr.github.io"
+   },
+   {
+    "href": "urldefense.com/v3/__@.com<\u0430\u0131ZA\uff0e\u017f>[",
+    "text": "?].9.'",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__@.com<\u0430\u0131ZA\uff0e\u017f>["
+   },
+   {
+    "href": "\u0430\u0440",
+    "text": "paypalwww..github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0430\u0440"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url="
+   },
+   {
+    "href": "http://__;%3A@paypal",
+    "text": ".comevil",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://__;%3A@paypal"
+   },
+   {
+    "href": "__;",
+    "text": "\u0131",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;"
+   },
+   {
+    "href": "\u0131~\u3002%!\u3048Z",
+    "text": "www.$http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0131~\u3002%!\u3048Z"
+   },
+   {
+    "href": "-$~+[__;\u00a0\u0430evil",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "-$~+[__;\u00a0\u0430evil"
+   },
+   {
+    "href": "evil",
+    "text": "%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil"
+   },
+   {
+    "href": "www.+\u3048>'0-__;",
+    "text": ".com%3A+-\u0440[",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.+\u3048>'0-__;"
+   },
+   {
+    "href": "@www.",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@www."
+   },
+   {
+    "href": "@%3A.@.~=.com",
+    "text": ".fr__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@%3A.@.~=.com"
+   },
+   {
+    "href": "urldefense.com/v3/__urldefense.com/v3/__\u200b\";*:~",
+    "text": ".github.io@!\u200b\u200b",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__urldefense.com/v3/__\u200b\";*:~"
+   },
+   {
+    "href": "paypal",
+    "text": "www..comA(~%>%",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal"
+   },
+   {
+    "href": "https://",
+    "text": "https://%3A..github.io",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://"
+   },
+   {
+    "href": "\u4f8b9.__;.fr",
+    "text": "\"\u4f8b=>%2Fpaypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u4f8b9.__;.fr"
+   },
+   {
+    "href": ".com:%:%/\u00a0-http://https://",
+    "text": "A\u0130\u4f8bevil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com:%:%/\u00a0-http://https://"
+   },
+   {
+    "href": ".fr",
+    "text": "\u200b\u0440a-",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr"
+   },
+   {
+    "href": "=/>(]\u043e*http://=9\u0131",
+    "text": "http://>=,@-+\u0130#\u0435*\uff0e,",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "=/>(]\u043e*http://=9\u0131"
+   },
+   {
+    "href": "\u200b:@\u30020\u00e9=.\u3002zevil",
+    "text": "evil\uff0e@\u4f8b#\u00a0",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u200b:@\u30020\u00e9=.\u3002zevil"
+   },
+   {
+    "href": "https://",
+    "text": "evilevil__;Z",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://"
+   },
+   {
+    "href": "__;\u017f%\u3048\u200b#.co.uk",
+    "text": ".github.io\u4f8b-\u3002www.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;\u017f%\u3048\u200b#.co.uk"
+   },
+   {
+    "href": "https://urldefense.com/v3/__#",
+    "text": ",[\u3048=&%\u3048",
+    "scheme": "https",
+    "href_domain": "urldefense.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://urldefense.com/v3/__#"
+   },
+   {
+    "href": "www..\u4f8b\u00e9\u0130:../\u0440@\u00e9(K\u043e.",
+    "text": ")\u00a0#",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www..\u4f8b\u00e9\u0130:../\u0440@\u00e9(K\u043e."
+   },
+   {
+    "href": "evilurldefense.com/v3/__*",
+    "text": "%2Fz'/~\u0435Khttp://__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evilurldefense.com/v3/__*"
+   },
+   {
+    "href": "]\u3002\u017f;,Zpaypal",
+    "text": "<z\u0435!*.z\u0430_0\u0131\u0430\u0440",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "]\u3002\u017f;,Zpaypal"
+   },
+   {
+    "href": ".fr",
+    "text": "evil.~).github.io%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr"
+   },
+   {
+    "href": "%&",
+    "text": ".github.io\u200b&//.evil-.https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%&"
+   },
+   {
+    "href": "www.",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www."
+   },
+   {
+    "href": "paypal",
+    "text": ")[%2Fsafelinks.protection.outlook.com/?url=@[#~\u4f8b*\u043e,",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal"
+   },
+   {
+    "href": "~\u0131/@.github.io",
+    "text": ".fr\u00e9+@z",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "~\u0131/@.github.io"
+   },
+   {
+    "href": "*_K:\u017f@\u3002http://.com",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "*_K:\u017f@\u3002http://.com"
+   },
+   {
+    "href": "@",
+    "text": "http://-\u0430",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@"
+   },
+   {
+    "href": "https://",
+    "text": "\u3048\uff0e",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://"
+   },
+   {
+    "href": "\u3002+#",
+    "text": "safelinks.protection.outlook.com/?url=@\u0430",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3002+#"
+   },
+   {
+    "href": "\u043e\u0131\u0131#\u200bhttps://z",
+    "text": ".github.io__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u043e\u0131\u0131#\u200bhttps://z"
+   },
+   {
+    "href": "https://.fr\u0130.@",
+    "text": "@a:.fr.github.io",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://.fr\u0130.@"
+   },
+   {
+    "href": "&\u017f9zA.compaypal",
+    "text": "https:// \u4f8b\u0435z~@@z@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "&\u017f9zA.compaypal"
+   },
+   {
+    "href": "evil__;urldefense.com/v3/__",
+    "text": "%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil__;urldefense.com/v3/__"
+   },
+   {
+    "href": "z$",
+    "text": "evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "z$"
+   },
+   {
+    "href": "%3Aurldefense.com/v3/__",
+    "text": "http://%3A.co.ukZ.9",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3Aurldefense.com/v3/__"
+   },
+   {
+    "href": " ;",
+    "text": " ?[\u3002\u0130)evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ";"
+   },
+   {
+    "href": "!K9\u0435*",
+    "text": ":Z\u0435?\u0130/urldefense.com/v3/__\u0430(a\u0131Awww.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "!K9\u0435*"
+   },
+   {
+    "href": "\u04350-\u0440a",
+    "text": "$\u3002&A-=*_\u200b.,\u043e\u3002~-",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u04350-\u0440a"
+   },
+   {
+    "href": ".fr\u0130K\u0430urldefense.com/v3/__'A=\u017f.paypal",
+    "text": "%3Ahttp://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr\u0130K\u0430urldefense.com/v3/__'A=\u017f.paypal"
+   },
+   {
+    "href": "&",
+    "text": "\u0430)?\u017f",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "&"
+   },
+   {
+    "href": "@@https://%2F\uff0e.co.uk",
+    "text": "evil/.[&@?",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@@https://%2F\uff0e.co.uk"
+   },
+   {
+    "href": "A\u00a0\u3048z\u3002z",
+    "text": "*@\uff0e#;__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "A\u00a0\u3048z\u3002z"
+   },
+   {
+    "href": "%3A.com",
+    "text": ".co.ukhttp://http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A.com"
+   },
+   {
+    "href": ".com@.fr.fr;Z",
+    "text": "\u3048($",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com@.fr.fr;Z"
+   },
+   {
+    "href": ".co.uk?\u4f8bA=\u00a0\u4f8b__;\u043eZ),:\u0430",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.uk?\u4f8bA=\u00a0\u4f8b__;\u043eZ),:\u0430"
+   },
+   {
+    "href": ".com0__;",
+    "text": ".fr\u00e9\u3048=/",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com0__;"
+   },
+   {
+    "href": "/a",
+    "text": "%\u200b",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "/a"
+   },
+   {
+    "href": ">*A(z\uff0e",
+    "text": "www.urldefense.com/v3/__@.fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ">*A(z\uff0e"
+   },
+   {
+    "href": "[\u0131A -%",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "[\u0131A -%"
+   },
+   {
+    "href": ".comhttp://\u00a0;+,Z\";\u00a0",
+    "text": "paypal:",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".comhttp://\u00a0;+,Z\";"
+   },
+   {
+    "href": "@https://;\u200b?#\u0430.github.io>\uff0e\u0440A\u043e'#[",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@https://;\u200b?#\u0430.github.io>\uff0e\u0440A\u043e'#["
+   },
+   {
+    "href": "A)-A\u200b,~9[\"@@\u00a0>!",
+    "text": "*@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "A)-A\u200b,~9[\"@@\u00a0>!"
+   },
+   {
+    "href": "%3A<\u017fZ<.com$",
+    "text": ".com__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A<\u017fZ<.com$"
+   },
+   {
+    "href": "paypalsafelinks.protection.outlook.com/?url=http://__;",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypalsafelinks.protection.outlook.com/?url=http://__;"
+   },
+   {
+    "href": ".com.co.ukhttp://",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com.co.ukhttp://"
+   },
+   {
+    "href": "<(",
+    "text": "'.co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "<("
+   },
+   {
+    "href": "K.comsafelinks.protection.outlook.com/?url=.github.io",
+    "text": "(\u0440.%\u043e",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "K.comsafelinks.protection.outlook.com/?url=.github.io"
+   },
+   {
+    "href": "https://'",
+    "text": "urldefense.com/v3/__@-A*\u3048\u00e9evil",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://'"
+   },
+   {
+    "href": ".github.io\u00e9z[\u017f\u00a0.fr?\u0435,#,",
+    "text": ".co.uk\u3002?\u0131 K!*\u0130'\u04300",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io\u00e9z[\u017f\u00a0.fr?\u0435,#,"
+   },
+   {
+    "href": "\u017f\u0435K paypal",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u017f\u0435K paypal"
+   },
+   {
+    "href": "@.github.io%2F__;%2F",
+    "text": "evil__;__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@.github.io%2F__;%2F"
+   },
+   {
+    "href": "?,",
+    "text": "\u0430_Z_",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "?,"
+   },
+   {
+    "href": "\u0440@.com",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0440@.com"
+   },
+   {
+    "href": "evil%3A",
+    "text": "__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil%3A"
+   },
+   {
+    "href": ".&/",
+    "text": ".%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".&/"
+   },
+   {
+    "href": "zA\u0440?\u3002\u0430;?",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "zA\u0440?\u3002\u0430;?"
+   },
+   {
+    "href": ">,\u0131=[/\u3048(\u0440",
+    "text": ";=\u0440%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ">,\u0131=[/\u3048(\u0440"
+   },
+   {
+    "href": "paypalhttps://.fr<\u00e9?\u00a0]0\u200b\u3002",
+    "text": "\u0131;\u017f\u0430http://#\u043e\u0440Z@=safelinks.protection.outlook.com/?url=",
+    "scheme": "paypalhttps",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypalhttps://.fr<\u00e9?\u00a0]0\u200b\u3002"
+   },
+   {
+    "href": "\u0131$>www.=<@\"\u0130",
+    "text": "https://.fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0131$>www.=<@\"\u0130"
+   },
+   {
+    "href": ".fr!>$!K\u3002",
+    "text": "!!$",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr!>$!K\u3002"
+   },
+   {
+    "href": "%3A.github.iowww.",
+    "text": "]+=!%2F>'=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A.github.iowww."
+   },
+   {
+    "href": "\u3048]\u043e<@\u0130\u017f\u3048",
+    "text": "?!~\u017f+(",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048]\u043e<@\u0130\u017f\u3048"
+   },
+   {
+    "href": "Z>)-safelinks.protection.outlook.com/?url= <0Z\u043e,+.com",
+    "text": "=(?\u0131[",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "Z>)-safelinks.protection.outlook.com/?url= <0Z\u043e,+.com"
+   },
+   {
+    "href": ")\u00e9%www.",
+    "text": ".\u3002Z$www.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ")\u00e9%www."
+   },
+   {
+    "href": "\u0130\u0440\"\u00e9%/\u0435\u017f?\u00a0&\u3002.github.iourldefense.com/v3/__",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0130\u0440\"\u00e9%/\u0435\u017f?\u00a0&\u3002.github.iourldefense.com/v3/__"
+   },
+   {
+    "href": "",
+    "text": "__;.github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ""
+   },
+   {
+    "href": "@https://.comKK\u200b\u4f8b\u200b9+https://",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@https://.comKK\u200b\u4f8b\u200b9+https://"
+   },
+   {
+    "href": "\u00e9a$#'\u4f8b\u3048,]/>https://%2F",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9a$#'\u4f8b\u3048,]/>https://%2F"
+   },
+   {
+    "href": "@a#=<[https://>'\u0131\u0435",
+    "text": "[\"~)Z>\u00e9\u0435]\u3048",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@a#=<[https://>'\u0131\u0435"
+   },
+   {
+    "href": "www.__;?/&\u00a0\u3048\u4f8b\u017f[)]\u4f8b",
+    "text": ".co.ukwww.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.__;?/&\u00a0\u3048\u4f8b\u017f[)]\u4f8b"
+   },
+   {
+    "href": "\u00a0\u0130_(urldefense.com/v3/__\u00e9",
+    "text": "a[]$*-9paypal.github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0130_(urldefense.com/v3/__\u00e9"
+   },
+   {
+    "href": ".co.uk$@__;@",
+    "text": "\u043e;\u043e__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.uk$@__;@"
+   },
+   {
+    "href": "urldefense.com/v3/__%3A \u200bz",
+    "text": "%2F%2Furldefense.com/v3/__\u00e9&-",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__%3A \u200bz"
+   },
+   {
+    "href": "\"(\u3048\u00e9\u00e9@%)",
+    "text": ".fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\"(\u3048\u00e9\u00e9@%)"
+   },
+   {
+    "href": "@0*<+%2F",
+    "text": "+\"z[._.com",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@0*<+%2F"
+   },
+   {
+    "href": ".github.iourldefense.com/v3/__",
+    "text": "-\u04400\"!<?.comhttps://\u0430",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.iourldefense.com/v3/__"
+   },
+   {
+    "href": "urldefense.com/v3/__",
+    "text": "www.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__"
+   },
+   {
+    "href": "\u0131\u0131+0$=]\u200b\u0435%3Aurldefense.com/v3/__",
+    "text": ":*>",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0131\u0131+0$=]\u200b\u0435%3Aurldefense.com/v3/__"
+   },
+   {
+    "href": "\u0430\u200b.]'\u200b__; ZK\uff0eA ",
+    "text": "safelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0430\u200b.]'\u200b__; ZK\uff0eA"
+   },
+   {
+    "href": "*\u043eA\u00a0#~",
+    "text": "safelinks.protection.outlook.com/?url=!\uff0e\u0440__;ZK)\u00a0",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "*\u043eA\u00a0#~"
+   },
+   {
+    "href": ".fr",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr"
+   },
+   {
+    "href": ":(evil\uff0eK/\u200b:",
+    "text": "evil_z&\u4f8b\u00a0@.*!-",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ":(evil\uff0eK/\u200b:"
+   },
+   {
+    "href": "https://",
+    "text": ".co.uk(\u043e%K_aZ/[\u00e9\u0131;a':",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://"
+   },
+   {
+    "href": "#\u0130\u043e\uff0e\u0440Zevil-@Awww.evil,",
+    "text": "urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "#\u0130\u043e\uff0e\u0440Zevil-@Awww.evil,"
+   },
+   {
+    "href": "~@*,~\u4f8b\u4f8b\u0430\u0131.github.iourldefense.com/v3/__%3A",
+    "text": "9\"?zZ~-/",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "~@*,~\u4f8b\u4f8b\u0430\u0131.github.iourldefense.com/v3/__%3A"
+   },
+   {
+    "href": "*\u0430#\u00e9\u0435A",
+    "text": ".co.ukwww.%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "*\u0430#\u00e9\u0435A"
+   },
+   {
+    "href": "http://%3A\u0440~,(~\u4f8b;+A:\"",
+    "text": "http://",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://%3A\u0440~,(~\u4f8b;+A:\""
+   },
+   {
+    "href": ";\u200bAzurldefense.com/v3/__+&!",
+    "text": "\u200b\u4f8b0https://\u0430&%\"<[www.safelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ";\u200bAzurldefense.com/v3/__+&!"
+   },
+   {
+    "href": ".github.io.co.uk\u017f[zaZ%2F",
+    "text": "https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io.co.uk\u017f[zaZ%2F"
+   },
+   {
+    "href": ".frevil.co.uk]?evil,/\u4f8bZ\u0430\u200b",
+    "text": "\u0435K_A\u4f8b%",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".frevil.co.uk]?evil,/\u4f8bZ\u0430\u200b"
+   },
+   {
+    "href": "%2F+:\u0440\u00e9.github.iohttps://",
+    "text": "urldefense.com/v3/__urldefense.com/v3/__?*Z,___;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2F+:\u0440\u00e9.github.iohttps://"
+   },
+   {
+    "href": "%+A%2F",
+    "text": "\u200b",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%+A%2F"
+   },
+   {
+    "href": "Z:AA'\u3048:.co.uk9;urldefense.com/v3/__.github.io",
+    "text": "urldefense.com/v3/__#_)\uff0e",
+    "scheme": "z",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": true,
+    "rewritten_by": null,
+    "target": "Z:AA'\u3048:.co.uk9;urldefense.com/v3/__.github.io"
+   },
+   {
+    "href": "ZZ\u0131\u4f8b)](+ $\uff0e.co.uk#:+0)",
+    "text": "?\u0435\u3002&]\u0435;\u0131\u0131 z_",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "ZZ\u0131\u4f8b)](+ $\uff0e.co.uk#:+0)"
+   },
+   {
+    "href": "www.@%3A<\u0131\u3048\u017f**Z*[,:",
+    "text": "%\uff0e-K#\u0440\u0435[\u00e9%2F@http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.@%3A<\u0131\u3048\u017f**Z*[,:"
+   },
+   {
+    "href": "\u0440%&\u3048%2F\u0130(.\u043e__;%2F\u0130>",
+    "text": "paypalhttps://.com(?$;\u0130\u017f\u4f8b((",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0440%&\u3048%2F\u0130(.\u043e__;%2F\u0130>"
+   },
+   {
+    "href": "@",
+    "text": "safelinks.protection.outlook.com/?url=Z'+%@paypal%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@"
+   },
+   {
+    "href": "\u00e9+\u0430<\u0130a",
+    "text": "paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9+\u0430<\u0130a"
+   },
+   {
+    "href": "?\u200b(-\u0130<9evil\u00a0+'?#",
+    "text": ".fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "?\u200b(-\u0130<9evil\u00a0+'?#"
+   },
+   {
+    "href": ".co.ukurldefense.com/v3/__safelinks.protection.outlook.com/?url=",
+    "text": "/Za'?'https://safelinks.protection.outlook.com/?url=:_z",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.ukurldefense.com/v3/__safelinks.protection.outlook.com/?url="
+   },
+   {
+    "href": "__;,K(.evil.fr",
+    "text": "safelinks.protection.outlook.com/?url=%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;,K(.evil.fr"
+   },
+   {
+    "href": "%2F__;https://@Z\u0131.fr",
+    "text": "\"\u017f\u00a0",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2F__;https://@Z\u0131.fr"
+   },
+   {
+    "href": "http://",
+    "text": "Z.",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://"
+   },
+   {
+    "href": "www.%3A\u4f8bZ\u017f%__;",
+    "text": "?\uff0eZ\u017f.fr*<\u0430$%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.%3A\u4f8bZ\u017f%__;"
+   },
+   {
+    "href": ",;.github.iohttp://*\u3002?a~'+\u3002?\u0131.",
+    "text": ",9\u200b",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ",;.github.iohttp://*\u3002?a~'+\u3002?\u0131."
+   },
+   {
+    "href": "a;\u3002?A",
+    "text": ":?%\u00e9[,\u4f8b?aZhttp://%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "a;\u3002?A"
+   },
+   {
+    "href": "9Z;0*@)+~\u00a0",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "9Z;0*@)+~"
+   },
+   {
+    "href": "%2Fwww..com",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2Fwww..com"
+   },
+   {
+    "href": "https://",
+    "text": "Z-Z\u0435a%3A.co.uk%3A",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://"
+   },
+   {
+    "href": ".github.io]-.9",
+    "text": "~.[",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io]-.9"
+   },
+   {
+    "href": ":<~\u0440@_.paypal<@\u017f",
+    "text": "/\u00a0\u0435_\u0131z\uff0e\u043e,[[?:]\u017f\u3002\u043eZ",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ":<~\u0440@_.paypal<@\u017f"
+   },
+   {
+    "href": "%3A#(\u200b/(\u0440",
+    "text": ".github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A#(\u200b/(\u0440"
+   },
+   {
+    "href": "%K'/",
+    "text": "__;%2F%2F.co.uk+~/-_'",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%K'/"
+   },
+   {
+    "href": "a-[\u3048~_A",
+    "text": "\u017f,[",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "a-[\u3048~_A"
+   },
+   {
+    "href": "~\u3048,>",
+    "text": "https://<",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "~\u3048,>"
+   },
+   {
+    "href": "[,/\u200b",
+    "text": ".com=\u00a0z.>-\uff0e:\u3048=\u017f,.\u0130",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "[,/\u200b"
+   },
+   {
+    "href": "\u017f\u0430'+!\"\u0440>\u3048.:\u00e9",
+    "text": "paypal\u017f_/[*@9!#[:\u00e9./?.@\"\"",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u017f\u0430'+!\"\u0440>\u3048.:\u00e9"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=a><@",
+    "text": "'(urldefense.com/v3/__%3A.com",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=a><@"
+   },
+   {
+    "href": "0*;\u00a0-/\u0430\u3048%2F-[\u00e90-],\uff0eZ9.fr",
+    "text": "@\uff0e\u04350Zpaypal@\u01310';",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "0*;\u00a0-/\u0430\u3048%2F-[\u00e90-],\uff0eZ9.fr"
+   },
+   {
+    "href": "www.#+\" =safelinks.protection.outlook.com/?url=",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.#+\" =safelinks.protection.outlook.com/?url="
+   },
+   {
+    "href": "__;a0www.evilhttp://",
+    "text": "https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;a0www.evilhttp://"
+   },
+   {
+    "href": "%)\"\u3048AK.frevilhttps://",
+    "text": "evil\u00e9urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "xn--evilurldefense-ekb.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%)\"\u3048AK.frevilhttps://"
+   },
+   {
+    "href": "\u0430\"'[_[A ",
+    "text": "/",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0430\"'[_[A"
+   },
+   {
+    "href": "www.https://urldefense.com/v3/__\u00e9safelinks.protection.outlook.com/?url=",
+    "text": "https://\u4f8bz0",
+    "scheme": "www.https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.https://urldefense.com/v3/__\u00e9safelinks.protection.outlook.com/?url="
+   },
+   {
+    "href": "http://\u200b];<-?(@",
+    "text": "%2Fevil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://\u200b];<-?(@"
+   },
+   {
+    "href": "%3A",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A"
+   },
+   {
+    "href": "\uff0e[\u200b_\u0131)\u0130&*paypal' aA",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\uff0e[\u200b_\u0131)\u0130&*paypal' aA"
+   },
+   {
+    "href": "\u3048.9\u0430-",
+    "text": "%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048.9\u0430-"
+   },
+   {
+    "href": ":https://safelinks.protection.outlook.com/?url=\u04300.\u0430z",
+    "text": "_/\u0131A)#\u00e9",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ":https://safelinks.protection.outlook.com/?url=\u04300.\u0430z"
+   },
+   {
+    "href": "\u0130https://\u0430\u3048\u200b;]aK.github.io",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0130https://\u0430\u3048\u200b;]aK.github.io"
+   },
+   {
+    "href": "K",
+    "text": "<\u043e$\u0430\u0440",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "K"
+   },
+   {
+    "href": "]/\u0131,'www.\u00e9",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "]/\u0131,'www.\u00e9"
+   },
+   {
+    "href": ".co.uk.co.ukurldefense.com/v3/__.github.io.com",
+    "text": ".fr:%\u0435a@:@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.uk.co.ukurldefense.com/v3/__.github.io.com"
+   },
+   {
+    "href": "%2Fwww.",
+    "text": ".co.uk)A</\u00e9evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2Fwww."
+   },
+   {
+    "href": ";\u017f\u00e9\u0430\"0\u3002%'\u00e9\u0440",
+    "text": ".co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ";\u017f\u00e9\u0430\"0\u3002%'\u00e9\u0440"
+   },
+   {
+    "href": "paypal)\u043e~9",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal)\u043e~9"
+   },
+   {
+    "href": "urldefense.com/v3/__K >\u0131paypal\u04409&)/+:[_\"##",
+    "text": "\u0131']~safelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__K >\u0131paypal\u04409&)/+:[_\"##"
+   },
+   {
+    "href": "<\u0435>_%?",
+    "text": "!\u017f?/\u00e9\uff0e\u0440",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "<\u0435>_%?"
+   },
+   {
+    "href": "\u4f8b%\uff0ez;",
+    "text": "&\"\u00e9#]*,",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u4f8b%\uff0ez;"
+   },
+   {
+    "href": ".\u0430\u043e_!&a:9?evil\u017f;\u0131\u043e&\u0435(",
+    "text": "%2Fhttps:///0[_www.,z",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".\u0430\u043e_!&a:9?evil\u017f;\u0131\u043e&\u0435("
+   },
+   {
+    "href": "'_.A]\"a@\u0131\u0131\u00a0aZ!\uff0e)",
+    "text": "__;%2F\u0131\u4f8b.,&evil.fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "'_.A]\"a@\u0131\u0131\u00a0aZ!\uff0e)"
+   },
+   {
+    "href": "@=a<-http://.co.uk99#(#K\u043e\u200b.com",
+    "text": "\u0131\",9",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@=a<-http://.co.uk99#(#K\u043e\u200b.com"
+   },
+   {
+    "href": "%2Fevilhttps://>z\"./_evil.com",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2Fevilhttps://>z\"./_evil.com"
+   },
+   {
+    "href": "\u4f8b.com.github.io-\u200b\u0440",
+    "text": "\u0130[\u0440/=(\"&urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u4f8b.com.github.io-\u200b\u0440"
+   },
+   {
+    "href": "https://+9]]\"!",
+    "text": "@paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://+9]]\"!"
+   },
+   {
+    "href": "9\u017fpaypalsafelinks.protection.outlook.com/?url=evil",
+    "text": "%3Asafelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "9\u017fpaypalsafelinks.protection.outlook.com/?url=evil"
+   },
+   {
+    "href": "https://0\u0430*\u017f[/",
+    "text": "\u3002.com $(https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://0\u0430*\u017f[/"
+   },
+   {
+    "href": " =\u0131\u0130\u4f8b& A\uff0e\u043e\u0131",
+    "text": "\u0430,#@(&",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "=\u0131\u0130\u4f8b& A\uff0e\u043e\u0131"
+   },
+   {
+    "href": "[=.fr",
+    "text": "\u00e9)\u00e9",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "[=.fr"
+   },
+   {
+    "href": "! (\u0130\u0130\u043e (+\u043e? aZ)",
+    "text": "\u00a00\uff0e?(&;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "! (\u0130\u0130\u043e (+\u043e? aZ)"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=z\u4f8b>z]\u4f8b +",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=z\u4f8b>z]\u4f8b +"
+   },
+   {
+    "href": "urldefense.com/v3/__",
+    "text": "__;\u0130~",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__"
+   },
+   {
+    "href": ".github.ioevil$<\u0435K\u017f%",
+    "text": "\u3048a\u0435>\u0430\u00e9",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.ioevil$<\u0435K\u017f%"
+   },
+   {
+    "href": ".com?\u017f>\u0131\u0430 \u3048\u0131K\u017f\u0435",
+    "text": "\u3002a\u043e[www.'aurldefense.com/v3/__urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com?\u017f>\u0131\u0430 \u3048\u0131K\u017f\u0435"
+   },
+   {
+    "href": "\u0435A,0",
+    "text": ".fr<*\u4f8b0(\u00e9\u4f8bzwww.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0435A,0"
+   },
+   {
+    "href": "urldefense.com/v3/__urldefense.com/v3/__https://",
+    "text": "evil.com.co.uk$.9\u00e9~%*/",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__urldefense.com/v3/__https://"
+   },
+   {
+    "href": "<)a\u200b\u0130a99safelinks.protection.outlook.com/?url=\u0440",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "<)a\u200b\u0130a99safelinks.protection.outlook.com/?url=\u0440"
+   },
+   {
+    "href": "\u017fhttps://\u00e9$\u017f=\uff0e",
+    "text": "safelinks.protection.outlook.com/?url=\uff0e\u017f, A0 0[[\u0435;\u0435z&",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u017fhttps://\u00e9$\u017f=\uff0e"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=%2F=z\u0131",
+    "text": "%3A.com__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=%2F=z\u0131"
+   },
+   {
+    "href": ")\u00a0%",
+    "text": "\u3002 %www.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ")\u00a0%"
+   },
+   {
+    "href": "&)$-",
+    "text": "paypal\uff0ehttp://.com>! $Z\uff0e",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "&)$-"
+   },
+   {
+    "href": "@",
+    "text": ".com.fr,9A]A$0/=\u017f",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@"
+   },
+   {
+    "href": "__;%3Ahttp://paypal\u0430&-\u0435",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;%3Ahttp://paypal\u0430&-\u0435"
+   },
+   {
+    "href": "=#\u043e",
+    "text": "safelinks.protection.outlook.com/?url=\"*.;http://:00%%",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "=#\u043e"
+   },
+   {
+    "href": "\u043e@",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u043e@"
+   },
+   {
+    "href": "__;",
+    "text": "[\u3048>\u3048]",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;"
+   },
+   {
+    "href": "__;",
+    "text": "(\u3002\u3002\u4f8b@](",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;"
+   },
+   {
+    "href": "https://_[\u0440\u0430",
+    "text": "A+\u043e':a\u4f8bz)\u0130Aevil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://_[\u0440\u0430"
+   },
+   {
+    "href": ".co.ukevilhttps://\u0440\u017f\u0131\u0430+?.co.uk",
+    "text": "@\u3048",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.ukevilhttps://\u0440\u017f\u0131\u0430+?.co.uk"
+   },
+   {
+    "href": "\u00e9#>",
+    "text": "#&[<\u0430.fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9#>"
+   },
+   {
+    "href": "\u0435\u0430 \u3048z\uff0e$\u0435_",
+    "text": "evil.fr(]=9/Apaypal_K",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0435\u0430 \u3048z\uff0e$\u0435_"
+   },
+   {
+    "href": "https://ahttp://evil",
+    "text": ".co.uk",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://ahttp://evil"
+   },
+   {
+    "href": "=\uff0e=\u0130\u043ez.com#&\u3002\"%\u043e[;",
+    "text": "[\u0435(,a*",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "=\uff0e=\u0130\u043ez.com#&\u3002\"%\u043e[;"
+   },
+   {
+    "href": ".co.uk__;__;",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.uk__;__;"
+   },
+   {
+    "href": "\u04359\"\u00e9\u0430(/)",
+    "text": ":'0K\u0440)\u0430:",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u04359\"\u00e9\u0430(/)"
+   },
+   {
+    "href": "https://;*\u00e9Z,9\u00e9@-\u017f",
+    "text": "https://.com@evil",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://;*\u00e9Z,9\u00e9@-\u017f"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=https://\u0435\uff0e+@.a\u0430'9(a[",
+    "text": "\u0130\u0430]%2F#)>https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=https://\u0435\uff0e+@.a\u0430'9(a["
+   },
+   {
+    "href": "__;\u200b%3A.\u3048\u3002\u4f8b",
+    "text": ".co.uk\u0130\u200b\u0131@~\uff0e)\u0440\u043e\u0430\u0430",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;\u200b%3A.\u3048\u3002\u4f8b"
+   },
+   {
+    "href": ">\u0130%.safelinks.protection.outlook.com/?url=\"K9(K&\u200b",
+    "text": "https://_%].co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ">\u0130%.safelinks.protection.outlook.com/?url=\"K9(K&\u200b"
+   },
+   {
+    "href": "\"K(\u200bevil",
+    "text": "https://+0.github.iohttps://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\"K(\u200bevil"
+   },
+   {
+    "href": "\u4f8b.com%2F",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u4f8b.com%2F"
+   },
+   {
+    "href": "urldefense.com/v3/__urldefense.com/v3/__urldefense.com/v3/__https://urldefense.com/v3/__",
+    "text": "https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__urldefense.com/v3/__urldefense.com/v3/__https://urldefense.com/v3/__"
+   },
+   {
+    "href": "urldefense.com/v3/__?$\uff0e\u00e9\uff0e\u3002\u017f/<);<.co.uk",
+    "text": ".co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__?$\uff0e\u00e9\uff0e\u3002\u017f/<);<.co.uk"
+   },
+   {
+    "href": ".co.uk%2F",
+    "text": "\u0440]\u043e\u017f",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.uk%2F"
+   },
+   {
+    "href": "(\u00e9;#+]!+a<www.<\u043e\u00a0.+__;",
+    "text": "z.\u00e9$-@, [\u0130'-urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "(\u00e9;#+]!+a<www.<\u043e\u00a0.+__;"
+   },
+   {
+    "href": "~;evilwww.",
+    "text": "www.http://)/paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "~;evilwww."
+   },
+   {
+    "href": "\u017f\u3002\u3002'\u0435",
+    "text": "\u3048*",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u017f\u3002\u3002'\u0435"
+   },
+   {
+    "href": "paypal_~\u043e#/?\u0430",
+    "text": "safelinks.protection.outlook.com/?url=www..co.ukwww.evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal_~\u043e#/?\u0430"
+   },
+   {
+    "href": "9",
+    "text": "\u00e9z",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "9"
+   },
+   {
+    "href": "&,@\u200b\u00e9&;",
+    "text": "\u00e9-\u043e@/z$.github.io/<KZ",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "&,@\u200b\u00e9&;"
+   },
+   {
+    "href": "?;_\u043e!\u00a0**!!.com",
+    "text": "Z.\uff0e\u017f\u043e<&)%3Aevil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "?;_\u043e!\u00a0**!!.com"
+   },
+   {
+    "href": "\u043e?.co.uk.fr",
+    "text": "urldefense.com/v3/__\u00a0Z#=&https://safelinks.protection.outlook.com/?url=https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u043e?.co.uk.fr"
+   },
+   {
+    "href": "__;\u043e;",
+    "text": ".co.ukevil.co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "ukevil.co.uk",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;\u043e;"
+   },
+   {
+    "href": "www.*zwww..com.fr",
+    "text": " ~0!\u3002)/",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.*zwww..com.fr"
+   },
+   {
+    "href": "%3A\u00e9\u0440<\u043e\u043e\"",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A\u00e9\u0440<\u043e\u043e\""
+   },
+   {
+    "href": "\u200b-A\u0130;;https://%3A%2F.fr",
+    "text": "%2F?A?\u200b\u3002",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u200b-A\u0130;;https://%3A%2F.fr"
+   },
+   {
+    "href": "__;.fr.co.uk\u3048=",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;.fr.co.uk\u3048="
+   },
+   {
+    "href": "%2Fsafelinks.protection.outlook.com/?url=",
+    "text": "https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2Fsafelinks.protection.outlook.com/?url="
+   },
+   {
+    "href": "urldefense.com/v3/__\u00a0]",
+    "text": ".fr@.com%.'",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__\u00a0]"
+   },
+   {
+    "href": "z_#>\u0435-,],>#%3A",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "z_#>\u0435-,],>#%3A"
+   },
+   {
+    "href": "www..com",
+    "text": ".fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www..com"
+   },
+   {
+    "href": "\u00e9",
+    "text": ".co.uk\u00e9~@?.frhttp://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9"
+   },
+   {
+    "href": ".github.io'#=:$\u043e,\u4f8b.github.io",
+    "text": "\u0440=;#\u043e\u0430\u0430",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io'#=:$\u043e,\u4f8b.github.io"
+   },
+   {
+    "href": "http://%2F",
+    "text": "",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://%2F"
+   },
+   {
+    "href": "!z@$%2F:z\u00a0(?%3A \u00a0\u4f8b$/!.fr",
+    "text": ".github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "!z@$%2F:z\u00a0(?%3A \u00a0\u4f8b$/!.fr"
+   },
+   {
+    "href": "_9<z/=+\u0130\u00a0\u3048\uff0e.co.uk",
+    "text": "$$0\uff0e$",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "_9<z/=+\u0130\u00a0\u3048\uff0e.co.uk"
+   },
+   {
+    "href": "\u00a0.frsafelinks.protection.outlook.com/?url=\u0130",
+    "text": ".",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".frsafelinks.protection.outlook.com/?url=\u0130"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=.co.uk",
+    "text": "'\u3002\u0440Z",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=.co.uk"
+   },
+   {
+    "href": "paypal__;9=z\u3048<\u3002www.%3A",
+    "text": "www.%2Furldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "%2furldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal__;9=z\u3048<\u3002www.%3A"
+   },
+   {
+    "href": "(.K\u0131\u0430",
+    "text": ".co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "(.K\u0131\u0430"
+   },
+   {
+    "href": "\u00e9$).co.uk.com",
+    "text": "urldefense.com/v3/__safelinks.protection.outlook.com/?url=.co.uk\u00e9<\u017f%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9$).co.uk.com"
+   },
+   {
+    "href": "\u00e9a?%",
+    "text": "www..github.io\u043e\u04409)(&\u0430z(",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9a?%"
+   },
+   {
+    "href": "9?\u0430\u3002/).github.iourldefense.com/v3/__%2F",
+    "text": "*?>\u30489 ",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "9?\u0430\u3002/).github.iourldefense.com/v3/__%2F"
+   },
+   {
+    "href": "a)9\uff0e_!\u0435_/evil@%3A..",
+    "text": "urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "a)9\uff0e_!\u0435_/evil@%3A.."
+   },
+   {
+    "href": "https://",
+    "text": "%2Fhttps://",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://"
+   },
+   {
+    "href": ".fr\u017f\u4f8b\u3048A\u043e\uff0e",
+    "text": "paypal\u3048.>9urldefense.com/v3/__*9+,&",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr\u017f\u4f8b\u3048A\u043e\uff0e"
+   },
+   {
+    "href": ".co.ukhttps://",
+    "text": ".com0A)",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.ukhttps://"
+   },
+   {
+    "href": "\u0131\u00a0a",
+    "text": "\u00a0.com~\u017f-\u0130\u200b.K",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0131\u00a0a"
+   },
+   {
+    "href": ".fr%3A",
+    "text": "http://www.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr%3A"
+   },
+   {
+    "href": "\uff0e\u0130.fr>_\u00a0]!\u4f8b.com",
+    "text": "z@!__;+a\u00e9",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\uff0e\u0130.fr>_\u00a0]!\u4f8b.com"
+   },
+   {
+    "href": "A",
+    "text": ")@0$",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "A"
+   },
+   {
+    "href": ".com.github.iowww.",
+    "text": "paypal.github.iopaypal(\u0435",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com.github.iowww."
+   },
+   {
+    "href": "AZ*:-)\u043e\u3002&[,\u00e9\",%2F@@",
+    "text": "%3A\u200bwww.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "AZ*:-)\u043e\u3002&[,\u00e9\",%2F@@"
+   },
+   {
+    "href": "]\u0435\u0430",
+    "text": ".co.ukpaypal.github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "ukpaypal.github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "]\u0435\u0430"
+   },
+   {
+    "href": "aZ;",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "aZ;"
+   },
+   {
+    "href": "https://[ &\u0130\u0440",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://[ &\u0130\u0440"
+   },
+   {
+    "href": "%2Fevil%3A-\u0430[K-",
+    "text": "~<[A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2Fevil%3A-\u0430[K-"
+   },
+   {
+    "href": "'\u017f\u200b.z",
+    "text": "K/=)_%2Fhttps://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "'\u017f\u200b.z"
+   },
+   {
+    "href": "paypal.com\u017f$9http://www.",
+    "text": "\u0130</]9;<~.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal.com\u017f$9http://www."
+   },
+   {
+    "href": "$",
+    "text": "evil__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "$"
+   },
+   {
+    "href": "paypal@%\u0440]&a\u200b-\u00a0\u0131_",
+    "text": "https://]\u3048-K\u017f",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal@%\u0440]&a\u200b-\u00a0\u0131_"
+   },
+   {
+    "href": "%3A\u00a0=%@.com",
+    "text": "%2Fhttps://http://= \u4f8bZ\u0430",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A\u00a0=%@.com"
+   },
+   {
+    "href": ".github.iopaypalwww.A!",
+    "text": "K=@\u017f$[)www.urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.iopaypalwww.A!"
+   },
+   {
+    "href": "evil.co.uk",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil.co.uk"
+   },
+   {
+    "href": ",=@,__;",
+    "text": "@]\u00a0\u4f8bK0http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ",=@,__;"
+   },
+   {
+    "href": "&Z\u4f8b;\u00a0a\u043e\u0440\"<]*?a\u0130\u043e!\u200b,\u043e%Z",
+    "text": ">http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "&Z\u4f8b;\u00a0a\u043e\u0440\"<]*?a\u0130\u043e!\u200b,\u043e%Z"
+   },
+   {
+    "href": "__; <?>\u00a0www.",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__; <?>\u00a0www."
+   },
+   {
+    "href": "~\u0435paypal%2Fsafelinks.protection.outlook.com/?url=@",
+    "text": "urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "~\u0435paypal%2Fsafelinks.protection.outlook.com/?url=@"
+   },
+   {
+    "href": ",\u3002$",
+    "text": "0/@_['+\u0131'\u00e9",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ",\u3002$"
+   },
+   {
+    "href": "__;9safelinks.protection.outlook.com/?url=",
+    "text": "\u0440[a,\u017fa\u3048<paypal@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;9safelinks.protection.outlook.com/?url="
+   },
+   {
+    "href": "\u043e !\u00a0;http://urldefense.com/v3/__%3A#)",
+    "text": ".github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u043e !\u00a0;http://urldefense.com/v3/__%3A#)"
+   },
+   {
+    "href": "urldefense.com/v3/__\u0430\u4f8bA#+\u0130urldefense.com/v3/__",
+    "text": "\"",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__\u0430\u4f8bA#+\u0130urldefense.com/v3/__"
+   },
+   {
+    "href": "(\u200b.fr__;.co.uk%2F",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "(\u200b.fr__;.co.uk%2F"
+   },
+   {
+    "href": "%2F@Z9\u043e\uff0e \u0430",
+    "text": "paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2F@Z9\u043e\uff0e \u0430"
+   },
+   {
+    "href": "evil?K\u200b?$K'!",
+    "text": ".github.io@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil?K\u200b?$K'!"
+   },
+   {
+    "href": "a&",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "a&"
+   },
+   {
+    "href": "<,'urldefense.com/v3/__\u017f/KZ?__;",
+    "text": "\u3002\u3002a,http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "<,'urldefense.com/v3/__\u017f/KZ?__;"
+   },
+   {
+    "href": "www.!\u0430",
+    "text": "safelinks.protection.outlook.com/?url=<;_paypal\u0131\u0435+",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.!\u0430"
+   },
+   {
+    "href": "\u043e\u4f8b@\uff0e~.github.io",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u043e\u4f8b@\uff0e~.github.io"
+   },
+   {
+    "href": "\u200b)\u00e9\u0130>>\u017f9@%3A",
+    "text": ".github.io.com+\u01300@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u200b)\u00e9\u0130>>\u017f9@%3A"
+   },
+   {
+    "href": "<:\u00e9_\u0440:\u00e9@ .github.io.co.uk",
+    "text": "http://.com%2F>(\"\u017f@https://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "<:\u00e9_\u0440:\u00e9@ .github.io.co.uk"
+   },
+   {
+    "href": "[#-(\u0430\u0130",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "[#-(\u0430\u0130"
+   },
+   {
+    "href": "evil",
+    "text": "http://.com&'?",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil"
+   },
+   {
+    "href": "evilpaypal.\uff0e+?%2F",
+    "text": "#A\uff0e",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evilpaypal.\uff0e+?%2F"
+   },
+   {
+    "href": ".com",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com"
+   },
+   {
+    "href": "\u00e9~\u00e9'",
+    "text": "%3A.co.ukhttp://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9~\u00e9'"
+   },
+   {
+    "href": "&\u017fZ\u3048/9safelinks.protection.outlook.com/?url=urldefense.com/v3/__\"urldefense.com/v3/__",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "&\u017fZ\u3048/9safelinks.protection.outlook.com/?url=urldefense.com/v3/__\"urldefense.com/v3/__"
+   },
+   {
+    "href": "#\u043ez@__;",
+    "text": ".github.iohttp://paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "#\u043ez@__;"
+   },
+   {
+    "href": "%3A@",
+    "text": "evil'\u0130\u01309<;urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A@"
+   },
+   {
+    "href": "\u0440('9\u3002>A;&.\u0430",
+    "text": "@,*>\u200b\u00e9]\u0430",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0440('9\u3002>A;&.\u0430"
+   },
+   {
+    "href": ".com9",
+    "text": "\u043e<www..github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com9"
+   },
+   {
+    "href": "https://evil",
+    "text": ".fr",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://evil"
+   },
+   {
+    "href": ".fr#+\u017f#0\u0130",
+    "text": "__;__;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr#+\u017f#0\u0130"
+   },
+   {
+    "href": "__;\u4f8b>\u0130!_a.fr:*\uff0e\u04359%urldefense.com/v3/__",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;\u4f8b>\u0130!_a.fr:*\uff0e\u04359%urldefense.com/v3/__"
+   },
+   {
+    "href": ".comevil",
+    "text": "www..co.ukevil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".comevil"
+   },
+   {
+    "href": "www.urldefense.com/v3/__ %",
+    "text": ".frwww.\u3002a\u0131a)",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.urldefense.com/v3/__ %"
+   },
+   {
+    "href": "http://%\u017f%\u0440\"~.frpaypal\u0130\u0430_",
+    "text": "https://",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://%\u017f%\u0440\"~.frpaypal\u0130\u0430_"
+   },
+   {
+    "href": "__;paypal",
+    "text": "=$&\u3002?, &\u3002#Apaypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;paypal"
+   },
+   {
+    "href": " *,;\u0130\u0131Z\u4f8b/@%(\u017f\u00a0\u200b\uff0e,Z",
+    "text": "@https://%3Az\u0440#:<",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "*,;\u0130\u0131Z\u4f8b/@%(\u017f\u00a0\u200b\uff0e,Z"
+   },
+   {
+    "href": "urldefense.com/v3/__.github.io%2F\u00e9&\u0440.,\u00e9\u00e9A9ZAZ\u043e",
+    "text": "safelinks.protection.outlook.com/?url=@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__.github.io%2F\u00e9&\u0440.,\u00e9\u00e9A9ZAZ\u043e"
+   },
+   {
+    "href": "\u01309@\"\u043e\u0440urldefense.com/v3/__evil",
+    "text": "safelinks.protection.outlook.com/?url=%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u01309@\"\u043e\u0440urldefense.com/v3/__evil"
+   },
+   {
+    "href": ".fr,\u0131.fr",
+    "text": "urldefense.com/v3/__safelinks.protection.outlook.com/?url=\u0131&\uff0e'",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr,\u0131.fr"
+   },
+   {
+    "href": "A)=@\u0430.github.iopaypalhttp://",
+    "text": "@www.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "A)=@\u0430.github.iopaypalhttp://"
+   },
+   {
+    "href": "\u0440'9__A@[?$\u0440\u017f\u0130",
+    "text": "paypal@safelinks.protection.outlook.com/?url=.co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0440'9__A@[?$\u0440\u017f\u0130"
+   },
+   {
+    "href": "https://\u043e\u200b_.\u043ea@",
+    "text": "",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://\u043e\u200b_.\u043ea@"
+   },
+   {
+    "href": "https://Z)+)z,.github.io@$\u04409",
+    "text": "!\u4f8b~\"paypalevil",
+    "scheme": "https",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "https://Z)+)z,.github.io@$\u04409"
+   },
+   {
+    "href": "evil?\u017f)\u00a0.[!Z'+$K\u0440<",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil?\u017f)\u00a0.[!Z'+$K\u0440<"
+   },
+   {
+    "href": "_.\uff0e$$@%3A\u00e9Z.]@\u200b",
+    "text": "safelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "_.\uff0e$$@%3A\u00e9Z.]@\u200b"
+   },
+   {
+    "href": " \"[?",
+    "text": "paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\"[?"
+   },
+   {
+    "href": "]\u3048\u043e<~.github.io\u3002@=\u4f8bhttp://.fr",
+    "text": ".fr\" /http://paypal\u3002",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "]\u3048\u043e<~.github.io\u3002@=\u4f8bhttp://.fr"
+   },
+   {
+    "href": ",. \u00e9safelinks.protection.outlook.com/?url=\u30480>z\uff0e",
+    "text": "paypalZ\uff0e@.fr+*\u00e9-",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ",. \u00e9safelinks.protection.outlook.com/?url=\u30480>z\uff0e"
+   },
+   {
+    "href": ".github.io.fra!./z+\u0430",
+    "text": "=\uff0e",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io.fra!./z+\u0430"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=paypalpaypalhttp://",
+    "text": "=#\u3002'Z\u0131.com.frsafelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=paypalpaypalhttp://"
+   },
+   {
+    "href": "+\u0430,!9z:?%2F\u3002'a:_)?=\u0440/\u0130%",
+    "text": ".co.ukevil@&\"@evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "+\u0430,!9z:?%2F\u3002'a:_)?=\u0440/\u0130%"
+   },
+   {
+    "href": "'~=",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "'~="
+   },
+   {
+    "href": "www.\u017f>.com>:. \u017f",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.\u017f>.com>:. \u017f"
+   },
+   {
+    "href": "#z",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "#z"
+   },
+   {
+    "href": ".co.uk.com\u3002\uff0e\u0131&",
+    "text": "%2F9\u0130\u00e9$\u00a0",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.uk.com\u3002\uff0e\u0131&"
+   },
+   {
+    "href": "\u0131\u0131\u017fK#\u3002.com%2F",
+    "text": ".comhttps://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0131\u0131\u017fK#\u3002.com%2F"
+   },
+   {
+    "href": ".fr",
+    "text": "]]\u017f- ",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".fr"
+   },
+   {
+    "href": "urldefense.com/v3/__\u0131\u017f<.github.io",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "urldefense.com/v3/__\u0131\u017f<.github.io"
+   },
+   {
+    "href": ".github.io",
+    "text": "~\u200b.comKK'https://*_-%",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io"
+   },
+   {
+    "href": "_A\uff0e\u3002]",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "_A\uff0e\u3002]"
+   },
+   {
+    "href": ",+>+\uff0e\u0430*);\u0130!\u0440",
+    "text": "evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ",+>+\uff0e\u0430*);\u0130!\u0440"
+   },
+   {
+    "href": ">\u0430 \u043e,(\u0131\u01310\u3002\u0130\u0430[\u4f8b *-",
+    "text": "-.github.io\u4f8b\u0440\u00a0;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ">\u0430 \u043e,(\u0131\u01310\u3002\u0130\u0430[\u4f8b *-"
+   },
+   {
+    "href": "/#:z[(",
+    "text": "\u0435> ?'%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "/#:z[("
+   },
+   {
+    "href": "\u4f8b'#;9.0_%$__;+\uff0ezAK'!$z\u0435A_'&",
+    "text": "@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u4f8b'#;9.0_%$__;+\uff0ezAK'!$z\u0435A_'&"
+   },
+   {
+    "href": "\u3048\u4f8b\u3002\u017f*\"\"z]@\u043e]",
+    "text": "evil\uff0e9<,\u0435\u017f=*)",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048\u4f8b\u3002\u017f*\"\"z]@\u043e]"
+   },
+   {
+    "href": "\u3048.com",
+    "text": "\u00a0urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048.com"
+   },
+   {
+    "href": "\u017f)\u0430<~\u00a0'](a\u3002",
+    "text": "AKz!+http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u017f)\u0430<~\u00a0'](a\u3002"
+   },
+   {
+    "href": "!Z(9",
+    "text": "http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "!Z(9"
+   },
+   {
+    "href": "9%z\u0440",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "9%z\u0440"
+   },
+   {
+    "href": "evilurldefense.com/v3/__.co.uk\u017f:\uff0e\u017f+",
+    "text": "=&http://.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evilurldefense.com/v3/__.co.uk\u017f:\uff0e\u017f+"
+   },
+   {
+    "href": "a\u3002\u0440$<\u013109\">%3Ahttp://paypal'",
+    "text": ")",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "a\u3002\u0440$<\u013109\">%3Ahttp://paypal'"
+   },
+   {
+    "href": "paypal~-]]+www.",
+    "text": "#-&\u043e%=safelinks.protection.outlook.com/?url=safelinks.protection.outlook.com/?url=http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal~-]]+www."
+   },
+   {
+    "href": "a?/]0\"Zahttps://www.www.",
+    "text": "evilhttps://\uff0e.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "a?/]0\"Zahttps://www.www."
+   },
+   {
+    "href": "http://A \u0440]]\u0130K\u043eZ#Z\u017fZ/",
+    "text": "\u3048*\u00e9Kpaypal\u4f8b<:[@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://A \u0440]]\u0130K\u043eZ#Z\u017fZ/"
+   },
+   {
+    "href": ">\u3002\u0435\u0130urldefense.com/v3/__",
+    "text": "evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ">\u3002\u0435\u0130urldefense.com/v3/__"
+   },
+   {
+    "href": ".github.io]&\u4f8b\u0430",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".github.io]&\u4f8b\u0430"
+   },
+   {
+    "href": "\u0131a.\"https://",
+    "text": "0'",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0131a.\"https://"
+   },
+   {
+    "href": "(~ a99~a+https://",
+    "text": "\u017f?\u3002)\u0430<*!\u043e&=paypal",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "(~ a99~a+https://"
+   },
+   {
+    "href": "@\uff0e\u0130(\u4f8b\u0435Z/%2F",
+    "text": "safelinks.protection.outlook.com/?url=",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@\uff0e\u0130(\u4f8b\u0435Z/%2F"
+   },
+   {
+    "href": ".co.uk@:\u3048\u3048 =%2F__;",
+    "text": "paypalurldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "paypalurldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".co.uk@:\u3048\u3048 =%2F__;"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=https://",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=https://"
+   },
+   {
+    "href": ".com/=http://http://",
+    "text": "\u00e9safelinks.protection.outlook.com/?url=\u0440\u0131~$ .fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com/=http://http://"
+   },
+   {
+    "href": "\u017faA9<a\u3048\u4f8b.\u0131\u0435@",
+    "text": ".github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u017faA9<a\u3048\u4f8b.\u0131\u0435@"
+   },
+   {
+    "href": "evil",
+    "text": ".github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "evil"
+   },
+   {
+    "href": ":'K\u200b\u0430",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ":'K\u200b\u0430"
+   },
+   {
+    "href": "\u3048",
+    "text": "a\u4f8b.frKK\uff0e?.co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048"
+   },
+   {
+    "href": "www.::@https://www.",
+    "text": "&*0\u3002?%.fr\u017fK*",
+    "scheme": "www.",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.::@https://www."
+   },
+   {
+    "href": "@_www.",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "@_www."
+   },
+   {
+    "href": "paypal%2F.comA",
+    "text": "safelinks.protection.outlook.com/?url=\uff0e\u00e9/<.frhttp://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "outlook.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal%2F.comA"
+   },
+   {
+    "href": "z\u043e\u200b#(",
+    "text": "%2F,\u0440",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "z\u043e\u200b#("
+   },
+   {
+    "href": "Z\u0430z",
+    "text": "\u043e_\u00a0.github.io@http://",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "Z\u0430z"
+   },
+   {
+    "href": "%2F%3Apaypal",
+    "text": "<\u0435.@\u3048Asafelinks.protection.outlook.com/?url=.co.uk",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%2F%3Apaypal"
+   },
+   {
+    "href": "Z~-evilpaypal",
+    "text": "~\u00e9=?evil a",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "Z~-evilpaypal"
+   },
+   {
+    "href": "+#!/$_KZ",
+    "text": "paypal\u0440>)\u0430z\u0435>",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "+#!/$_KZ"
+   },
+   {
+    "href": "%3A%3A$:/\u017f%\u0440/$!>",
+    "text": "urldefense.com/v3/__",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3A%3A$:/\u017f%\u0440/$!>"
+   },
+   {
+    "href": "paypal\u043e\u4f8b\u3002\u0130Z(.fr",
+    "text": "evil]Z\u017fZ.0",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypal\u043e\u4f8b\u3002\u0130Z(.fr"
+   },
+   {
+    "href": "__;evil.fr",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "__;evil.fr"
+   },
+   {
+    "href": "~\" ;/a+:'.github.io",
+    "text": ".co.uk.github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "uk.github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "~\" ;/a+:'.github.io"
+   },
+   {
+    "href": "\u043e\u3002.\u0440z",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u043e\u3002.\u0440z"
+   },
+   {
+    "href": "www.__;*((\uff0e.fr*)\u3002;@",
+    "text": ".com(:\u0435=.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.__;*((\uff0e.fr*)\u3002;@"
+   },
+   {
+    "href": "+*%",
+    "text": ".fr.fr",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "fr.fr",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "+*%"
+   },
+   {
+    "href": "\"_\u04309\u3048",
+    "text": "urldefense.com/v3/__evil",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "urldefense.com",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\"_\u04309\u3048"
+   },
+   {
+    "href": "http://",
+    "text": "",
+    "scheme": "http",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "http://"
+   },
+   {
+    "href": "\u0435' 0",
+    "text": ".fr\u00e9\u3002https://'~",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0435' 0"
+   },
+   {
+    "href": ".com%3A\u200b[=",
+    "text": "@%3A.github.io",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".com%3A\u200b[="
+   },
+   {
+    "href": "\u3048?",
+    "text": "www.[Z\u200b\u0430A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048?"
+   },
+   {
+    "href": "www.-.%.com",
+    "text": "paypal(\u017f\u00e9@/([<Z\u0430a*:\u017f\u043e+paypal",
+    "scheme": "",
+    "href_domain": "%.com",
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "www.-.%.com"
+   },
+   {
+    "href": "paypalurldefense.com/v3/__\u0440\u0130\u200b~\u0430-",
+    "text": "@$,%\u00e9(a=@",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "paypalurldefense.com/v3/__\u0440\u0130\u200b~\u0430-"
+   },
+   {
+    "href": "safelinks.protection.outlook.com/?url=%3A.co.uk",
+    "text": "http://urldefense.com/v3/__.com-\u043e ?\u3048;%<",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "safelinks.protection.outlook.com/?url=%3A.co.uk"
+   },
+   {
+    "href": "_>\u043eA",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "_>\u043eA"
+   },
+   {
+    "href": "\uff0e#\u3048K\u0440\uff0e\"\u00e9K/\u00a0*;=[",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\uff0e#\u3048K\u0440\uff0e\"\u00e9K/\u00a0*;=["
+   },
+   {
+    "href": "\uff0e\u017f/K.A\u4f8bKA-\u0440",
+    "text": "\u00a0 A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\uff0e\u017f/K.A\u4f8bKA-\u0440"
+   },
+   {
+    "href": "\u200b",
+    "text": "www.",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u200b"
+   },
+   {
+    "href": "~ https://",
+    "text": "@%3A",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "~ https://"
+   },
+   {
+    "href": "%3Awww.http://\u00a0\u0131#A!\u017f\u3002.co.uk",
+    "text": "__;%2F",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "%3Awww.http://\u00a0\u0131#A!\u017f\u3002.co.uk"
+   },
+   {
+    "href": "\u00e9\u3002\u0131,%\u00a0\".co.ukwww.",
+    "text": "paypal&\u200b",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u00e9\u3002\u0131,%\u00a0\".co.ukwww."
+   },
+   {
+    "href": "\u3048!paypalevil%2F",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u3048!paypalevil%2F"
+   },
+   {
+    "href": "\u0130\uff0e)%3A",
+    "text": "evilhttps://https://\u00e9@)=K",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": "\u0130\uff0e)%3A"
+   },
+   {
+    "href": ".comaurldefense.com/v3/__",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ".comaurldefense.com/v3/__"
+   },
+   {
+    "href": "",
+    "text": ".github.io;",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": "github.io",
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ""
+   },
+   {
+    "href": "",
+    "text": "",
+    "scheme": "",
+    "href_domain": null,
+    "text_domain": null,
+    "mismatch": false,
+    "rewritten_by": null,
+    "target": ""
+   }
+  ],
+  "unwrap": [
+   {
+    "input": "https://www.paypal.com/signin",
+    "output": null
+   },
+   {
+    "input": "https://paypal.com",
+    "output": null
+   },
+   {
+    "input": "http://paypa1-secure.example/login",
+    "output": null
+   },
+   {
+    "input": "https://evil.example/www.paypal.com",
+    "output": null
+   },
+   {
+    "input": "  https://www.impots.gouv.fr/  ",
+    "output": null
+   },
+   {
+    "input": "HTTPS://WWW.EXAMPLE.CO.UK/x",
+    "output": null
+   },
+   {
+    "input": "//cdn.example.com/a",
+    "output": null
+   },
+   {
+    "input": "www.example.org/page",
+    "output": null
+   },
+   {
+    "input": "/relative/path",
+    "output": null
+   },
+   {
+    "input": "page.html",
+    "output": null
+   },
+   {
+    "input": "#ancre",
+    "output": null
+   },
+   {
+    "input": "mailto:support@paypal.com",
+    "output": null
+   },
+   {
+    "input": "tel:+33123456789",
+    "output": null
+   },
+   {
+    "input": "javascript:alert(1)",
+    "output": null
+   },
+   {
+    "input": " JavaScript:void(0)",
+    "output": null
+   },
+   {
+    "input": "data:text/html;base64,PHNjcmlwdD4=",
+    "output": null
+   },
+   {
+    "input": "vbscript:msgbox",
+    "output": null
+   },
+   {
+    "input": "file:///C:/Windows/notepad.exe",
+    "output": null
+   },
+   {
+    "input": "ftp://files.example.com/a",
+    "output": null
+   },
+   {
+    "input": "http://192.0.2.10/paypal/",
+    "output": null
+   },
+   {
+    "input": "http://[2001:db8::1]/login",
+    "output": null
+   },
+   {
+    "input": "http://[::1",
+    "output": null
+   },
+   {
+    "input": "http://xn--pple-43d.com/",
+    "output": null
+   },
+   {
+    "input": "http://\u0430pple.com/",
+    "output": null
+   },
+   {
+    "input": "https://user@evil.example/",
+    "output": null
+   },
+   {
+    "input": "https://www.paypal.com@evil.example/",
+    "output": null
+   },
+   {
+    "input": "https://someone.github.io/page",
+    "output": null
+   },
+   {
+    "input": "https://github.io",
+    "output": null
+   },
+   {
+    "input": "http://localhost:8000/",
+    "output": null
+   },
+   {
+    "input": "https://bradesco.recompensas/",
+    "output": null
+   },
+   {
+    "input": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.paypal.com%2Fsignin&data=x",
+    "output": [
+     "https://www.paypal.com/signin",
+     "safelinks"
+    ]
+   },
+   {
+    "input": "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevil.example%2F&data=x",
+    "output": [
+     "https://evil.example/",
+     "safelinks"
+    ]
+   },
+   {
+    "input": "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)",
+    "output": null
+   },
+   {
+    "input": "https://nam12.safelinks.protection.outlook.com/?data=x",
+    "output": null
+   },
+   {
+    "input": "https://nam12.safelinks.protection.outlook.com/?url=&url=https%3A%2F%2Fa.example%2F",
+    "output": [
+     "https://a.example/",
+     "safelinks"
+    ]
+   },
+   {
+    "input": "https://NAM12.SAFELINKS.PROTECTION.OUTLOOK.COM/?url=https://b.example/",
+    "output": [
+     "https://b.example/",
+     "safelinks"
+    ]
+   },
+   {
+    "input": "https://safelinks.protection.outlook.com/?url=https://c.example/",
+    "output": null
+   },
+   {
+    "input": "https://clicktime.symantec.com/a/1/x?u=https%3A%2F%2Fevil.example%2Fpay",
+    "output": [
+     "https://evil.example/pay",
+     "symantec"
+    ]
+   },
+   {
+    "input": "https://clicktime.symantec.com/a/1/x?u=",
+    "output": null
+   },
+   {
+    "input": "https://urldefense.proofpoint.com/v2/url?u=https-3A__evil.example_login&d=x",
+    "output": [
+     "https://evil.example/login",
+     "proofpoint"
+    ]
+   },
+   {
+    "input": "https://urldefense.proofpoint.com/v2/url?u=https-3A__www.paypal.com_&d=x",
+    "output": [
+     "https://www.paypal.com/",
+     "proofpoint"
+    ]
+   },
+   {
+    "input": "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_",
+    "output": null
+   },
+   {
+    "input": "https://urldefense.com/v3/__https://evil.example/login__;!!abc",
+    "output": [
+     "https://evil.example/login",
+     "proofpoint"
+    ]
+   },
+   {
+    "input": "https://urldefense.com/v3/__https://evil.example/login",
+    "output": null
+   },
+   {
+    "input": "https://urldefense.com/v3/__javascript:alert(1)__;!!abc",
+    "output": null
+   },
+   {
+    "input": "https://www.google.com/url?q=https://evil.example/&sa=D",
+    "output": null
+   },
+   {
+    "input": "https://exemple.fr/?a=1&a=2&b=%41+c",
+    "output": null
+   },
+   {
+    "input": "https://exemple.fr:99999/",
+    "output": null
+   },
+   {
+    "input": "http://example.com\t/tab",
+    "output": null
+   },
+   {
+    "input": "http://exa\nmple.com/",
+    "output": null
+   },
+   {
+    "input": "https://b\u00fccher.example/",
+    "output": null
+   },
+   {
+    "input": "https://\u4f8b\u3048.\u30c6\u30b9\u30c8/",
+    "output": null
+   }
+  ],
+  "registered_domain": [
+   {
+    "input": "",
+    "output": null
+   },
+   {
+    "input": "Cliquez ici",
+    "output": null
+   },
+   {
+    "input": "www.paypal.com",
+    "output": "paypal.com"
+   },
+   {
+    "input": "WWW.PAYPAL.COM",
+    "output": "paypal.com"
+   },
+   {
+    "input": "paypal.com",
+    "output": "paypal.com"
+   },
+   {
+    "input": "https://www.paypal.com/signin",
+    "output": "paypal.com"
+   },
+   {
+    "input": "http://paypal.com",
+    "output": "paypal.com"
+   },
+   {
+    "input": "<https://www.paypal.com>",
+    "output": null
+   },
+   {
+    "input": "(www.paypal.com).",
+    "output": null
+   },
+   {
+    "input": "\"paypal.com\";",
+    "output": null
+   },
+   {
+    "input": "  www.paypal.com  ",
+    "output": "paypal.com"
+   },
+   {
+    "input": "www.\u00a0paypal.com",
+    "output": null
+   },
+   {
+    "input": "Visitez www.paypal.com",
+    "output": null
+   },
+   {
+    "input": "paypal.com/login?x=1#y",
+    "output": "paypal.com"
+   },
+   {
+    "input": "paypal.com:443",
+    "output": "paypal.com"
+   },
+   {
+    "input": "evil.example",
+    "output": null
+   },
+   {
+    "input": "www.impots.gouv.fr",
+    "output": "impots.gouv.fr"
+   },
+   {
+    "input": "impots.gouv.fr",
+    "output": "impots.gouv.fr"
+   },
+   {
+    "input": "support@paypal.com",
+    "output": "paypal.com"
+   },
+   {
+    "input": "192.0.2.10",
+    "output": "192.0.2.10"
+   },
+   {
+    "input": "localhost",
+    "output": null
+   },
+   {
+    "input": "Bradesco.recompensas",
+    "output": null
+   },
+   {
+    "input": "fichier.pdf",
+    "output": null
+   },
+   {
+    "input": "v2.0",
+    "output": null
+   },
+   {
+    "input": "a.b",
+    "output": null
+   },
+   {
+    "input": "exemple.fr",
+    "output": "exemple.fr"
+   },
+   {
+    "input": "EXEMPLE.FR",
+    "output": "exemple.fr"
+   },
+   {
+    "input": "exemple.\u017fr",
+    "output": "exemple.sr"
+   },
+   {
+    "input": "exemple.\u212az",
+    "output": "exemple.kz"
+   },
+   {
+    "input": "exemple.\u0130o",
+    "output": null
+   },
+   {
+    "input": "exemple.f",
+    "output": null
+   },
+   {
+    "input": "exemple.aaaaaaaaaaaaaaaaaaaaaaaa",
+    "output": null
+   },
+   {
+    "input": "exemple.aaaaaaaaaaaaaaaaaaaaaaaaa",
+    "output": null
+   },
+   {
+    "input": "\u0430pple.com",
+    "output": "xn--pple-43d.com"
+   },
+   {
+    "input": "xn--pple-43d.com",
+    "output": "xn--pple-43d.com"
+   },
+   {
+    "input": "b\u00fccher.example",
+    "output": null
+   },
+   {
+    "input": "\u4f8b\u3048.\u30c6\u30b9\u30c8",
+    "output": null
+   },
+   {
+    "input": "\u043f\u0440\u0438\u043c\u0435\u0440.\u0440\u0444",
+    "output": "xn--e1afmkfd.xn--p1ai"
+   },
+   {
+    "input": "someone.github.io",
+    "output": "someone.github.io"
+   },
+   {
+    "input": "github.io",
+    "output": "github.io"
+   },
+   {
+    "input": "https://",
+    "output": null
+   },
+   {
+    "input": "www.",
+    "output": null
+   },
+   {
+    "input": "www.x",
+    "output": null
+   },
+   {
+    "input": "http\u017f://paypal.com",
+    "output": null
+   },
+   {
+    "input": "www\u200b.paypal.com",
+    "output": "paypal.com"
+   },
+   {
+    "input": "paypal\u3002com",
+    "output": null
+   },
+   {
+    "input": "under_score.example.com",
+    "output": "example.com"
+   },
+   {
+    "input": "-tiret.example.com",
+    "output": "example.com"
+   },
+   {
+    "input": "\u202epaypal.com",
+    "output": "xn--paypal-9l0c.com"
+   },
+   {
+    "input": "multi\nligne\twww.paypal.com",
+    "output": null
+   }
+  ],
+  "display_name_domain": [
+   {
+    "input": "",
+    "output": null
+   },
+   {
+    "input": "PayPal",
+    "output": null
+   },
+   {
+    "input": "service@paypal.com",
+    "output": "paypal.com"
+   },
+   {
+    "input": "\"service@paypal.com\"",
+    "output": "paypal.com"
+   },
+   {
+    "input": "PayPal <service@paypal.com>",
+    "output": "paypal.com"
+   },
+   {
+    "input": "Service client paypal.com",
+    "output": "paypal.com"
+   },
+   {
+    "input": "Banque www.impots.gouv.fr",
+    "output": "impots.gouv.fr"
+   },
+   {
+    "input": "Jean Dupont",
+    "output": null
+   },
+   {
+    "input": "jean.dupont",
+    "output": "jean.dupont"
+   },
+   {
+    "input": "a.b",
+    "output": null
+   },
+   {
+    "input": "fichier.pdf",
+    "output": null
+   },
+   {
+    "input": "Support (support@apple.com)",
+    "output": "apple.com"
+   },
+   {
+    "input": "support@\u0430pple.com",
+    "output": "xn--pple-43d.com"
+   },
+   {
+    "input": "s\u00e9curit\u00e9@banque.fr",
+    "output": "banque.fr"
+   },
+   {
+    "input": "x@y",
+    "output": null
+   },
+   {
+    "input": "Amazon.fr",
+    "output": "amazon.fr"
+   },
+   {
+    "input": "AMAZON.FR",
+    "output": "amazon.fr"
+   },
+   {
+    "input": "exemple.\u212az",
+    "output": "exemple.kz"
+   },
+   {
+    "input": "-x.example.com",
+    "output": "example.com"
+   },
+   {
+    "input": "_x.example.com",
+    "output": "example.com"
+   },
+   {
+    "input": "noreply@notifications.paypal.com via evil.example",
+    "output": "paypal.com"
+   },
+   {
+    "input": "\u00dcn\u00efc\u00f6d\u00e9.example",
+    "output": null
+   }
+  ],
+  "senders": [
+   {
+    "name": "",
+    "address": "service@paypal.com",
+    "domain": "paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "service@paypal.com",
+    "domain": "paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "service@paypal.com",
+    "domain": "paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "service@paypal.com",
+    "domain": "paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "service@intl.paypal.com",
+    "domain": "intl.paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "service@intl.paypal.com",
+    "domain": "intl.paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "service@intl.paypal.com",
+    "domain": "intl.paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "service@intl.paypal.com",
+    "domain": "intl.paypal.com",
+    "registered_domain": "paypal.com",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "noreply@evil.example",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "noreply@evil.example",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "noreply@evil.example",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "noreply@evil.example",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "x@evil.example.",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "x@evil.example.",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "x@evil.example.",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "x@evil.example.",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "<x@Evil.Example>",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "<x@Evil.Example>",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "<x@Evil.Example>",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "<x@Evil.Example>",
+    "domain": "evil.example",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "x@192.0.2.1",
+    "domain": "192.0.2.1",
+    "registered_domain": "192.0.2.1",
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "x@192.0.2.1",
+    "domain": "192.0.2.1",
+    "registered_domain": "192.0.2.1",
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "x@192.0.2.1",
+    "domain": "192.0.2.1",
+    "registered_domain": "192.0.2.1",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "x@192.0.2.1",
+    "domain": "192.0.2.1",
+    "registered_domain": "192.0.2.1",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "x@localhost",
+    "domain": "localhost",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "x@localhost",
+    "domain": "localhost",
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "x@localhost",
+    "domain": "localhost",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "x@localhost",
+    "domain": "localhost",
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "x@\u0430pple.com",
+    "domain": "\u0430pple.com",
+    "registered_domain": "xn--pple-43d.com",
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "x@\u0430pple.com",
+    "domain": "\u0430pple.com",
+    "registered_domain": "xn--pple-43d.com",
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "x@\u0430pple.com",
+    "domain": "\u0430pple.com",
+    "registered_domain": "xn--pple-43d.com",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "x@\u0430pple.com",
+    "domain": "\u0430pple.com",
+    "registered_domain": "xn--pple-43d.com",
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "pas-une-adresse",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "pas-une-adresse",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "pas-une-adresse",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "pas-une-adresse",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "",
+    "address": "",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "PayPal",
+    "address": "",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": null
+   },
+   {
+    "name": "service@paypal.com",
+    "address": "",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   },
+   {
+    "name": "www.paypal.com",
+    "address": "",
+    "domain": null,
+    "registered_domain": null,
+    "display_name_domain": "paypal.com"
+   }
+  ]
+ }
 }

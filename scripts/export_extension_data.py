@@ -36,6 +36,7 @@ import argparse
 import json
 import math
 import random
+import re
 import sys
 import unicodedata
 from collections.abc import Callable, Iterable
@@ -47,6 +48,8 @@ import idna
 import tldextract
 
 from phishguard.data.urls import make_domain_extractor, normalize_url
+from phishguard.email.html import make_link, registered_domain, unwrap_rewritten
+from phishguard.email.parser import display_name_domain, make_address
 from phishguard.fusion.score import default_config
 from phishguard.security.normalize import NORMALIZATION_VERSION, host_script_alert
 from phishguard.urls import brands as brands_module
@@ -190,6 +193,28 @@ def _script_ranges() -> tuple[list[str], list[list[int]]]:
     return names, ranges
 
 
+_WORD_RE = re.compile(r"\w")
+_ASCII_LETTER_IGNORECASE_RE = re.compile("[a-z]", re.IGNORECASE)
+
+
+def _ignorecase_letters() -> dict[str, list[int]]:
+    """Points de code non ASCII qu'une lettre ASCII reconnaît sous ``re.IGNORECASE``.
+
+    ``[a-z]`` avec ``re.I`` reconnaît aussi ``İ``, ``ı``, ``ſ`` et le signe kelvin : la
+    classe JavaScript ``/[a-z]/iu`` ne suit pas les mêmes règles (repli de casse simple).
+    Les expressions portées (liens des emails, étape 5.6) en ont besoin à l'identique.
+    """
+    extra: dict[str, list[int]] = {}
+    for cp in range(0x80, MAX_CODE_POINT + 1):
+        char = chr(cp)
+        if not _ASCII_LETTER_IGNORECASE_RE.fullmatch(char):
+            continue
+        for letter in "abcdefghijklmnopqrstuvwxyz":
+            if re.fullmatch(letter, char, re.IGNORECASE):
+                extra.setdefault(letter, []).append(cp)
+    return extra
+
+
 def unicode_data() -> dict[str, Any]:
     scripts, script_ranges = _script_ranges()
     return {
@@ -207,6 +232,10 @@ def unicode_data() -> dict[str, Any]:
         "format": _ranges(lambda c: unicodedata.category(c) == "Cf"),
         "control": _ranges(lambda c: unicodedata.category(c) == "Cc"),
         "combining": _ranges(lambda c: unicodedata.combining(c) != 0),
+        # ``\w`` des expressions de Python (``str.isalnum()`` ou « _ ») et lettres ASCII
+        # sous ``re.IGNORECASE`` : règles des liens et de l'expéditeur (étape 5.6).
+        "word": _ranges(lambda c: _WORD_RE.fullmatch(c) is not None),
+        "ignorecase": _ignorecase_letters(),
     }
 
 
@@ -583,6 +612,246 @@ def interp_cases() -> list[dict[str, Any]]:
     return [{"xp": xp, "fp": fp, "x": q, "output": float(np.interp(q, xp, fp))} for q in queries]
 
 
+# --------------------------------------------------------------------------- #
+# Liens et expéditeur d'un email (étape 5.6) : make_link, unwrap_rewritten,
+# display_name_domain, tels que l'API les applique à un email.
+# --------------------------------------------------------------------------- #
+
+MAIL_HREFS = [
+    "https://www.paypal.com/signin",
+    "https://paypal.com",
+    "http://paypa1-secure.example/login",
+    "https://evil.example/www.paypal.com",
+    "  https://www.impots.gouv.fr/  ",
+    "HTTPS://WWW.EXAMPLE.CO.UK/x",
+    "//cdn.example.com/a",
+    "www.example.org/page",
+    "/relative/path",
+    "page.html",
+    "#ancre",
+    "mailto:support@paypal.com",
+    "tel:+33123456789",
+    "javascript:alert(1)",
+    " JavaScript:void(0)",
+    "data:text/html;base64,PHNjcmlwdD4=",
+    "vbscript:msgbox",
+    "file:///C:/Windows/notepad.exe",
+    "ftp://files.example.com/a",
+    "http://192.0.2.10/paypal/",
+    "http://[2001:db8::1]/login",
+    "http://[::1",
+    "http://xn--pple-43d.com/",
+    "http://аpple.com/",
+    "https://user@evil.example/",
+    "https://www.paypal.com@evil.example/",
+    "https://someone.github.io/page",
+    "https://github.io",
+    "http://localhost:8000/",
+    "https://bradesco.recompensas/",
+    "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.paypal.com%2Fsignin&data=x",
+    "https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fevil.example%2F&data=x",
+    "https://nam12.safelinks.protection.outlook.com/?url=javascript%3Aalert(1)",
+    "https://nam12.safelinks.protection.outlook.com/?data=x",
+    "https://nam12.safelinks.protection.outlook.com/?url=&url=https%3A%2F%2Fa.example%2F",
+    "https://NAM12.SAFELINKS.PROTECTION.OUTLOOK.COM/?url=https://b.example/",
+    "https://safelinks.protection.outlook.com/?url=https://c.example/",
+    "https://clicktime.symantec.com/a/1/x?u=https%3A%2F%2Fevil.example%2Fpay",
+    "https://clicktime.symantec.com/a/1/x?u=",
+    "https://urldefense.proofpoint.com/v2/url?u=https-3A__evil.example_login&d=x",
+    "https://urldefense.proofpoint.com/v2/url?u=https-3A__www.paypal.com_&d=x",
+    "https://urldefense.proofpoint.com/v1/url?u=https-3A__evil.example_",
+    "https://urldefense.com/v3/__https://evil.example/login__;!!abc",
+    "https://urldefense.com/v3/__https://evil.example/login",
+    "https://urldefense.com/v3/__javascript:alert(1)__;!!abc",
+    "https://www.google.com/url?q=https://evil.example/&sa=D",
+    "https://exemple.fr/?a=1&a=2&b=%41+c",
+    "https://exemple.fr:99999/",
+    "http://example.com\t/tab",
+    "http://exa\nmple.com/",
+    "https://bücher.example/",
+    "https://例え.テスト/",
+]
+
+MAIL_TEXTS = [
+    "",
+    "Cliquez ici",
+    "www.paypal.com",
+    "WWW.PAYPAL.COM",
+    "paypal.com",
+    "https://www.paypal.com/signin",
+    "http://paypal.com",
+    "<https://www.paypal.com>",
+    "(www.paypal.com).",
+    '"paypal.com";',
+    "  www.paypal.com  ",
+    "www.\u00a0paypal.com",
+    "Visitez www.paypal.com",
+    "paypal.com/login?x=1#y",
+    "paypal.com:443",
+    "evil.example",
+    "www.impots.gouv.fr",
+    "impots.gouv.fr",
+    "support@paypal.com",
+    "192.0.2.10",
+    "localhost",
+    "Bradesco.recompensas",
+    "fichier.pdf",
+    "v2.0",
+    "a.b",
+    "exemple.fr",
+    "EXEMPLE.FR",
+    "exemple.ſr",
+    "exemple.\u212az",
+    "exemple.\u0130o",
+    "exemple.f",
+    "exemple." + "a" * 24,
+    "exemple." + "a" * 25,
+    "аpple.com",
+    "xn--pple-43d.com",
+    "bücher.example",
+    "例え.テスト",
+    "пример.рф",
+    "someone.github.io",
+    "github.io",
+    "https://",
+    "www.",
+    "www.x",
+    "httpſ://paypal.com",
+    "www\u200b.paypal.com",
+    "paypal\u3002com",
+    "under_score.example.com",
+    "-tiret.example.com",
+    "\u202epaypal.com",
+    "multi\nligne\twww.paypal.com",
+]
+
+DISPLAY_NAMES = [
+    "",
+    "PayPal",
+    "service@paypal.com",
+    '"service@paypal.com"',
+    "PayPal <service@paypal.com>",
+    "Service client paypal.com",
+    "Banque www.impots.gouv.fr",
+    "Jean Dupont",
+    "jean.dupont",
+    "a.b",
+    "fichier.pdf",
+    "Support (support@apple.com)",
+    "support@аpple.com",
+    "sécurité@banque.fr",
+    "x@y",
+    "Amazon.fr",
+    "AMAZON.FR",
+    "exemple.\u212az",
+    "-x.example.com",
+    "_x.example.com",
+    "noreply@notifications.paypal.com via evil.example",
+    "Ünïcödé.example",
+]
+
+SENDER_ADDRESSES = [
+    "service@paypal.com",
+    "service@intl.paypal.com",
+    "noreply@evil.example",
+    "x@evil.example.",
+    "<x@Evil.Example>",
+    "x@192.0.2.1",
+    "x@localhost",
+    "x@аpple.com",
+    "pas-une-adresse",
+    "",
+]
+
+_MAIL_FUZZ_ALPHABET = "aAzZ09._-+@/:?#&=%~ <>()[]\"',;!*$ſKİıé\u00a0\u200b\u3002\uff0eаеор例え"
+_MAIL_FUZZ_PIECES = [
+    "www.",
+    "http://",
+    "https://",
+    "paypal",
+    "evil",
+    ".com",
+    ".co.uk",
+    ".fr",
+    ".github.io",
+    "%2F",
+    "%3A",
+    "safelinks.protection.outlook.com/?url=",
+    "urldefense.com/v3/__",
+    "__;",
+    "@",
+]
+
+
+def _mail_fuzz(count: int, seed: int) -> list[list[str]]:
+    rng = random.Random(seed)
+
+    def piece() -> str:
+        if rng.random() < 0.5:
+            return rng.choice(_MAIL_FUZZ_PIECES)
+        return "".join(rng.choice(_MAIL_FUZZ_ALPHABET) for _ in range(rng.randint(0, 6)))
+
+    pairs = []
+    for _ in range(count):
+        href = "".join(piece() for _ in range(rng.randint(1, 6)))
+        text = "".join(piece() for _ in range(rng.randint(0, 5)))
+        pairs.append([href, text])
+    return pairs
+
+
+def _link_case(href: str, text: str) -> dict[str, Any]:
+    link = make_link("a", href, text)
+    unwrapped = unwrap_rewritten(link.href) if link.rewritten_by else None
+    return {
+        "href": href,
+        "text": text,
+        "scheme": link.scheme,
+        "href_domain": link.href_domain,
+        "text_domain": link.text_domain,
+        "mismatch": link.mismatch,
+        "rewritten_by": link.rewritten_by,
+        "target": unwrapped[0] if unwrapped else link.href,
+    }
+
+
+def mail_cases() -> dict[str, Any]:
+    pairs = [[href, text] for href in MAIL_HREFS for text in ("", "www.paypal.com", "Cliquez ici")]
+    pairs += [
+        [href, text]
+        for text in MAIL_TEXTS
+        for href in ("https://www.paypal.com/", "https://evil.example/")
+    ]
+    pairs += _mail_fuzz(400, FUZZ_SEED + 1)
+    senders = []
+    for address in SENDER_ADDRESSES:
+        for name in ("", "PayPal", "service@paypal.com", "www.paypal.com"):
+            sender = make_address(name, address)
+            shown = display_name_domain(name)
+            senders.append(
+                {
+                    "name": name,
+                    "address": address,
+                    "domain": sender.domain if sender else None,
+                    "registered_domain": sender.registered_domain if sender else None,
+                    "display_name_domain": shown,
+                }
+            )
+    return {
+        "links": [_link_case(href, text) for href, text in pairs],
+        "unwrap": [
+            {"input": href, "output": list(r) if (r := unwrap_rewritten(href)) else None}
+            for href in MAIL_HREFS
+        ],
+        "registered_domain": [
+            {"input": text, "output": registered_domain(text)} for text in MAIL_TEXTS
+        ],
+        "display_name_domain": [
+            {"input": name, "output": display_name_domain(name)} for name in DISPLAY_NAMES
+        ],
+        "senders": senders,
+    }
+
+
 def parity_cases() -> dict[str, Any]:
     extractor = UrlFeatureExtractor()  # toutes les familles sauf ``tld`` (sans table)
     domain_extractor = make_domain_extractor()
@@ -771,6 +1040,7 @@ def parity_cases() -> dict[str, Any]:
         "synthetic_models": synthetic_model_cases(),
         "urls": [_url_case(url, extractor) for url in PARITY_URLS],
         "fuzz": [_url_case(url, extractor) for url in fuzz_urls()],
+        "mail": mail_cases(),
     }
 
 
