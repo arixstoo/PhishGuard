@@ -24,7 +24,7 @@ EMAIL_SAMPLE_COUNT := 200
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
 	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest \
 	extension-data extension-install extension-test extension-build extension-e2e \
-	bot
+	bot sus
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -259,3 +259,8 @@ extension-e2e: ## Parcours Playwright : extension, maquette Gmail, page « colle
 
 bot: ## Bot Telegram en long polling (PHISHGUARD_BOT_TOKEN dans .env, docs/telegram-bot.md)
 	$(PYTHON) -m phishguard.bot
+
+SUS ?= docs/user-tests/sus.csv
+
+sus: ## Score SUS des tests utilisateurs, critère ≥ 70 sur le dernier groupe (docs/user-tests.md)
+	$(PYTHON) scripts/sus_score.py $(SUS) --min-score 70

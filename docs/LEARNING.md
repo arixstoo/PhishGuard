@@ -289,3 +289,8 @@ Trois lignes par étape : ce que j'ai fait, ce que j'ai appris, ce qui m'a bloqu
 - **Fait** : page servie par l'API (même origine : ni CORS, ni clé), CSP propre avec Trusted Types, texte par `textContent` seulement, champ sans `name` et `form-action 'none'`, correcteur désactivé, hôtes seulement. 20 tests côté serveur, 6 parcours Playwright avec la vraie CSP et une raison piégée renvoyée par l'API.
 - **Appris** : les fuites les plus probables d'une page de ce genre ne sont pas dans le code mais autour : un formulaire `GET` qui se soumet quand le script ne charge pas (le message part dans l'historique et les journaux du proxy), le correcteur orthographique « amélioré » qui envoie le texte à un service en ligne.
 - **Bloqué** : rien.
+
+### 5.13 — Tests utilisateurs
+- **Fait** : protocole complet (`docs/user-tests.md`) : recrutement, consentement, anonymisation, tâches, fiche d'observation, questionnaire SUS, kit de messages de test, rapport à remplir ; `scripts/sus_score.py` (calcul de Brooke, intervalle de Student, échelle de Sauro et Lewis, critère ≥ 70), 17 tests.
+- **Appris** : un script de score qui complète une réponse manquante fabrique un résultat ; il la refuse. Un identifiant qui ressemble à un nom est refusé aussi : l'anonymisation se vérifie à la saisie.
+- **Bloqué** : **les séances elles-mêmes** : recruter et observer de vraies personnes. Le critère de fin (SUS ≥ 70 sur le dernier groupe) n'est pas atteint tant qu'elles n'ont pas eu lieu.

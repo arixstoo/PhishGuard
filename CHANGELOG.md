@@ -26,6 +26,10 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 - Servie par l'API à la racine (étape 5.12, [docs/web-page.md](docs/web-page.md)) : texte et liens analysés en parallèle, verdict par icône, couleur et texte, avertissement « Ne collez pas de mot de passe ou de données personnelles. ». Même origine (ni CORS ni clé), CSP propre avec Trusted Types, `textContent` seulement, champ sans `name` et `form-action 'none'`, correcteur orthographique désactivé, rien de stocké. `PHISHGUARD_API_WEB_PAGE_ENABLED`. 20 tests serveur, 6 parcours Playwright.
 
+### Tests utilisateurs
+
+- Protocole prêt (étape 5.13, [docs/user-tests.md](docs/user-tests.md)) : recrutement, consentement et anonymisation, tâches, fiche d'observation, questionnaire SUS, kit de messages de test, comparaison avec PhishTool. `scripts/sus_score.py` (`make sus`) : score de Brooke, intervalle de Student, échelle de Sauro et Lewis, critère ≥ 70 ; refuse une réponse manquante ou un identifiant nominatif. **Séances à mener.**
+
 ## [0.4.0] : module 4, API et backend sécurisés
 
 Le moteur devient un service HTTP : trois routes d'analyse au contrat figé, des entrées bornées dès le schéma, des clés d'API stockées en empreinte seulement et des limites de débit par niveau de client, appliquées avant la lecture du corps ([docs/api.md](docs/api.md)). Il est livré dans une image Docker durcie, analysée par trivy et démarrée par la CI sur une machine propre ; il ne charge que des modèles dont la signature Ed25519 a été vérifiée ; il reçoit les retours des utilisateurs sans jamais les laisser toucher au modèle ; il exporte son modèle URL en JSON avec des vecteurs de référence pour l'extension ; et il tient 50 requêtes par seconde avec une médiane d'environ 12 ms.
