@@ -72,7 +72,11 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
         channel: "chromium", // vrai Chromium (le « headless shell » ne charge pas d'extension)
         headless: true,
         locale: "fr-FR",
+        // Langue de l'interface de Chromium, donc du catalogue `_locales` choisi par Chrome :
+        // `--lang` sous Windows et macOS ; sous Linux, Chromium l'ignore et lit `LANGUAGE`
+        // puis `LANG` (le runner de la CI est en `C.UTF-8`, d'où une extension en anglais).
         args: [`--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, "--lang=fr"],
+        env: { ...process.env, LANGUAGE: "fr", LANG: "fr_FR.UTF-8" },
       });
       const network: Network = { outside: [], expected: new Set() };
       context.on("request", (request) => {
