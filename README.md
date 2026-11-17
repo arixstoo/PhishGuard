@@ -162,6 +162,7 @@ data/, models/    generated locally, never committed
 - [Browser extension design](docs/extension-design.md): on-device analysis with the same extractor, model and fusion as the API (ported from Python and checked against it), Gmail banner, options, languages and accessibility (French)
 - [Extension privacy](docs/extension-privacy.md): in plain language, what the extension reads, keeps and sends (by default: nothing), with one sentence per permission for the Chrome Web Store, checked by tests (French)
 - [Telegram bot](docs/telegram-bot.md): forward a suspicious message, get a verdict in under three seconds, with defanged links and nothing kept (French)
+- [Paste-and-check page](docs/web-page.md): a static page served by the API, with a strict content security policy and Trusted Types (French)
 - [External tools evaluation](docs/external-tools.md): EML Analyzer, Outlook .msg, DeHashed and PhishTool, what was kept and why (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 

@@ -7,6 +7,8 @@ on:
     paths:
       - "extension/**"
       - "docs/extension-privacy.md"
+      - "src/phishguard/api/static/**"
+      - "src/phishguard/api/routers/web.py"
       - "tests/golden/**"
       - "scripts/export_extension_data.py"
       - "src/phishguard/urls/**"
@@ -21,6 +23,8 @@ on:
     paths:
       - "extension/**"
       - "docs/extension-privacy.md"
+      - "src/phishguard/api/static/**"
+      - "src/phishguard/api/routers/web.py"
       - "tests/golden/**"
       - "scripts/export_extension_data.py"
       - "src/phishguard/urls/**"

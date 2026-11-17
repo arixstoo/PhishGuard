@@ -549,6 +549,7 @@ Chromium avec `dist-test/` chargé (contexte persistant, `--load-extension`).
 | `e2e/popup.spec.ts` | verdict en texte, conseil, ordre de tabulation, Maj+Tab, Entrée, Échap, confiance (focus sur « Annuler »), signalement désactivé, homographe, page non analysable, arabe (`rtl`, bordure à droite), anglais |
 | `e2e/options.spec.ts` | défauts, `aria-describedby` de chaque réglage, serveur `http` refusé, serveur local sans permission accordée, liste blanche |
 | `e2e/gmail.spec.ts` | liste jamais lue, les 10 messages (bannière, rôle `alert` ou `status`, marques nommées, ombre fermée, `href` intacts), « Masquer », Gmail désactivé, rien gardé |
+| `e2e/web-page.spec.ts` | page « coller et analyser » de l'API ([web-page.md](web-page.md)) |
 
 - **Aucune page réelle** : toute requête hors du paquet est servie par Playwright
   (maquette sous `https://mail.google.com/`, page factice ailleurs).

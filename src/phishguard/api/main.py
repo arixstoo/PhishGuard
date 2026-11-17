@@ -15,7 +15,7 @@ Organisation :
 - ``settings.py``   configuration (``pydantic-settings``, préfixe ``PHISHGUARD_API_``) ;
 - ``schemas.py``    schémas d'entrée stricts (étape 4.2) ;
 - ``service.py``    logique d'analyse, sans HTTP (étape 4.3) ;
-- ``routers/``      ``analyze.py``, ``feedback.py``, ``meta.py`` ;
+- ``routers/``      ``analyze.py``, ``feedback.py``, ``meta.py``, ``web.py`` (page de l'étape 5.12) ;
 - ``security.py``   IP réelle du client et clés d'API (étape 4.4) ;
 - ``ratelimit.py``  limites de débit (étape 4.4) ;
 - ``storage.py``    base SQLite : empreintes des clés, retours en quarantaine ;
@@ -51,7 +51,7 @@ from phishguard.api.hardening import (
 from phishguard.api.logs import RequestLogMiddleware, configure_logging
 from phishguard.api.middleware import MULTIPART_OVERHEAD, BodySizeLimitMiddleware
 from phishguard.api.ratelimit import RateLimiter, RateLimitMiddleware
-from phishguard.api.routers import analyze, feedback, meta
+from phishguard.api.routers import analyze, feedback, meta, web
 from phishguard.api.security import authenticated_client
 from phishguard.api.service import AnalysisService, describe_models
 from phishguard.api.settings import ApiSettings, get_api_settings
@@ -158,6 +158,8 @@ def create_app(
     v1.include_router(meta.router)
     app.include_router(meta.health_router, prefix=API_PREFIX)
     app.include_router(v1)
+    if settings.web_page_enabled:
+        app.include_router(web.router)  # hors schéma, sans authentification (étape 5.12)
 
     # Modèles des routes, tirés du schéma OpenAPI (API publique, calculé même si /docs est
     # désactivé) : les routeurs inclus ne sont pas listés dans app.routes.

@@ -63,8 +63,8 @@ Issues = "https://github.com/arixstoo/PhishGuard/issues"
 [tool.setuptools.package-data]
 # Listes de référence des features URL, relues aussi par l'extension (module 5),
 # paramètres versionnés de la fusion du score (étape 2.10) et gabarits des raisons
-# lisibles en trois langues (étape 3.2).
-phishguard = ["urls/data/*.json", "fusion/*.json", "explain/*.yml"]
+# lisibles en trois langues (étape 3.2), page « coller et analyser » (étape 5.12).
+phishguard = ["urls/data/*.json", "fusion/*.json", "explain/*.yml", "api/static/*"]
 
 [tool.ruff]
 line-length = 100
