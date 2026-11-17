@@ -512,7 +512,34 @@ droite) et anglais ; options par défaut, refus d'un serveur `http`, liste blanc
 messages Gmail ; `href` intacts ; ombre fermée ; aucune requête externe. Ces parcours
 entrent dans la CI avec Playwright à l'étape 5.10.
 
-## 9. Ce qui vient ensuite
+## 9. Audit et tests de bout en bout (étapes 5.9 et 5.10)
+
+### Audit (5.9)
+
+[extension-privacy.md](extension-privacy.md) dit en langage simple ce que l'extension lit,
+garde et envoie, avec **une phrase par permission** pour le Chrome Web Store.
+`test/audit.test.ts` garde ce document vrai :
+
+- son tableau des autorisations contient **exactement** celles du manifeste, avec leur
+  type, chaque justification en une phrase de moins de 1 000 caractères (limite du
+  formulaire du store) ; une permission ajoutée sans justification fait échouer le test ;
+- le manifeste n'ouvre rien d'autre : ni `host_permissions`, ni
+  `web_accessible_resources` (un site ne peut pas détecter l'extension en sondant ses
+  fichiers), ni `externally_connectable`, ni page remplacée ; script de contenu sur Gmail,
+  cadre principal, monde isolé ;
+- CSP : `script-src 'self'` seul, `object-src 'none'`, aucun `unsafe-*`, aucun joker
+  d'hôte ; le seul relâchement est `connect-src https:` (section 1) ;
+- sources : seuls les espaces `action`, `contextMenus`, `i18n`, `permissions`, `runtime`,
+  `storage`, `tabs` ; `chrome.tabs.query` seulement sur l'onglet actif ; jamais
+  `storage.sync`, ni `randomUUID`, `getRandomValues`, `Math.random` (aucun identifiant),
+  ni `navigator.userAgent` et voisins, ni `console.log`, ni `document.cookie` ;
+- aucune dépendance d'exécution, versions exactes, `ignore-scripts=true`.
+
+En CI : `npm audit` (0 vulnérabilité) et `npm audit signatures` (signatures du registre
+de chaque paquet installé).
+
+
+## 10. Ce qui vient ensuite
 
 | Étape | Ajoute |
 |---|---|

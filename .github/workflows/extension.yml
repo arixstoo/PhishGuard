@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "extension/**"
+      - "docs/extension-privacy.md"
       - "tests/golden/**"
       - "scripts/export_extension_data.py"
       - "src/phishguard/urls/**"
@@ -18,6 +19,7 @@ on:
   pull_request:
     paths:
       - "extension/**"
+      - "docs/extension-privacy.md"
       - "tests/golden/**"
       - "scripts/export_extension_data.py"
       - "src/phishguard/urls/**"
@@ -65,6 +67,10 @@ jobs:
 
       - name: Audit des dépendances npm
         run: npm audit --audit-level=moderate
+
+      # Chaque paquet installé porte la signature du registre npm (étape 5.9).
+      - name: Signatures du registre npm
+        run: npm audit signatures
 
       - name: Vérification des types
         run: npm run typecheck
