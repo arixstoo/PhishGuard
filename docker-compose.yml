@@ -68,6 +68,47 @@ services:
         max-size: 10m
         max-file: "3"
 
+  # Bot Telegram (étape 5.11, docs/telegram-bot.md) : même image, autre commande.
+  #   docker compose --profile bot up -d
+  # Jeton de @BotFather et clé d'API du bot dans .env.bot (jamais commité) :
+  #   PHISHGUARD_BOT_TOKEN=…
+  #   PHISHGUARD_BOT_API_KEY=pg_…   (docker compose exec api python -m phishguard.api.keys create --name telegram-bot)
+  # Long polling : le bot va chercher les messages chez Telegram, aucun port n'est ouvert.
+  bot:
+    image: phishguard-api:local
+    profiles: ["bot"]
+    init: true
+    restart: unless-stopped
+    entrypoint: ["python", "-m", "phishguard.bot"]
+    env_file:
+      - path: .env.bot
+        required: true
+    environment:
+      # Réseau interne de compose : l'API n'est jamais jointe à travers Internet.
+      PHISHGUARD_BOT_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    # La sonde de l'image vise l'API (port 8000) : sans objet ici.
+    healthcheck:
+      disable: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.5
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
 volumes:
   # Base SQLite : empreintes des clés d'API et retours en quarantaine.
   phishguard-data:

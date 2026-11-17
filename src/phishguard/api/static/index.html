@@ -1,0 +1,72 @@
+<!doctype html>
+<!--
+  Page « coller et analyser » (étape 5.12, docs/web-page.md), servie par l'API elle-même :
+  même origine, donc ni CORS ni clé à exposer. Aucun script en ligne, aucune ressource
+  externe : la politique de contenu de la page n'admet que ses propres fichiers.
+-->
+<html lang="fr" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>PhishGuard : vérifier un message</title>
+    <link rel="icon" href="static/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="static/paste.css" />
+    <script type="module" src="static/paste.js"></script>
+  </head>
+  <body>
+    <main>
+      <header class="top">
+        <h1 data-i18n="title">Vérifier un message ou un lien</h1>
+        <label class="language">
+          <span data-i18n="language">Langue</span>
+          <select id="language">
+            <option value="fr" lang="fr">Français</option>
+            <option value="en" lang="en">English</option>
+            <option value="ar" lang="ar" dir="rtl">العربية</option>
+          </select>
+        </label>
+      </header>
+
+      <p class="lead" data-i18n="lead">
+        Collez un SMS, un message ou un lien qui vous paraît douteux : PhishGuard vous dit
+        s'il ressemble à du phishing, et pourquoi.
+      </p>
+
+      <p class="warning" role="note">
+        <span aria-hidden="true">🔒</span>
+        <strong data-i18n="warning">Ne collez pas de mot de passe ou de données personnelles.</strong>
+        <span data-i18n="warningDetail">Le texte est envoyé à ce serveur pour être analysé, puis oublié.</span>
+      </p>
+
+      <!-- Pas d'attribut name : le texte n'est jamais sérialisé dans une URL. La politique
+           de contenu (form-action 'none') bloque aussi tout envoi natif du formulaire. -->
+      <form id="form" novalidate>
+        <label for="text" data-i18n="label">Message ou lien à vérifier</label>
+        <textarea id="text" rows="7" maxlength="5000" autocomplete="off" spellcheck="false"
+          autocapitalize="off" aria-describedby="counter text-error" required></textarea>
+        <div class="row">
+          <p id="counter" class="hint" aria-live="off"></p>
+          <p id="text-error" class="error" hidden></p>
+        </div>
+        <div class="actions">
+          <button id="analyze" type="submit" data-i18n="analyze">Analyser</button>
+          <button id="clear" type="button" class="secondary" data-i18n="clear">Effacer</button>
+        </div>
+      </form>
+
+      <section id="result" aria-labelledby="verdict-title" hidden></section>
+      <p id="status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+      <footer>
+        <p data-i18n="footer">
+          PhishGuard ne visite jamais les liens : il les analyse comme du texte. Un verdict
+          « sûr » n'est pas une garantie ; en cas de doute, contactez l'organisme par ses
+          coordonnées officielles.
+        </p>
+        <p><a href="https://github.com/arixstoo/PhishGuard" rel="noopener noreferrer" data-i18n="source">Code source et politique de confidentialité</a></p>
+      </footer>
+    </main>
+    <noscript><p class="error">JavaScript est nécessaire pour analyser un message.</p></noscript>
+  </body>
+</html>

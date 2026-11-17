@@ -130,7 +130,8 @@ CASES = [
          json={**FEEDBACK, "received_at": "2020-01-01T00:00:00Z"}),
     # --- Ailleurs ----------------------------------------------------------- #
     Case("unknown-route", "GET", f"/v1/{SENTINEL}", 404, "not_found"),
-    Case("root", "GET", "/", 404, "not_found"),
+    # La racine sert la page « coller et analyser » (étape 5.12) : autre chemin inconnu.
+    Case("unknown_root_path", "GET", "/inconnu", 404, "not_found"),
     Case("trace", "TRACE", "/v1/analyze/url", 405, "method_not_allowed"),
 ]  # fmt: skip
 

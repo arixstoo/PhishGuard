@@ -1,4 +1,4 @@
-# Extension navigateur : architecture (étapes 5.1 à 5.8)
+# Extension navigateur : architecture (étapes 5.1 à 5.10)
 
 L'extension PhishGuard (Chrome, Manifest V3) analyse une URL **sur l'appareil**, avec le
 même extracteur de features, le même modèle et la même fusion que l'API, et les liens du
@@ -84,7 +84,7 @@ l'extérieur.
 ```text
 extension/
   .npmrc               ignore-scripts, save-exact
-  package.json         4 dépendances de développement, 0 dépendance d'exécution
+  package.json         5 dépendances de développement (Playwright depuis 5.10), 0 d'exécution
   build.mjs            esbuild, vérification du modèle signé, icônes, garde-fous
   static/              manifest.json, popup.html/.css, _locales/{fr,en,ar}
   src/core/            extracteur, modèle, décision : pur, sans API Chrome
@@ -296,8 +296,8 @@ pages internes sont la faiblesse connue de `url_v2` (« le chiffre à surveiller
 
 Le build de test (`node build.mjs --test`, `dist-test/`) ajoute un point d'entrée qui
 expose l'analyse du service worker à un test automatisé, qui ne peut pas cliquer sur
-l'icône. Il n'est jamais inclus dans `dist/` (le build échoue sinon). Les tests de bout
-en bout Playwright entrent dans la CI à l'étape 5.10.
+l'icône. Il n'est jamais inclus dans `dist/` (le build échoue sinon). Ces 10 URLs sont
+rejouées en CI par Playwright (section 9).
 
 ## 5. Fenêtre contextuelle (étape 5.5)
 
@@ -510,12 +510,69 @@ focus sur « Annuler » pour un phishing ; signalement désactivé et expliqué 
 sans bouton de confiance ; page non analysable ; arabe (`rtl`, traduction, bordure à
 droite) et anglais ; options par défaut, refus d'un serveur `http`, liste blanche ; les 10
 messages Gmail ; `href` intacts ; ombre fermée ; aucune requête externe. Ces parcours
-entrent dans la CI avec Playwright à l'étape 5.10.
+sont en CI depuis l'étape 5.10 (section 9).
 
-## 9. Ce qui vient ensuite
+## 9. Audit et tests de bout en bout (étapes 5.9 et 5.10)
+
+### Audit (5.9)
+
+[extension-privacy.md](extension-privacy.md) dit en langage simple ce que l'extension lit,
+garde et envoie, avec **une phrase par permission** pour le Chrome Web Store.
+`test/audit.test.ts` garde ce document vrai :
+
+- son tableau des autorisations contient **exactement** celles du manifeste, avec leur
+  type, chaque justification en une phrase de moins de 1 000 caractères (limite du
+  formulaire du store) ; une permission ajoutée sans justification fait échouer le test ;
+- le manifeste n'ouvre rien d'autre : ni `host_permissions`, ni
+  `web_accessible_resources` (un site ne peut pas détecter l'extension en sondant ses
+  fichiers), ni `externally_connectable`, ni page remplacée ; script de contenu sur Gmail,
+  cadre principal, monde isolé ;
+- CSP : `script-src 'self'` seul, `object-src 'none'`, aucun `unsafe-*`, aucun joker
+  d'hôte ; le seul relâchement est `connect-src https:` (section 1) ;
+- sources : seuls les espaces `action`, `contextMenus`, `i18n`, `permissions`, `runtime`,
+  `storage`, `tabs` ; `chrome.tabs.query` seulement sur l'onglet actif ; jamais
+  `storage.sync`, ni `randomUUID`, `getRandomValues`, `Math.random` (aucun identifiant),
+  ni `navigator.userAgent` et voisins, ni `console.log`, ni `document.cookie` ;
+- aucune dépendance d'exécution, versions exactes, `ignore-scripts=true`.
+
+En CI : `npm audit` (0 vulnérabilité) et `npm audit signatures` (signatures du registre
+de chaque paquet installé).
+
+### Tests de bout en bout (5.10)
+
+`npm run test:e2e` (`make extension-e2e`, job `e2e` de `extension.yml`) : Playwright lance
+Chromium avec `dist-test/` chargé (contexte persistant, `--load-extension`).
+
+| Fichier | Parcours |
+|---|---|
+| `e2e/service-worker.spec.ts` | permissions accordées à l'installation, verdicts des 10 sites (section 4) en moins de 50 ms, badge effacé à la navigation, rien d'analysé ni gardé sans l'option |
+| `e2e/popup.spec.ts` | verdict en texte, conseil, ordre de tabulation, Maj+Tab, Entrée, Échap, confiance (focus sur « Annuler »), signalement désactivé, homographe, page non analysable, arabe (`rtl`, bordure à droite), anglais |
+| `e2e/options.spec.ts` | défauts, `aria-describedby` de chaque réglage, serveur `http` refusé, serveur local sans permission accordée, liste blanche |
+| `e2e/gmail.spec.ts` | liste jamais lue, les 10 messages (bannière, rôle `alert` ou `status`, marques nommées, ombre fermée, `href` intacts), « Masquer », Gmail désactivé, rien gardé |
+| `e2e/web-page.spec.ts` | page « coller et analyser » de l'API ([web-page.md](web-page.md)) |
+
+- **Aucune page réelle** : toute requête hors du paquet est servie par Playwright
+  (maquette sous `https://mail.google.com/`, page factice ailleurs).
+- **Réseau surveillé après chaque test** : une requête hors du paquet que le test n'a pas
+  provoquée le fait échouer. Vérifié par mutation : un `fetch` ajouté au service worker ou
+  à la page d'options est attrapé.
+- **Ombre fermée** : Playwright n'y entre pas ; la bannière est lue par le protocole de
+  débogage (`DOM.getDocument`, `pierce`), qui donne aussi le type de chaque racine.
+- **Modèle de test.** Le modèle signé n'est pas versionné : en CI, `--test --stub-model`
+  embarque `e2e/stub-model.mjs`, un arbre LightGBM écrit à la main (IP, marque dans
+  l'hôte, mots-clés, homographe) qui donne sur ces parcours **les verdicts de `url_v2`**
+  (contrôlé par `test/stub-model.test.ts`). Il passe par le même chargement défensif ; le
+  build le refuse sans `--test`. Avec le vrai modèle (`node build.mjs --test`), les mêmes
+  parcours passent.
+- **Premier bug trouvé** : `dl { display: grid }` l'emportait sur `hidden`, et les détails
+  techniques s'affichaient dépliés. La vérification manuelle de l'étape 5.8 lisait la
+  propriété, pas ce qui était visible. Corrigé dans `theme.css` (`[hidden]` toujours
+  masqué).
+
+## 10. Ce qui vient ensuite
 
 | Étape | Ajoute |
 |---|---|
-| 5.9 | audit des permissions (tableau de la section 1 : une phrase par permission pour le Chrome Web Store), `docs/extension-privacy.md` |
-| 5.10 | tests de bout en bout Playwright en CI : maquette Gmail et parcours de la section 8 |
-| module 6 | téléchargement de modèles signés : `loadUrlModel` est déjà prêt pour une entrée non fiable ; reste la vérification Ed25519 dans l'extension (WebCrypto) |
+| 5.13 | tests utilisateurs ([user-tests.md](user-tests.md)) : lecteurs d'écran réels, faux positifs sur les pages internes, compréhension des raisons |
+| 5.14 | bêta `0.5.0-beta.1` ([beta.md](beta.md)) ; tag `v0.5.0` après les tests utilisateurs |
+| module 6 | Chrome Web Store (justifications de [extension-privacy.md](extension-privacy.md)) ; téléchargement de modèles signés : `loadUrlModel` est déjà prêt pour une entrée non fiable ; reste la vérification Ed25519 dans l'extension (WebCrypto) |

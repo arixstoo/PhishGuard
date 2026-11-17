@@ -6,6 +6,8 @@
  *
  * `--test` construit dans `dist-test/` une variante qui expose au test automatisé
  * l'analyse du service worker (`globalThis.phishguardTest`) ; jamais à publier.
+ * `--test --stub-model` y embarque le modèle de test des parcours Playwright
+ * (`e2e/stub-model.mjs`) à la place du modèle signé, absent en CI (étape 5.10).
  *
  * 1. **Modèle** : `models/manifest.json` doit porter une signature Ed25519 valide
  *    (`keys/model-signing.pub`, étape 4.12), et `models/url_v2.json` exactement la taille et
@@ -65,6 +67,16 @@ function verifyManifest(manifestBytes, signatureBytes, publicKeyPem) {
   const bytes = Buffer.from(signature.signature, "base64");
   if (bytes.length !== 64 || bytes.toString("base64") !== signature.signature) fail("signature mal encodée");
   if (!verify(null, manifestBytes, key, bytes)) fail("signature du manifeste des modèles INVALIDE");
+}
+
+/** Modèle de test des parcours Playwright (`e2e/stub-model.mjs`), build de test seulement. */
+async function stubModelForTests() {
+  if (!testBuild) fail("--stub-model n'est admis qu'avec --test : jamais dans dist/");
+  const { stubModel } = await import("./e2e/stub-model.mjs");
+  const reference = JSON.parse(readFileSync(join(here, "src/generated/reference-data.json"), "utf-8"));
+  const bytes = Buffer.from(JSON.stringify(stubModel(reference.feature_extractor)), "utf-8");
+  console.warn("build : modèle de TEST (e2e/stub-model.mjs), pour les parcours Playwright seulement");
+  return { bytes, sha256: sha256(bytes) };
 }
 
 function signedModel() {
@@ -208,11 +220,23 @@ function checkBundles() {
   }
 }
 
+/**
+ * Version du manifeste depuis package.json (étape 5.14). Chrome n'admet dans `version` que
+ * des entiers séparés par des points : `0.5.0-beta.1` devient `version: "0.5.0"` et
+ * `version_name: "0.5.0-beta.1"` (affiché dans chrome://extensions).
+ */
+function manifestVersion(version) {
+  const match = /^(\d{1,5})\.(\d{1,5})\.(\d{1,5})(?:-((?:alpha|beta|rc)\.\d{1,3}))?$/.exec(version);
+  if (!match) fail(`version de package.json invalide : ${version} (attendu 1.2.3 ou 1.2.3-beta.1)`);
+  const numeric = match.slice(1, 4).join(".");
+  return match[4] ? { version: numeric, version_name: version } : { version: numeric };
+}
+
 function writeStatic(model) {
   cpSync(join(here, "static"), dist, { recursive: true });
   const pkg = JSON.parse(readFileSync(join(here, "package.json"), "utf-8"));
   const manifest = JSON.parse(readFileSync(join(here, "static/manifest.json"), "utf-8"));
-  manifest.version = pkg.version;
+  Object.assign(manifest, manifestVersion(pkg.version));
   writeFileSync(join(dist, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   mkdirSync(join(dist, "icons"), { recursive: true });
   for (const size of [16, 32, 48, 128]) writeFileSync(join(dist, `icons/icon-${size}.png`), shieldPng(size));
@@ -222,7 +246,7 @@ function writeStatic(model) {
   }
 }
 
-const model = signedModel();
+const model = args.has("--stub-model") ? await stubModelForTests() : signedModel();
 if (!model) console.warn("build : AUCUN modèle embarqué (--allow-missing-model) : l'extension ne pourra pas analyser");
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });

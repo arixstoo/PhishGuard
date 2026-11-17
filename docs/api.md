@@ -73,6 +73,7 @@ invalide empêche le démarrage.
 | POST | `/v1/analyze/text` | JSON `TextRequest` | `AnalysisResponse` |
 | POST | `/v1/analyze/email` | multipart : `file` (`.eml`), `language`, `analyst` | `AnalysisResponse` |
 | POST | `/v1/feedback` | JSON `FeedbackRequest` | 202, retour mis en quarantaine ([feedback.md](feedback.md)) |
+| GET | `/` et `/static/*` | — | page « coller et analyser » ([web-page.md](web-page.md)), hors schéma OpenAPI ; `PHISHGUARD_API_WEB_PAGE_ENABLED=false` la retire |
 
 Options communes aux analyses : `language` (`fr`, `en`, `ar` ; défaut `fr`) et `analyst`
 (vue « Détails techniques », défaut `false`). `use_threat_intel` (URL, défaut `false`)

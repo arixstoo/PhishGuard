@@ -1,0 +1,288 @@
+/*
+ * Page « coller et analyser » (étape 5.12). Mêmes couleurs que l'extension (WCAG AA,
+ * vérifiées par tests/test_api_web.py en clair et en sombre). Propriétés logiques : la mise
+ * en page se retourne d'elle-même en arabe.
+ */
+:root {
+  color-scheme: light dark;
+  --fg: #1b1b1f;
+  --bg: #ffffff;
+  --muted: #55555f;
+  --line: #8a8a96;
+  --surface: #f4f4f7;
+  --safe: #1e7b34;
+  --safe-bg: #eaf6ee;
+  --suspicious: #8f4a00;
+  --suspicious-bg: #fff4e5;
+  --phishing: #b71c1c;
+  --phishing-bg: #fdecea;
+  --accent: #1f4fd1;
+  --accent-fg: #ffffff;
+  --focus: #1f4fd1;
+  --warning-bg: #fff4e5;
+  --warning-fg: #5c3000;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #ececf1;
+    --bg: #1d1d22;
+    --muted: #b0b0bb;
+    --line: #7d7d8a;
+    --surface: #2a2a31;
+    --safe: #6fdc8c;
+    --safe-bg: #14301d;
+    --suspicious: #ffb35c;
+    --suspicious-bg: #3a2810;
+    --phishing: #ff8a80;
+    --phishing-bg: #3d1717;
+    --accent: #8ab4ff;
+    --accent-fg: #0b1a3a;
+    --focus: #8ab4ff;
+    --warning-bg: #3a2810;
+    --warning-fg: #ffd9a3;
+  }
+}
+
+[hidden] {
+  display: none !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.language {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+}
+
+.lead {
+  margin: 16px 0;
+}
+
+.warning {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-inline-start: 5px solid var(--suspicious);
+  border-radius: 6px;
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+}
+
+.warning strong {
+  display: block;
+}
+
+label {
+  font-weight: 600;
+}
+
+textarea,
+select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+select {
+  padding: 4px 8px;
+}
+
+textarea[aria-invalid="true"] {
+  border-color: var(--phishing);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hint,
+.error {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+}
+
+.hint {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--phishing);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+button {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.card {
+  margin-top: 24px;
+  padding: 16px;
+  border-inline-start: 5px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.card.safe {
+  border-inline-start-color: var(--safe);
+  background: var(--safe-bg);
+}
+
+.card.suspicious {
+  border-inline-start-color: var(--suspicious);
+  background: var(--suspicious-bg);
+}
+
+.card.phishing {
+  border-inline-start-color: var(--phishing);
+  background: var(--phishing-bg);
+}
+
+.verdict {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  font-size: 1.375rem;
+}
+
+.card.safe .verdict {
+  color: var(--safe);
+}
+
+.card.suspicious .verdict {
+  color: var(--suspicious);
+}
+
+.card.phishing .verdict {
+  color: var(--phishing);
+}
+
+.score,
+.note {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.items {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.item-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.reasons {
+  margin: 4px 0 0;
+  padding-inline-start: 24px;
+}
+
+.advice {
+  margin: 12px 0 0;
+}
+
+footer {
+  margin-top: 32px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (forced-colors: active) {
+  .card,
+  .warning {
+    border: 1px solid CanvasText;
+  }
+}

@@ -269,3 +269,33 @@ Trois lignes par étape : ce que j'ai fait, ce que j'ai appris, ce qui m'a bloqu
 - **Fait** : `analyzeUrl` (extracteur, modèle, règle dure `lookalike_host`, liste blanche) avec la même décision que l'API, cache dans `storage.session` (clés SHA-256), badge icône + couleur + texte, menu contextuel. Mesuré dans Chromium : 10 verdicts corrects sur 10, de 2 à 4 ms par analyse, 140 ms pour charger et vérifier le modèle.
 - **Appris** : le piège n'était pas MV3 mais le badge. Il décrit une URL ; sans la permission `tabs`, l'extension ne voit pas l'adresse vers laquelle l'onglet navigue, et un « ✓ » resterait affiché sur la page suivante. Le badge est donc effacé dès qu'un événement peut être une navigation : mieux vaut un badge vide qu'un badge faux. Autre point : un script de contenu porte le même identifiant d'extension que la fenêtre contextuelle ; c'est l'origine de l'expéditeur qui les distingue.
 - **Bloqué** : un test automatisé ne peut pas cliquer sur l'icône, donc n'obtient pas `activeTab`. Un build de test expose l'analyse du vrai service worker ; les tests Playwright entreront en CI à l'étape 5.10.
+
+### 5.9 — Audit des permissions et de la sécurité de l'extension
+- **Fait** : `docs/extension-privacy.md` en langage simple (ce qui est lu, gardé, envoyé ; ce qui ne l'est jamais ; ce que d'autres peuvent voir) avec une phrase par permission pour le Chrome Web Store. `test/audit.test.ts` lie ce tableau au manifeste (une permission ajoutée sans justification fait échouer le test, vérifié par mutation), fige la CSP, la liste des API `chrome.*` employées et l'absence de tout générateur d'identifiant. `npm audit` : 0 ; `npm audit signatures` ajouté à la CI.
+- **Appris** : un document de confidentialité ment dès qu'il n'est plus relu. Le rendre testable (le tableau des permissions est lu par un test) le garde vrai. Écrire « ce que d'autres pourraient voir » oblige à nommer les limites : Gmail peut détecter la bannière, le stockage local est lisible par le script de contenu.
+- **Bloqué** : rien.
+
+### 5.10 — Tests de l'extension
+- **Fait** : 39 parcours Playwright en CI (`e2e/`) : extension chargée dans Chromium, verdicts et badge, fenêtre au clavier, arabe et anglais, options, les 10 messages de la maquette Gmail (bannière lue dans son ombre fermée par le protocole de débogage), rien gardé de Gmail, et après **chaque** test aucune requête hors du paquet (vérifié par mutation : un `fetch` ajouté au service worker ou à une page fait échouer). Un modèle de test (`e2e/stub-model.mjs`) donne en CI les mêmes verdicts que `url_v2` sur ces parcours, contrôlé par un test vitest.
+- **Appris** : le premier passage a trouvé un vrai bug que la vérification manuelle de l'étape 5.8 n'avait pas vu : `dl { display: grid }` l'emportait sur l'attribut `hidden`, et les détails techniques s'affichaient dépliés. Le script manuel lisait la propriété `hidden`, Playwright regarde ce qui est visible. Autre leçon : une mesure de durée dans un test de bout en bout doit exclure ce qui ne dépend pas du code mesuré (ici, le rechargement du modèle quand MV3 endort le service worker).
+- **Bloqué** : Playwright n'entre pas dans un Shadow DOM fermé ; le protocole de débogage de Chromium (`DOM.getDocument` avec `pierce`) le fait, et vérifie au passage que l'ombre est bien fermée.
+
+### 5.11 — Bot Telegram
+- **Fait** : `phishguard.bot` : liens visibles et **cachés derrière un texte** (entités `text_link`, positions en UTF-16), analyse parallèle sous un délai global de 2,5 s, réponse en texte brut avec hôtes désarmés (`[.]`, ASCII, sans chemin), conversations privées seulement, limite de débit qui ne répond qu'une fois, rien de conservé, journal sans contenu. 43 tests, dont un contre la vraie application FastAPI. Service `bot` dans compose (profil, long polling, aucun port).
+- **Appris** : aiogram, proposé par le plan, aurait rétrogradé pydantic dans tout le projet ; quatre méthodes de l'API Bot ne justifient pas neuf dépendances. Le jeton de Telegram est dans l'URL : le journal de `httpx` le recopierait, et pydantic recopie une valeur refusée dans son message d'erreur (`hide_input_in_errors`). Un bot de sécurité ne doit jamais devenir le relais cliquable du lien qu'il dénonce.
+- **Bloqué** : le critère « verdict en moins de 3 s » est vérifié avec Telegram et l'API simulés ; la mesure avec un vrai jeton reste à faire.
+
+### 5.12 — Page « coller et analyser »
+- **Fait** : page servie par l'API (même origine : ni CORS, ni clé), CSP propre avec Trusted Types, texte par `textContent` seulement, champ sans `name` et `form-action 'none'`, correcteur désactivé, hôtes seulement. 20 tests côté serveur, 6 parcours Playwright avec la vraie CSP et une raison piégée renvoyée par l'API.
+- **Appris** : les fuites les plus probables d'une page de ce genre ne sont pas dans le code mais autour : un formulaire `GET` qui se soumet quand le script ne charge pas (le message part dans l'historique et les journaux du proxy), le correcteur orthographique « amélioré » qui envoie le texte à un service en ligne.
+- **Bloqué** : rien.
+
+### 5.13 — Tests utilisateurs
+- **Fait** : protocole complet (`docs/user-tests.md`) : recrutement, consentement, anonymisation, tâches, fiche d'observation, questionnaire SUS, kit de messages de test, rapport à remplir ; `scripts/sus_score.py` (calcul de Brooke, intervalle de Student, échelle de Sauro et Lewis, critère ≥ 70), 17 tests.
+- **Appris** : un script de score qui complète une réponse manquante fabrique un résultat ; il la refuse. Un identifiant qui ressemble à un nom est refusé aussi : l'anonymisation se vérifie à la saisie.
+- **Bloqué** : **les séances elles-mêmes** : recruter et observer de vraies personnes. Le critère de fin (SUS ≥ 70 sur le dernier groupe) n'est pas atteint tant qu'elles n'ont pas eu lieu.
+
+### 5.14 — Version bêta
+- **Fait** : `0.5.0-beta.1` (manifeste `version: 0.5.0`, `version_name` complet ; paquet Python `0.5.0b1`). `npm run package` : archive ZIP **reproductible** (même SHA-256 après un nouveau build complet) et son empreinte, refusée sans modèle signé ou depuis le build de test ; l'archive décompressée passe les parcours Gmail et options. Guide d'installation pour les testeurs (`docs/beta.md`).
+- **Appris** : Chrome n'accepte que des entiers dans `version` : `0.5.0-beta` dans le manifeste aurait empêché l'extension de se charger.
+- **Bloqué** : le tag `v0.5.0` attend les tests utilisateurs (critère de l'étape 5.13).

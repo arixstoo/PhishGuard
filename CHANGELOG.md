@@ -2,7 +2,9 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
-## [Non publié] : module 5, extension navigateur
+## [0.5.0-beta.1] : module 5, extension navigateur et canaux de messagerie (bêta)
+
+Version de test distribuée aux participants des tests utilisateurs ([docs/beta.md](docs/beta.md)). Le tag `v0.5.0` suivra les tests utilisateurs (SUS ≥ 70 sur le dernier groupe).
 
 ### Extension
 
@@ -14,6 +16,22 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - Script de contenu Gmail (étape 5.6) : seuls les messages ouverts sont lus (`MutationObserver`, sélecteurs isolés dans `selectors.ts`), rien n'est stocké ni envoyé, jamais d'analyse en ligne. `make_link`, `unwrap_rewritten`, `registered_domain`, `display_name_domain` et `make_address` de l'API portés à l'identique, avec les classes `\w`, `\s`, `\b` et `re.IGNORECASE` de Python (exportées) ; 656 liens, 52 déballages, 22 noms affichés et 40 expéditeurs rejoués depuis Python. Redirection `google.com/url?q=` déballée (hôtes fermés), règle « le texte affiché n'est pas la cible », liens `javascript:`/`data:`. Règle de l'expéditeur **graduée** comme dans le score de l'API : un faux positif trouvé dans Chromium (`« impots.gouv.fr » <…@dgfip.finances.gouv.fr>`) a été corrigé. Bannière et marques dans un Shadow DOM fermé, `textContent` seulement, liens jamais modifiés. Maquette `test/fixtures/gmail-mock.html` : **10 messages sur 10 bien jugés** dans Chromium.
 - Page d'options (étape 5.7) : langue, Gmail, analyse automatique (`tabs` optionnelle, demandée au clic, rendue à la désactivation, **sans aucun cache**), serveur auto-hébergé et clé d'API, analyse en ligne et signalements (permission de l'hôte choisi seulement), sites de confiance ; chaque réglage dit quelles données partent où. `api.ts`, seul module réseau : réglage **et** permission vérifiés avant chaque requête, URL sans fragment, ni cookie ni redirection, réponse du serveur validée et **incapable de rendre un verdict plus rassurant** que l'analyse locale. CSP élargie à `https:` (une CSP de manifeste ne peut pas viser un hôte choisi après coup) ; le build refuse tout `fetch` hors de `api.ts` et du chargement du modèle, et tout autre canal réseau. **Par défaut, aucune requête** : vérifié dans Chromium et par les tests.
 - Langues et accessibilité (étape 5.8) : catalogues `fr`, `en`, `ar` embarqués (choix de langue dans les options), substitutions de Chrome en un passage, pluriels `Intl.PluralRules` (six formes en arabe) ; `rtl` et propriétés logiques ; contrastes WCAG AA calculés par test depuis les couleurs réelles, en clair et en sombre ; clavier (Tab, Échap, retour du focus) et ARIA vérifiés dans Chromium. Textes partagés avec l'API vérifiés par `tests/test_extension_data.py`. Écoute réelle au lecteur d'écran à faire aux tests utilisateurs (5.13).
+- Audit des permissions et de la sécurité (étape 5.9) : [docs/extension-privacy.md](docs/extension-privacy.md) dit en langage simple ce que l'extension lit, garde et envoie (par défaut : rien), avec une phrase par permission pour le Chrome Web Store et l'objectif unique. `test/audit.test.ts` vérifie que ce tableau contient exactement les permissions du manifeste (vérifié par mutation), fige la CSP, les API `chrome.*` employées, l'absence d'identifiant, de `storage.sync`, de ressource exposée aux sites et de dépendance d'exécution. `npm audit signatures` en CI.
+- Tests de bout en bout (étape 5.10) : 33 parcours Playwright dans Chromium, en CI (job `e2e`) : verdicts et badge, fenêtre au clavier, arabe et anglais, options, les 10 messages de la maquette Gmail (bannière lue dans son ombre fermée par le protocole de débogage) ; après chaque test, aucune requête hors du paquet (mutations attrapées). Modèle de test `e2e/stub-model.mjs` (`build.mjs --test --stub-model`), mêmes verdicts que `url_v2` sur ces parcours (test vitest). **Bug corrigé** : les détails techniques de la fenêtre s'affichaient dépliés (`dl { display: grid }` l'emportait sur `hidden`).
+- Version bêta (étape 5.14) : `0.5.0-beta.1` (manifeste `version` numérique et `version_name`), `npm run package` produit une archive ZIP **reproductible** et son SHA-256, refusée sans modèle signé ou depuis le build de test ; l'archive décompressée passe les parcours Gmail et options. `make extension-e2e extension-package`.
+
+### Bot Telegram
+
+- `phishguard.bot` (étape 5.11, [docs/telegram-bot.md](docs/telegram-bot.md)) : un message transféré ou un lien, un verdict en moins de 3 s. Liens visibles et cachés derrière un texte (entités `text_link`, positions UTF-16), texte et liens analysés en parallèle par l'API sous un délai global, réponse en texte brut sans aperçu, hôtes désarmés (`[.]`, ASCII, jamais le chemin). Conversations privées seulement, 5 liens, 4 096 caractères, un message toutes les 3 s (prévenu une fois), `/start`, `/aide`, `/confidentialite`, `/langue` (fr, en, ar). Rien de conservé, journal sans contenu ni identifiant, jeton jamais journalisé. Service `bot` dans `docker-compose.yml` (profil, long polling, aucun port). `make bot`.
+- **Écart au cahier des charges** : pas d'aiogram, qui aurait rétrogradé pydantic dans tout le projet et ajouté neuf paquets ; client minimal de l'API Bot sur `httpx`. Aucune dépendance ajoutée.
+
+### Page « coller et analyser »
+
+- Servie par l'API à la racine (étape 5.12, [docs/web-page.md](docs/web-page.md)) : texte et liens analysés en parallèle, verdict par icône, couleur et texte, avertissement « Ne collez pas de mot de passe ou de données personnelles. ». Même origine (ni CORS ni clé), CSP propre avec Trusted Types, `textContent` seulement, champ sans `name` et `form-action 'none'`, correcteur orthographique désactivé, rien de stocké. `PHISHGUARD_API_WEB_PAGE_ENABLED`. 20 tests serveur, 6 parcours Playwright.
+
+### Tests utilisateurs
+
+- Protocole prêt (étape 5.13, [docs/user-tests.md](docs/user-tests.md)) : recrutement, consentement et anonymisation, tâches, fiche d'observation, questionnaire SUS, kit de messages de test, comparaison avec PhishTool. `scripts/sus_score.py` (`make sus`) : score de Brooke, intervalle de Student, échelle de Sauro et Lewis, critère ≥ 70 ; refuse une réponse manquante ou un identifiant nominatif. **Séances à mener.**
 
 ## [0.4.0] : module 4, API et backend sécurisés
 

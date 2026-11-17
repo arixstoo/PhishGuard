@@ -133,6 +133,10 @@ class ApiSettings(BaseSettings):
     # le client le demande pour l'analyse (``use_threat_intel``).
     threat_intel_enabled: bool = False
 
+    # --- Page « coller et analyser » (étape 5.12) --------------------------- #
+    # Page statique servie à la racine (``/``), qui appelle cette API au palier anonyme.
+    web_page_enabled: bool = True
+
     # --- Limites de débit (étape 4.4) --------------------------------------- #
     rate_limit_enabled: bool = True
     # Syntaxe de la bibliothèque ``limits`` : « 30/minute », « 5/second;100/hour ».
