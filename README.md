@@ -127,7 +127,7 @@ tests/            pytest suite
 docs/             documentation, metrics, threat model, reports
 notebooks/legacy/ original 2022 SMS spam detector (tag v0-legacy)
 extension/        Chrome extension (module 5)
-bot/              Telegram bot (module 5)
+src/phishguard/bot/  Telegram bot (module 5)
 data/, models/    generated locally, never committed
 ```
 
@@ -161,6 +161,7 @@ data/, models/    generated locally, never committed
 - Model cards: [URL](docs/model-card-url.md) · [SMS text](docs/model-card-text.md) · [email](docs/model-card-email.md): intended use, data, metrics, known biases and limits (French)
 - [Browser extension design](docs/extension-design.md): on-device analysis with the same extractor, model and fusion as the API (ported from Python and checked against it), Gmail banner, options, languages and accessibility (French)
 - [Extension privacy](docs/extension-privacy.md): in plain language, what the extension reads, keeps and sends (by default: nothing), with one sentence per permission for the Chrome Web Store, checked by tests (French)
+- [Telegram bot](docs/telegram-bot.md): forward a suspicious message, get a verdict in under three seconds, with defanged links and nothing kept (French)
 - [External tools evaluation](docs/external-tools.md): EML Analyzer, Outlook .msg, DeHashed and PhishTool, what was kept and why (French)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
