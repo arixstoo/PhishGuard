@@ -3,3 +3,5 @@ dist/
 dist-test/
 test-results/
 playwright-report/
+# Archives de version (npm run package, étape 5.14)
+release/

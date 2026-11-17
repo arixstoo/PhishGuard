@@ -2,7 +2,9 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
-## [Non publié] : module 5, extension navigateur
+## [0.5.0-beta.1] : module 5, extension navigateur et canaux de messagerie (bêta)
+
+Version de test distribuée aux participants des tests utilisateurs ([docs/beta.md](docs/beta.md)). Le tag `v0.5.0` suivra les tests utilisateurs (SUS ≥ 70 sur le dernier groupe).
 
 ### Extension
 
@@ -16,6 +18,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - Langues et accessibilité (étape 5.8) : catalogues `fr`, `en`, `ar` embarqués (choix de langue dans les options), substitutions de Chrome en un passage, pluriels `Intl.PluralRules` (six formes en arabe) ; `rtl` et propriétés logiques ; contrastes WCAG AA calculés par test depuis les couleurs réelles, en clair et en sombre ; clavier (Tab, Échap, retour du focus) et ARIA vérifiés dans Chromium. Textes partagés avec l'API vérifiés par `tests/test_extension_data.py`. Écoute réelle au lecteur d'écran à faire aux tests utilisateurs (5.13).
 - Audit des permissions et de la sécurité (étape 5.9) : [docs/extension-privacy.md](docs/extension-privacy.md) dit en langage simple ce que l'extension lit, garde et envoie (par défaut : rien), avec une phrase par permission pour le Chrome Web Store et l'objectif unique. `test/audit.test.ts` vérifie que ce tableau contient exactement les permissions du manifeste (vérifié par mutation), fige la CSP, les API `chrome.*` employées, l'absence d'identifiant, de `storage.sync`, de ressource exposée aux sites et de dépendance d'exécution. `npm audit signatures` en CI.
 - Tests de bout en bout (étape 5.10) : 33 parcours Playwright dans Chromium, en CI (job `e2e`) : verdicts et badge, fenêtre au clavier, arabe et anglais, options, les 10 messages de la maquette Gmail (bannière lue dans son ombre fermée par le protocole de débogage) ; après chaque test, aucune requête hors du paquet (mutations attrapées). Modèle de test `e2e/stub-model.mjs` (`build.mjs --test --stub-model`), mêmes verdicts que `url_v2` sur ces parcours (test vitest). **Bug corrigé** : les détails techniques de la fenêtre s'affichaient dépliés (`dl { display: grid }` l'emportait sur `hidden`).
+- Version bêta (étape 5.14) : `0.5.0-beta.1` (manifeste `version` numérique et `version_name`), `npm run package` produit une archive ZIP **reproductible** et son SHA-256, refusée sans modèle signé ou depuis le build de test ; l'archive décompressée passe les parcours Gmail et options. `make extension-e2e extension-package`.
 
 ### Bot Telegram
 

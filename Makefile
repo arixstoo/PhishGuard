@@ -23,7 +23,7 @@ EMAIL_SAMPLE_COUNT := 200
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
 	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest \
-	extension-data extension-install extension-test extension-build extension-e2e \
+	extension-data extension-install extension-test extension-build extension-e2e extension-package \
 	bot sus
 
 help: ## Affiche cette aide
@@ -252,6 +252,9 @@ extension-build: ## Construit extension/dist (modèle signé vérifié) : à cha
 
 extension-e2e: ## Parcours Playwright : extension, maquette Gmail, page « coller et analyser » (étape 5.10)
 	cd extension && $(NPM) run test:e2e
+
+extension-package: ## Archive reproductible de la version : extension/release/*.zip et son SHA-256 (étape 5.14)
+	cd extension && $(NPM) run package
 
 # --------------------------------------------------------------------------- #
 # Bot et tests utilisateurs (étapes 5.11 et 5.13)

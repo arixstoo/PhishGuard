@@ -294,3 +294,8 @@ Trois lignes par étape : ce que j'ai fait, ce que j'ai appris, ce qui m'a bloqu
 - **Fait** : protocole complet (`docs/user-tests.md`) : recrutement, consentement, anonymisation, tâches, fiche d'observation, questionnaire SUS, kit de messages de test, rapport à remplir ; `scripts/sus_score.py` (calcul de Brooke, intervalle de Student, échelle de Sauro et Lewis, critère ≥ 70), 17 tests.
 - **Appris** : un script de score qui complète une réponse manquante fabrique un résultat ; il la refuse. Un identifiant qui ressemble à un nom est refusé aussi : l'anonymisation se vérifie à la saisie.
 - **Bloqué** : **les séances elles-mêmes** : recruter et observer de vraies personnes. Le critère de fin (SUS ≥ 70 sur le dernier groupe) n'est pas atteint tant qu'elles n'ont pas eu lieu.
+
+### 5.14 — Version bêta
+- **Fait** : `0.5.0-beta.1` (manifeste `version: 0.5.0`, `version_name` complet ; paquet Python `0.5.0b1`). `npm run package` : archive ZIP **reproductible** (même SHA-256 après un nouveau build complet) et son empreinte, refusée sans modèle signé ou depuis le build de test ; l'archive décompressée passe les parcours Gmail et options. Guide d'installation pour les testeurs (`docs/beta.md`).
+- **Appris** : Chrome n'accepte que des entiers dans `version` : `0.5.0-beta` dans le manifeste aurait empêché l'extension de se charger.
+- **Bloqué** : le tag `v0.5.0` attend les tests utilisateurs (critère de l'étape 5.13).

@@ -220,11 +220,23 @@ function checkBundles() {
   }
 }
 
+/**
+ * Version du manifeste depuis package.json (étape 5.14). Chrome n'admet dans `version` que
+ * des entiers séparés par des points : `0.5.0-beta.1` devient `version: "0.5.0"` et
+ * `version_name: "0.5.0-beta.1"` (affiché dans chrome://extensions).
+ */
+function manifestVersion(version) {
+  const match = /^(\d{1,5})\.(\d{1,5})\.(\d{1,5})(?:-((?:alpha|beta|rc)\.\d{1,3}))?$/.exec(version);
+  if (!match) fail(`version de package.json invalide : ${version} (attendu 1.2.3 ou 1.2.3-beta.1)`);
+  const numeric = match.slice(1, 4).join(".");
+  return match[4] ? { version: numeric, version_name: version } : { version: numeric };
+}
+
 function writeStatic(model) {
   cpSync(join(here, "static"), dist, { recursive: true });
   const pkg = JSON.parse(readFileSync(join(here, "package.json"), "utf-8"));
   const manifest = JSON.parse(readFileSync(join(here, "static/manifest.json"), "utf-8"));
-  manifest.version = pkg.version;
+  Object.assign(manifest, manifestVersion(pkg.version));
   writeFileSync(join(dist, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   mkdirSync(join(dist, "icons"), { recursive: true });
   for (const size of [16, 32, 48, 128]) writeFileSync(join(dist, `icons/icon-${size}.png`), shieldPng(size));

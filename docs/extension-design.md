@@ -573,6 +573,6 @@ Chromium avec `dist-test/` chargé (contexte persistant, `--load-extension`).
 
 | Étape | Ajoute |
 |---|---|
-| 5.9 | audit des permissions (tableau de la section 1 : une phrase par permission pour le Chrome Web Store), `docs/extension-privacy.md` |
-| 5.10 | tests de bout en bout Playwright en CI : maquette Gmail et parcours de la section 8 |
-| module 6 | téléchargement de modèles signés : `loadUrlModel` est déjà prêt pour une entrée non fiable ; reste la vérification Ed25519 dans l'extension (WebCrypto) |
+| 5.13 | tests utilisateurs ([user-tests.md](user-tests.md)) : lecteurs d'écran réels, faux positifs sur les pages internes, compréhension des raisons |
+| 5.14 | bêta `0.5.0-beta.1` ([beta.md](beta.md)) ; tag `v0.5.0` après les tests utilisateurs |
+| module 6 | Chrome Web Store (justifications de [extension-privacy.md](extension-privacy.md)) ; téléchargement de modèles signés : `loadUrlModel` est déjà prêt pour une entrée non fiable ; reste la vérification Ed25519 dans l'extension (WebCrypto) |
