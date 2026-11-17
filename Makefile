@@ -22,10 +22,11 @@ EMAIL_SAMPLE_COUNT := 200
 	collect data dataset split \
 	train train-url evaluate-url errors-url calibrate-url train-text email-samples email-corpora train-email \
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
-	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest
+	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest \
+	extension-data extension-install extension-test extension-build extension-e2e
 
 help: ## Affiche cette aide
-	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
+	@grep -hE '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*## "} {printf "  %-14s %s\n", $$1, $$2}'
 
 # --------------------------------------------------------------------------- #
@@ -247,3 +248,6 @@ extension-test: ## Types, tests de parité avec Python et vecteurs de référenc
 
 extension-build: ## Construit extension/dist (modèle signé vérifié) : à charger dans chrome://extensions
 	cd extension && $(NPM) run build
+
+extension-e2e: ## Parcours Playwright : extension, maquette Gmail, page « coller et analyser » (étape 5.10)
+	cd extension && $(NPM) run test:e2e

@@ -11,6 +11,7 @@ npm test               # parité avec Python, vecteurs de référence, modèle, 
 npm run build          # dist/ ; exige models/manifest.json signé (make export && make sign)
 node build.mjs --allow-missing-model   # sans modèle (CI)
 node build.mjs --test  # dist-test/ : crochets pour tests automatisés, jamais à publier
+npm run test:e2e       # Playwright : build de test avec le modèle de test, puis e2e/ (npx playwright install chromium)
 ```
 
 Ce que l'extension fait des données, en langage simple : [docs/extension-privacy.md](../docs/extension-privacy.md).
@@ -29,6 +30,7 @@ dans Gmail. Réglages : clic droit sur l'icône → Options.
 | `static/_locales/` | `fr`, `en`, `ar` ; toute clé employée doit exister dans les trois (test) |
 | `test/fixtures/gmail-mock.html` | maquette de Gmail (10 messages), même structure que `selectors.ts` |
 | `test/audit.test.ts` | permissions = tableau de `docs/extension-privacy.md`, CSP, API Chrome employées (étape 5.9) |
+| `e2e/` | parcours Playwright (étape 5.10) ; `stub-model.mjs` : modèle de test, mêmes verdicts que `url_v2` sur ces parcours |
 
 `src/generated/` et `test/fixtures/python-parity.json` sont produits par
 `make extension-data` à la racine du dépôt : ne pas les modifier à la main. Après toute

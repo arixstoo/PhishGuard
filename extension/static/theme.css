@@ -23,6 +23,15 @@
   font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif;
 }
 
+/*
+ * `hidden` doit toujours masquer. La règle du navigateur (`[hidden] { display: none }`)
+ * perd contre toute règle d'auteur qui fixe `display` : `dl { display: grid }` affichait
+ * ainsi les détails techniques repliés (trouvé par le test Playwright, étape 5.10).
+ */
+[hidden] {
+  display: none !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --fg: #ececf1;

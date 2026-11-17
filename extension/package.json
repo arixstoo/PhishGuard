@@ -13,9 +13,12 @@
     "watch": "node build.mjs --watch",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "build:e2e": "node build.mjs --test --stub-model",
+    "test:e2e": "npm run build:e2e && playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/chrome": "0.3.7",
     "@types/node": "24.19.2",
     "esbuild": "0.28.2",
