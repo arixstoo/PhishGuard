@@ -1,0 +1,10 @@
+[Unit]
+Description=Contrôle horaire de l'espace disque PhishGuard
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

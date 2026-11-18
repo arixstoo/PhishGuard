@@ -51,3 +51,14 @@ updates:
       # python:3.12-slim-trixie → 3.13 : changement d'interpréteur, pas une mise à jour.
       - dependency-name: python
         update-types: [version-update:semver-major, version-update:semver-minor]
+
+  # Images de production épinglées par empreinte (Caddy, Uptime Kuma, étape 6.2).
+  - package-ecosystem: docker-compose
+    directory: /deploy
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: deps

@@ -11,6 +11,8 @@ __pycache__/
 !.env.example
 node_modules/
 dist/
+# Lien local du CLI Vercel (identifiants de projet), régénéré par « vercel link ».
+.vercel/
 build/
 *.egg-info/
 *.joblib

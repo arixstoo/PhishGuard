@@ -1,0 +1,87 @@
+# Proxy inverse TLS de l'origine (étape 6.2, docs/deployment.md).
+#
+#   Internet ──HTTPS──▶ Vercel (api-phishguard.vercel.app) ──HTTPS + secret──▶ Caddy ──▶ api:8000
+#
+# Caddy obtient et renouvelle seul le certificat Let's Encrypt de PHISHGUARD_ORIGIN_HOST
+# (défi HTTP-01 sur le port 80). Il ne relaie vers l'API que les requêtes qui portent
+# l'en-tête secret ajouté par Vercel (deploy/edge) : une requête qui vise directement
+# l'adresse du serveur contourne le pare-feu et les limites de Vercel, elle est refusée.
+#
+# Variables lues au chargement (docker compose les exige, deploy/compose.prod.yml) :
+#   PHISHGUARD_ORIGIN_HOST    nom de l'origine, ex. phishguard-origin.duckdns.org
+#   PHISHGUARD_ORIGIN_SECRET  64 caractères hexadécimaux (openssl rand -hex 32), le même
+#                             que la variable d'environnement du projet Vercel
+#   PHISHGUARD_ACME_EMAIL     contact Let's Encrypt (avis d'expiration)
+#
+# Aucun journal d'accès (directive « log » absente, volontairement) : Caddy y écrirait
+# l'adresse IP du visiteur (X-Real-IP) et la clé d'API (X-API-Key). L'API tient son propre
+# journal, sans donnée personnelle (étape 4.6).
+
+{
+	admin off
+	email {$PHISHGUARD_ACME_EMAIL}
+	# La redirection HTTP → HTTPS est déclarée plus bas, sans port ni cible arbitraire.
+	auto_https disable_redirects
+	servers {
+		# Vercel joint l'origine en HTTP/1.1 ou HTTP/2 ; pas de HTTP/3 (UDP 443 fermé).
+		protocols h1 h2
+		timeouts {
+			read_header 10s
+			read_body 30s
+			write 60s
+			idle 2m
+		}
+		max_header_size 16KB
+	}
+}
+
+http://{$PHISHGUARD_ORIGIN_HOST} {
+	# Le défi ACME HTTP-01 (/.well-known/acme-challenge/) est traité par Caddy avant ce bloc.
+	redir https://{$PHISHGUARD_ORIGIN_HOST}{uri} 308
+}
+
+{$PHISHGUARD_ORIGIN_HOST} {
+	tls {
+		protocols tls1.2 tls1.3
+	}
+
+	# Un email .eml de 1 Mio en multipart tient largement ; l'API borne aussi chaque route.
+	request_body {
+		max_size 2MB
+	}
+
+	# Aucune annonce de la pile. « defer » : appliqué juste avant l'écriture de la
+	# réponse, après l'ajout de Via par reverse_proxy.
+	header {
+		-Server
+		-Via
+		defer
+	}
+
+	# Égalité exacte de l'en-tête (le secret, hexadécimal, ne contient pas de joker « * »).
+	@from_edge header X-PhishGuard-Origin-Auth {$PHISHGUARD_ORIGIN_SECRET}
+
+	handle @from_edge {
+		# Le secret ne va jamais jusqu'à l'API ni dans ses journaux.
+		request_header -X-PhishGuard-Origin-Auth
+		reverse_proxy api:8000 {
+			# Vercel écrase X-Real-IP avec l'adresse du visiteur : un client ne peut pas la
+			# choisir. Elle devient le seul maillon de X-Forwarded-For, que l'API ne croit
+			# que venant de Caddy (PHISHGUARD_API_TRUSTED_PROXIES, adresse fixe du réseau).
+			header_up X-Forwarded-For {http.request.header.X-Real-IP}
+			header_up -X-Real-IP
+			transport http {
+				dial_timeout 5s
+				# Au-delà du délai maximal d'une requête côté API (30 s).
+				response_header_timeout 35s
+			}
+		}
+	}
+
+	handle {
+		header Cache-Control no-store
+		respond "forbidden" 403 {
+			close
+		}
+	}
+}

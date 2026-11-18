@@ -1,0 +1,160 @@
+# Production sur le serveur (étapes 6.1 à 6.4, docs/deployment.md).
+#
+# Ce fichier n'est jamais lancé à la main : phishguard-deploy (deploy/server/deploy.sh) le
+# copie dans /opt/phishguard/releases/<version>/ et l'exécute avec deux fichiers
+# d'environnement :
+#   /opt/phishguard/shared/server.env     secrets et réglages du serveur (jamais commité)
+#   /opt/phishguard/releases/<v>/release.env
+#                                         PHISHGUARD_IMAGE=ghcr.io/…@sha256:… (écrit par le
+#                                         déploiement : l'image est désignée par empreinte)
+#
+# Différences avec docker-compose.yml (poste de développement) :
+# - image publiée sur ghcr.io, épinglée par empreinte, jamais construite ici ;
+# - l'API n'a aucun port publié : seul Caddy (80, 443) est joignable, et ne relaie que le
+#   trafic venu de Vercel (deploy/Caddyfile) ;
+# - adresses fixes sur le réseau « edge » : l'API ne croit X-Forwarded-For que de Caddy ;
+# - Uptime Kuma (profil « monitoring », étape 6.4), sur la boucle locale seulement.
+name: phishguard
+
+x-hardening: &hardening
+  init: true
+  restart: unless-stopped
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  caddy:
+    <<: *hardening
+    # Index multi-architecture (amd64, arm64) épinglé par empreinte.
+    image: caddy:2.11.9@sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b
+    # Root dans le conteneur, mais sans aucune capacité sauf l'écoute sur 80 et 443 :
+    # ni CAP_CHOWN, ni CAP_DAC_OVERRIDE, ni CAP_SETUID ; no-new-privileges et système de
+    # fichiers en lecture seule (seuls /data et /config, volumes de Caddy, s'écrivent).
+    cap_add:
+      - NET_BIND_SERVICE
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    environment:
+      PHISHGUARD_ORIGIN_HOST: ${PHISHGUARD_ORIGIN_HOST:?PHISHGUARD_ORIGIN_HOST absent de server.env}
+      PHISHGUARD_ORIGIN_SECRET: ${PHISHGUARD_ORIGIN_SECRET:?PHISHGUARD_ORIGIN_SECRET absent de server.env}
+      PHISHGUARD_ACME_EMAIL: ${PHISHGUARD_ACME_EMAIL:?PHISHGUARD_ACME_EMAIL absent de server.env}
+    volumes:
+      - type: bind
+        source: ./Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+      # Certificats et clés ACME : conservés d'une version à l'autre (limites de Let's Encrypt).
+      - caddy-data:/data
+      - caddy-config:/config
+    tmpfs:
+      - /tmp:size=16m,mode=1777,noexec,nosuid,nodev
+    networks:
+      edge:
+        ipv4_address: 10.89.53.10
+    depends_on:
+      api:
+        condition: service_healthy
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 1
+    stop_grace_period: 15s
+
+  api:
+    <<: *hardening
+    image: ${PHISHGUARD_IMAGE:?PHISHGUARD_IMAGE absent de release.env}
+    # Clés des sources de Threat Intelligence, et elles seules (facultatif, docs/secrets.md).
+    env_file:
+      - path: /opt/phishguard/shared/api.env
+        required: false
+    environment:
+      PHISHGUARD_API_ENVIRONMENT: production
+      PHISHGUARD_API_LOG_FORMAT: json
+      PHISHGUARD_API_MODELS_PUBLIC_KEY: /app/keys/model-signing.pub
+      # Caddy seul : son adresse fixe, pas tout le réseau.
+      PHISHGUARD_API_TRUSTED_PROXIES: 10.89.53.10/32
+      PHISHGUARD_API_CORS_ALLOWED_ORIGINS: ${PHISHGUARD_API_CORS_ALLOWED_ORIGINS:-}
+      PHISHGUARD_API_THREAT_INTEL_ENABLED: ${PHISHGUARD_API_THREAT_INTEL_ENABLED:-false}
+    volumes:
+      - type: bind
+        source: /opt/phishguard/shared/models
+        target: /app/models
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /opt/phishguard/shared/keys/model-signing.pub
+        target: /app/keys/model-signing.pub
+        read_only: true
+        bind:
+          create_host_path: false
+      - phishguard-data:/data
+    tmpfs:
+      - /tmp:size=64m,mode=1777,noexec,nosuid,nodev
+    networks:
+      edge:
+        ipv4_address: 10.89.53.20
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 2
+    stop_grace_period: 15s
+
+  # Supervision (étape 6.4, docs/operations.md) : COMPOSE_PROFILES=monitoring dans
+  # server.env. Interface sur 127.0.0.1:3001 seulement, atteinte par un tunnel SSH :
+  #   ssh -L 3001:127.0.0.1:3001 <admin>@<serveur>
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.12@sha256:8e4b6bef96417ec98a35dc103c99cc64fc229a01e584e56d95d9004d2003c02a
+    profiles: ["monitoring"]
+    init: true
+    restart: unless-stopped
+    # L'image tourne en root par défaut ; /app/data y appartient à « node » (1000), que
+    # le volume hérite à sa création. En 1000:1000, aucune capacité n'est nécessaire.
+    # Système de fichiers non verrouillé en lecture seule : Kuma écrit aussi hors de
+    # /app/data (cache de Chromium pour les sondes navigateur, non utilisées ici).
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3001:3001/tcp"
+    volumes:
+      - uptime-kuma-data:/app/data
+    networks:
+      edge:
+        ipv4_address: 10.89.53.30
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: 1
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  # Sous-réseau fixe hors des plages que Docker attribue seul (172.17-31.x, 192.168.x) et
+  # de la VCN Oracle par défaut (10.0.0.0/16) : pas de collision avec un futur réseau.
+  edge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.89.53.0/24
+
+volumes:
+  # Base SQLite : empreintes des clés d'API et retours en quarantaine (sauvegardée chaque
+  # jour, chiffrée, hors du serveur : deploy/server/backup.sh).
+  phishguard-data:
+  caddy-data:
+  caddy-config:
+  uptime-kuma-data:
