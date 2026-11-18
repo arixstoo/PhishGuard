@@ -44,6 +44,7 @@ d'un jour à l'autre. Un client avec clé est noté `key:<key_id>`.
 | **quota propre aux retours**, compteur distinct | `PHISHGUARD_API_RATE_LIMIT_FEEDBACK` | 20/heure |
 | déduplication : même rapporteur, même domaine, même jugement | `PHISHGUARD_API_FEEDBACK_DEDUP_SECONDS` | 24 h |
 | plafond des retours en attente, au-delà 503 `feedback_unavailable` | `PHISHGUARD_API_FEEDBACK_MAX_PENDING` | 10 000 |
+| **rétention maximale**, relu ou non (au démarrage, puis toutes les 6 h ; étape 6.5) | `PHISHGUARD_API_FEEDBACK_RETENTION_DAYS` | 90 jours |
 | schéma strict (étape 4.2) | — | — |
 
 - La déduplication répond **exactement** comme pour un nouveau retour (202) : un client

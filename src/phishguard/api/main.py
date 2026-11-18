@@ -32,6 +32,7 @@ l'extérieur pour que **toute** réponse, même un 429 ou un 500, porte les mêm
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -71,6 +72,28 @@ HEALTH_ROUTE = f"{API_PREFIX}/health"
 
 # Fabrique des analyseurs : les tests en injectent une qui construit de petits modèles.
 AnalyzersFactory = Callable[[ApiSettings, Orchestrator | None], Analyzers]
+
+# Rétention des retours (étape 6.5) : appliquée au démarrage puis à cet intervalle, pour
+# qu'un serveur qui ne redémarre jamais ne garde pas un retour au-delà de la durée promise.
+RETENTION_INTERVAL_SECONDS = 6 * 3600
+
+
+async def _enforce_retention(database: Database, retention_days: int) -> None:
+    removed = await run_in_threadpool(database.enforce_feedback_retention, retention_days)
+    if removed:
+        # Un nombre seulement : jamais un domaine ni une date (étape 4.6).
+        logger.info(
+            "rétention des retours : %d supprimé(s) (plus de %d jours)", removed, retention_days
+        )
+
+
+async def _retention_loop(database: Database, retention_days: int) -> None:
+    while True:
+        await asyncio.sleep(RETENTION_INTERVAL_SECONDS)
+        try:
+            await _enforce_retention(database, retention_days)
+        except Exception:  # la boucle ne doit jamais mourir en silence
+            logger.exception("rétention des retours : échec, nouvel essai au prochain passage")
 
 
 def _deployed_analyzers(settings: ApiSettings, orchestrator: Orchestrator | None) -> Analyzers:
@@ -118,12 +141,18 @@ def create_app(
                 analyzers,
                 settings.models_dir if analyzers_factory is None else None,
             )
+            database = Database(settings.database_path)
             app.state.phishguard = AppState(
                 settings=settings,
-                database=Database(settings.database_path),
+                database=database,
                 service=AnalysisService(analyzers),
                 models=models,
             )
+            await _enforce_retention(database, settings.feedback_retention_days)
+            retention = asyncio.create_task(
+                _retention_loop(database, settings.feedback_retention_days)
+            )
+            stack.callback(retention.cancel)
             logger.info(
                 "API prête : %s",
                 ", ".join(f"{kind}={m.version}" for kind, m in models.models.items()),

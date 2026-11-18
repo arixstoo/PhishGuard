@@ -174,7 +174,8 @@ data/, models/    generated locally, never committed
 - [Paste-and-check page](docs/web-page.md): a static page served by the API, with a strict content security policy and Trusted Types (French)
 - [User tests](docs/user-tests.md) and [beta release](docs/beta.md): protocol, SUS questionnaire and scoring script, reproducible extension archive (French)
 - [External tools evaluation](docs/external-tools.md): EML Analyzer, Outlook .msg, DeHashed and PhishTool, what was kept and why (French)
-- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+- [Model updates](docs/model-updates.md): monthly retraining, non-regression gate (frozen test set, common legitimate sites) and signed updates verified by the extension (French)
+- [Privacy policy](PRIVACY.md) (French and English) · [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## History
 

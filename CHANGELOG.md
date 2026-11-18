@@ -4,6 +4,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 ## [Non publié] : module 6, lancement (étapes 6.5 à 6.8)
 
+### Confidentialité (étape 6.5, [PRIVACY.md](PRIVACY.md))
+
+- `PRIVACY.md`, en français et en anglais, court et factuel : données traitées par l'extension, l'API, le bot et la page web, pourquoi, combien de temps, avec qui (Vercel, hébergeur, Telegram, GitHub, sources de Threat Intelligence **jamais par défaut**), comment les supprimer, comment écrire. Publié aussi sur le site de documentation (adresse publique exigée par le Chrome Web Store).
+- **Écart corrigé en l'écrivant** : la rétention des signalements d'erreur n'était qu'une recommandation (`purge` à la main). L'API l'applique désormais : `PHISHGUARD_API_FEEDBACK_RETENTION_DAYS` (90 jours par défaut, 1 à 365), relus ou non, au démarrage puis toutes les 6 heures ; testé. Les sauvegardes hors serveur exigent une règle d'expiration de 30 jours chez le fournisseur ([docs/operations.md](docs/operations.md)).
+- `tests/test_privacy_policy.py` : chaque fichier cité par le tableau des vérifications existe, et chaque valeur chiffrée de la politique (100 analyses, 1 000 sites, une fois par jour, 90 jours, 14 jours, 3 × 10 Mo), en français et en anglais, est celle du code.
+
 ### Mises à jour du modèle (étape 6.8, [docs/model-updates.md](docs/model-updates.md))
 
 - Workflow mensuel `model-update.yml` : historique chiffré des collectes (release `data-history`, réenregistré à chaque passage, même si le candidat est refusé) + artefacts des 90 derniers jours ; domaines du test figé retirés **avant** le split ; candidat entraîné avec la recette de `url_v2` (LightGBM, entraînement adversarial, calibration) ; garde-fou ; export ; release **brouillon** avec `SHA256SUMS` et attestation de provenance Sigstore. Rien n'est signé sur la CI.

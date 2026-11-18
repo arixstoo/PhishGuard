@@ -354,6 +354,12 @@ class Database:
             cursor = db.execute(query, (cutoff,))
         return cursor.rowcount
 
+    def enforce_feedback_retention(self, retention_days: int) -> int:
+        """Rétention maximale (PRIVACY.md) : tout retour plus vieux est supprimé, relu ou non."""
+        if retention_days < 1:
+            raise ValueError("retention_days doit être au moins 1")
+        return self.purge_feedback(retention_days, include_pending=True)
+
 
 @dataclass(frozen=True)
 class FeedbackRecord:
