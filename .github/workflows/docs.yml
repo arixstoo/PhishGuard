@@ -1,0 +1,68 @@
+name: docs
+
+# Site de documentation (étape 6.7) : construit en mode strict sur chaque PR qui touche la
+# documentation (un lien cassé fait échouer le job), publié sur GitHub Pages depuis master.
+# Réglage du dépôt, une fois : Settings → Pages → Source : « GitHub Actions ».
+
+on:
+  push:
+    branches: [master]
+    paths: ['docs/**', 'mkdocs.yml', 'scripts/docs_site.py', '*.md', 'pyproject.toml', 'uv.lock', '.github/workflows/docs.yml']
+  pull_request:
+    paths: ['docs/**', 'mkdocs.yml', 'scripts/docs_site.py', '*.md', 'pyproject.toml', 'uv.lock', '.github/workflows/docs.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installation d'uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.8'
+
+      # MkDocs et son thème, aux versions et empreintes exactes de uv.lock.
+      - name: Installation des dépendances (uv.lock)
+        run: |
+          uv sync --locked --extra docs --python 3.12
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Construction (liens vérifiés)
+        env:
+          NO_MKDOCS_2_WARNING: '1'
+        run: mkdocs build --strict --site-dir _site
+
+      - name: Artefact GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write # publier sur GitHub Pages
+      id-token: write # authentification OIDC de deploy-pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publication
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

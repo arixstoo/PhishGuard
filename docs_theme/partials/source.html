@@ -1,0 +1,14 @@
+{#-
+  Lien vers le dépôt, sans `data-md-component="source"` : le thème n'interroge pas l'API
+  de GitHub (étoiles, version) depuis le navigateur du visiteur. Le site ne fait ainsi
+  aucune requête vers un tiers (étape 6.7).
+-#}
+<a href="{{ config.repo_url }}" title="{{ lang.t('source') }}" class="md-source">
+  <div class="md-source__icon md-icon">
+    {% set icon = config.theme.icon.repo or "fontawesome/brands/git-alt" %}
+    {% include ".icons/" ~ icon ~ ".svg" %}
+  </div>
+  <div class="md-source__repository">
+    {{ config.repo_name }}
+  </div>
+</a>

@@ -4,6 +4,13 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 ## [Non publié] : module 6, lancement (étapes 6.5 à 6.8)
 
+### Site de documentation (étape 6.7, https://arixstoo.github.io/PhishGuard/)
+
+- MkDocs Material (`mkdocs.yml`, extra `docs` verrouillé dans `uv.lock`), publié sur GitHub Pages par `.github/workflows/docs.yml` (construction `--strict` sur chaque PR : un lien cassé fait échouer le job). Pages nouvelles : accueil et démarrage rapide en 3 étapes pour un non-technicien, questions fréquentes, architecture avec un diagramme SVG écrit à la main, modèle de menace (biens, attaquants, menaces, parades, risques résiduels). Navigation vers la confidentialité, les fiches des modèles, le rapport de robustesse, l'API, la contribution.
+- Aucun fichier dupliqué : un crochet (`scripts/docs_site.py`) publie `PRIVACY.md`, `SECURITY.md`, `CONTRIBUTING.md`, `CHANGELOG.md` et le code de conduite comme pages, et réécrit les liens qui sortent de `docs/` (vers la page du site, sinon vers GitHub). Ancres au format de GitHub : les mêmes liens marchent sur les deux.
+- **Aucune requête vers un tiers**, vérifié dans Chromium : polices système (`font: false`), et gabarit `docs_theme/partials/source.html` qui coupe l'appel à l'API de GitHub que le thème fait depuis le navigateur de chaque visiteur.
+- Reste à faire : les trois captures d'écran de l'installation (issue « good first issue ») et la vidéo de démonstration de 90 secondes. Material for MkDocs annonce sa fin de vie pour mai 2027 ; Zensical, son successeur, relit le même `mkdocs.yml`.
+
 ### Confidentialité (étape 6.5, [PRIVACY.md](PRIVACY.md))
 
 - `PRIVACY.md`, en français et en anglais, court et factuel : données traitées par l'extension, l'API, le bot et la page web, pourquoi, combien de temps, avec qui (Vercel, hébergeur, Telegram, GitHub, sources de Threat Intelligence **jamais par défaut**), comment les supprimer, comment écrire. Publié aussi sur le site de documentation (adresse publique exigée par le Chrome Web Store).
