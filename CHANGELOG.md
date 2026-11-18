@@ -2,6 +2,13 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié]
+
+### Dépôt
+
+- CodeQL (`codeql.yml`, Python et TypeScript, requêtes `security-extended`, actions épinglées par SHA) en plus de bandit ; Dependabot surveille désormais `extension/` (npm) ; `.editorconfig`.
+- README : badges security, CodeQL, extension et version ; liste des fonctionnalités alignée sur la feuille de route (M1 à M4 faits, M5 en bêta) ; schéma d'architecture ; lien vers le journal d'apprentissage.
+
 ## [0.5.0-beta.1] : module 5, extension navigateur et canaux de messagerie (bêta)
 
 Version de test distribuée aux participants des tests utilisateurs ([docs/beta.md](docs/beta.md)). Le tag `v0.5.0` suivra les tests utilisateurs (SUS ≥ 70 sur le dernier groupe).

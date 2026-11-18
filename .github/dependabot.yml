@@ -6,8 +6,7 @@
 #   (étape 4.9). Python reste en 3.12 : une version mineure de l'interpréteur se change
 #   à la main, avec uv.lock et la CI.
 #
-# npm (extension, module 5) s'ajoutera avec son premier manifeste : un écosystème sans
-# manifeste fait échouer chaque passage de Dependabot.
+# - npm : extension/package-lock.json (module 5), versions exactes conservées.
 version: 2
 updates:
   - package-ecosystem: uv
@@ -51,3 +50,19 @@ updates:
       # python:3.12-slim-trixie → 3.13 : changement d'interpréteur, pas une mise à jour.
       - dependency-name: python
         update-types: [version-update:semver-major, version-update:semver-minor]
+
+  # Extension navigateur (module 5) : versions exactes et package-lock.json ; npm ne lance
+  # aucun script d'installation (.npmrc ignore-scripts=true).
+  - package-ecosystem: npm
+    directory: /extension
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    labels: [dependencies, javascript]
+    commit-message:
+      prefix: deps
+    groups:
+      npm-minor:
+        update-types: [minor, patch]

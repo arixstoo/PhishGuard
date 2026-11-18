@@ -1,0 +1,50 @@
+name: codeql
+
+# Analyse sémantique du code (SAST) par CodeQL, en plus de bandit (security.yml) : flux de
+# données de bout en bout (injection, SSRF, désérialisation…) dans l'API Python et dans
+# l'extension TypeScript. Résultats dans l'onglet Security > Code scanning.
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    - cron: "0 5 * * 1"   # chaque lundi : nouvelles requêtes CodeQL sans nouveau commit
+
+# Moindre privilège : lecture seule, sauf l'envoi des résultats au job d'analyse.
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Pas de build : Python et TypeScript s'analysent depuis les sources.
+      - name: Initialisation de CodeQL
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:${{ matrix.language }}
