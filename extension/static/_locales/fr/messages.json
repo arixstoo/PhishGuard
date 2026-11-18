@@ -663,5 +663,76 @@
   },
   "optServerCleared": {
     "message": "Serveur retiré : plus rien ne peut être envoyé."
+  },
+  "optUpdatesTitle": {
+    "message": "Mises à jour du modèle"
+  },
+  "optModelUpdates": {
+    "message": "Recevoir les mises à jour signées du modèle de détection"
+  },
+  "optModelUpdatesHelp": {
+    "message": "Au plus une fois par jour, PhishGuard télécharge depuis GitHub le dernier modèle publié par le projet. Rien n'est envoyé : ni adresse visitée, ni réglage, ni identifiant. Un modèle n'est installé que si sa signature correspond à la clé intégrée à l'extension ; sinon il est ignoré."
+  },
+  "optModelCheckNow": {
+    "message": "Vérifier maintenant"
+  },
+  "optModelBundled": {
+    "message": "Modèle en service : $VERSION$, livré avec l'extension (publication $RELEASE$).",
+    "placeholders": {
+      "version": {
+        "content": "$1",
+        "example": "url_v3"
+      },
+      "release": {
+        "content": "$2",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optModelUpdated": {
+    "message": "Modèle en service : $VERSION$, mise à jour signée (publication $RELEASE$).",
+    "placeholders": {
+      "version": {
+        "content": "$1",
+        "example": "url_v3"
+      },
+      "release": {
+        "content": "$2",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optModelNone": {
+    "message": "Aucun modèle utilisable : l'analyse est impossible."
+  },
+  "optModelUnavailable": {
+    "message": "Cette version de l'extension ne peut pas vérifier de mise à jour."
+  },
+  "optUpdateUpdated": {
+    "message": "Nouveau modèle vérifié et installé : publication $RELEASE$.",
+    "placeholders": {
+      "release": {
+        "content": "$1",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optUpdateUpToDate": {
+    "message": "Le modèle est à jour."
+  },
+  "optUpdateRejected": {
+    "message": "Publication refusée : sa signature ou son contenu ne correspond pas. Le modèle actuel est conservé."
+  },
+  "optUpdateFailed": {
+    "message": "GitHub est injoignable pour le moment. Nouvel essai au prochain démarrage."
+  },
+  "optUpdateDisabled": {
+    "message": "Activez d'abord les mises à jour du modèle."
+  },
+  "opt_modelUpdates_on": {
+    "message": "Mises à jour du modèle activées."
+  },
+  "opt_modelUpdates_off": {
+    "message": "Mises à jour désactivées : le modèle livré avec l'extension est rétabli."
   }
 }

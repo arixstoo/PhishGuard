@@ -1,7 +1,8 @@
 # Extension PhishGuard : vos données (étape 5.9)
 
 Ce document dit, en langage simple, ce que l'extension PhishGuard lit, ce qu'elle garde,
-ce qu'elle envoie et à qui. Il décrit la version `0.5.0-beta`. Les détails techniques sont
+ce qu'elle envoie et à qui. Il décrit la version `0.5.0-beta`, plus les mises à jour
+signées du modèle (étape 6.8). Les détails techniques sont
 dans [extension-design.md](extension-design.md). Chaque affirmation ci-dessous est
 vérifiée par un test ou par le build (section 7).
 
@@ -41,6 +42,7 @@ synchronisé avec votre compte Google (l'extension n'utilise pas `storage.sync`)
 | Vos sites de confiance (noms de domaine que **vous** avez ajoutés, 1 000 au plus) | `storage.local` | jusqu'à ce que vous les retiriez | ne plus signaler ces sites |
 | Résultats des 100 dernières analyses **que vous avez demandées** (clic sur l'icône) : nom du site, score, raisons ; l'adresse complète n'est gardée que sous forme d'empreinte | `storage.session` (mémoire) | **effacés à la fermeture du navigateur** | réafficher un résultat sans tout recalculer |
 | Résultat du dernier lien analysé par clic droit : nom du site, verdict, raisons ; jamais l'adresse complète | `storage.session` (mémoire) | effacé dès son affichage, ignoré après 2 minutes | l'afficher dans la fenêtre de PhishGuard |
+| Si vous avez activé les mises à jour du modèle : le dernier modèle reçu, son manifeste et sa signature, et la date du dernier essai | `storage.local` | jusqu'à la publication suivante, ou effacés dès que vous désactivez l'option | analyser avec le modèle le plus récent ; il est revérifié à chaque chargement |
 
 **Rien n'est gardé** de l'analyse automatique ni de Gmail : ni sur le disque, ni en
 mémoire de session.
@@ -53,17 +55,25 @@ l'extension (Chrome efface alors tout son stockage).
 
 ## 3. Ce que l'extension envoie, et à qui
 
-**Par défaut : rien, à personne.** Deux options, éteintes à l'installation, peuvent
-envoyer des données. Chacune exige deux gestes de votre part : cocher l'option **et**
-accepter la demande d'autorisation de Chrome pour le serveur que vous avez choisi.
+**Par défaut : rien, à personne.** Trois options, éteintes à l'installation, font partir
+des requêtes. Chacune exige deux gestes de votre part : cocher l'option **et** accepter la
+demande d'autorisation de Chrome pour les hôtes concernés.
 
 | Option | Ce qui part | Vers qui | Quand |
 |---|---|---|---|
 | Analyse en ligne | l'adresse de la page, **sans** la partie après `#` (qui peut contenir un jeton de connexion) | le serveur PhishGuard **que vous avez saisi** (le vôtre, ou celui d'une personne de confiance) | seulement quand vous cliquez sur l'icône ; jamais pour l'analyse automatique, jamais pour Gmail |
 | Signalements d'erreur | le **nom de domaine** seulement, le verdict reçu et votre jugement (« faux positif » ou « faux négatif ») | ce même serveur | seulement quand vous cliquez sur « Signaler » |
+| Mises à jour du modèle | **rien** : trois téléchargements anonymes (signature, manifeste, modèle), sans cookie ni `Referer` ; GitHub voit votre adresse IP, comme pour toute page | les publications GitHub du projet (`github.com` et son stockage `*.githubusercontent.com`) | au plus une fois par jour, au démarrage du navigateur, ou quand vous cliquez sur « Vérifier maintenant » |
 
 Il n'existe **aucun serveur par défaut** : l'extension ne contacte ni l'auteur, ni Google,
-ni aucun service de statistiques. Si le serveur que vous choisissez interroge à son tour
+ni aucun service de statistiques.
+
+Un modèle téléchargé n'est installé que si sa **signature Ed25519** correspond à la clé
+publique intégrée à l'extension, si son empreinte correspond au manifeste signé, s'il a
+été produit pour le même extracteur de features, et s'il est plus récent que le modèle en
+place. Sinon, il est ignoré et le modèle actuel reste en service. Une compromission de
+GitHub ou du réseau ne suffit donc pas à vous faire utiliser un faux modèle. Un modèle est
+une donnée (des arbres de décision en JSON), jamais du code. Si le serveur que vous choisissez interroge à son tour
 des services d'analyse (VirusTotal, Google Safe Browsing…), c'est sa propre politique
 qui s'applique ; celle de l'API PhishGuard est dans [api.md](api.md#politique-de-confidentialité-de-lapi).
 
@@ -109,7 +119,7 @@ les autorisations du manifeste, ni plus ni moins.
 | `storage` | requise | Garder sur l'appareil les réglages et les sites de confiance de l'utilisateur, et en mémoire de session les résultats des analyses qu'il a demandées. |
 | `https://mail.google.com/*` | script de contenu | Analyser sur l'appareil les liens et l'expéditeur du seul message ouvert dans Gmail, et y afficher une alerte quand un lien est suspect ; rien n'est stocké ni envoyé. |
 | `tabs` | optionnelle | Lire l'adresse de chaque page ouverte pour l'analyser sur l'appareil, seulement si l'utilisateur active l'analyse automatique ; rendue à la désactivation. |
-| `https://*/*` | hôte optionnel | Joindre le serveur PhishGuard que l'utilisateur a lui-même saisi et autorisé, pour l'analyse en ligne ou les signalements ; seul l'hôte de ce serveur est demandé, au moment de l'activation. |
+| `https://*/*` | hôte optionnel | Joindre le serveur PhishGuard que l'utilisateur a lui-même saisi et autorisé, pour l'analyse en ligne ou les signalements, ou télécharger depuis les publications GitHub du projet les mises à jour signées du modèle s'il les active ; seuls ces hôtes précis sont demandés, au moment de l'activation. |
 | `http://localhost/*` | hôte optionnel | Joindre un serveur PhishGuard lancé sur l'ordinateur de l'utilisateur, aux mêmes conditions. |
 | `http://127.0.0.1/*` | hôte optionnel | Joindre un serveur PhishGuard lancé sur l'ordinateur de l'utilisateur, aux mêmes conditions. |
 <!-- permissions:end -->
@@ -145,8 +155,9 @@ Limites honnêtes, que l'extension ne peut pas supprimer :
 | exactement ces autorisations ; ni `host_permissions`, ni `web_accessible_resources`, ni `externally_connectable` ; script de contenu sur Gmail seulement, cadre principal seulement | `extension/test/audit.test.ts` |
 | CSP : scripts du paquet seulement (`script-src 'self'`), ni `unsafe-eval` ni `unsafe-inline`, `object-src 'none'` | `extension/test/audit.test.ts` |
 | aucune API qui identifie ou suit l'utilisateur (`chrome.history`, `chrome.identity`, `chrome.cookies`, `webRequest`…), seulement les espaces `action`, `contextMenus`, `i18n`, `permissions`, `runtime`, `storage`, `tabs` ; jamais `storage.sync` ; aucun générateur d'identifiant (`randomUUID`, `getRandomValues`, `Math.random`) | `extension/test/audit.test.ts` |
-| aucun `eval`, `new Function`, `importScripts`, aucune injection HTML ; `fetch` seulement dans `api.ts` et pour lire le modèle du paquet ; aucun autre canal réseau | `extension/build.mjs` (le build échoue) |
+| aucun `eval`, `new Function`, `importScripts`, aucune injection HTML ; `fetch` seulement dans `api.ts`, `updates.ts` et pour lire le modèle du paquet ; aucun autre canal réseau | `extension/build.mjs` (le build échoue) |
 | aucune requête sans le réglage **et** l'autorisation de l'hôte ; URL sans fragment ; réponse du serveur validée et incapable d'innocenter | `extension/test/network.test.ts` |
+| mises à jour du modèle : aucune requête sans le réglage **et** les trois autorisations de GitHub ; requêtes `GET` sans corps, sans en-tête, sans cookie ; au plus une par jour ; redirection hors de GitHub refusée ; modèle falsifié (un octet), autre clé, retour arrière, autre extracteur refusés sans rien stocker ; modèle stocké revérifié à chaque chargement | `extension/test/updates.test.ts`, `extension/test/signed-model.test.ts` |
 | rien en mémoire de session pour l'analyse automatique et Gmail | `extension/background.ts` (`persist: false`, pas de cache) ; parcours Playwright |
 | **aucune requête hors du paquet** sur tout un parcours (fenêtre, options, 10 messages Gmail) avec les réglages par défaut | `extension/e2e/` (Playwright, en CI) |
 | aucune dépendance embarquée ; dépendances de développement en versions exactes, sans script d'installation, sans vulnérabilité connue, signatures du registre vérifiées | `package.json`, `.npmrc`, `npm audit` et `npm audit signatures` en CI |

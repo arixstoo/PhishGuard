@@ -4,7 +4,8 @@
  *
  * - **Aucune requête réseau par défaut.** Le modèle est lu dans le paquet ; seul `api.ts`
  *   appelle un serveur, et seulement si l'utilisateur a activé l'option **et** accordé la
- *   permission de cet hôte (étape 5.7).
+ *   permission de cet hôte (étape 5.7). Les mises à jour signées du modèle (`updates.ts`,
+ *   étape 6.8) obéissent à la même règle des deux clés.
  * - **Aucun état important en mémoire** : MV3 arrête le service worker à tout moment.
  *   Le modèle est rechargé à la demande ; les analyses demandées vont dans
  *   `storage.session`. L'analyse automatique et Gmail ne gardent rien : pas de trace de
@@ -19,19 +20,21 @@ import { analyzeOnline, NetworkDisabledError, RemoteError, sendFeedback, stricte
 import { type Analysis, decide, InvalidUrlError, type LocalScore, UrlAnalyzer, type Verdict } from "./core/analyze";
 import { inspectMail } from "./core/inspect";
 import { ipVersion } from "./core/ip";
-import { loadUrlModel } from "./core/model";
+import { loadUrlModel, type UrlModel } from "./core/model";
+import { trustAnchorFromBase64 } from "./core/signed-model";
 import { resolveLanguage, translator, type Translate } from "./i18n";
 import { setLastLink } from "./link";
 import {
   type ErrorCode,
   type MailRequest,
   type MailResponse,
+  type ModelStatus,
   parseMailRequest,
   parseRequest,
   type Request,
   type Response,
 } from "./messages";
-import { getSettings, isSettingsChange, serverPermissionPattern, updateSettings } from "./settings";
+import { getSettings, isSettingsChange, type Settings, serverPermissionPattern, updateSettings } from "./settings";
 import {
   addToAllowlist,
   allowlistKey,
@@ -42,10 +45,22 @@ import {
   putCached,
   removeFromAllowlist,
 } from "./storage";
+import {
+  checkForModelUpdate,
+  clearStoredModel,
+  getUpdateState,
+  loadStoredModel,
+  UPDATE_ORIGINS,
+  type UpdateContext,
+  updatesAllowed,
+} from "./updates";
 
-// Injectés par build.mjs : chemin du modèle dans le paquet et empreinte vérifiée au build.
+// Injectés par build.mjs : chemin du modèle dans le paquet et empreinte vérifiée au build ;
+// publication signée de ce modèle et clé publique Ed25519 de confiance (étape 6.8).
 declare const __MODEL_PATH__: string;
 declare const __MODEL_SHA256__: string;
+declare const __MODEL_RELEASE__: string;
+declare const __MODEL_PUBLIC_KEY__: string;
 
 const CONTEXT_MENU_ID = "phishguard-analyze-link";
 const MEMORY_CACHE_SIZE = 50;
@@ -72,7 +87,29 @@ async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+const parseModel = (bytes: Uint8Array | ArrayBuffer): UrlModel =>
+  loadUrlModel(JSON.parse(new TextDecoder().decode(bytes)));
+
+const updateContext: UpdateContext = {
+  anchor: trustAnchorFromBase64(__MODEL_PUBLIC_KEY__),
+  bundledRelease: __MODEL_RELEASE__,
+  validateModel: (bytes) => void parseModel(bytes),
+};
+
+/** Origine du modèle en service, pour la page d'options. */
+let modelSource: { source: "bundled" | "update"; release: string } | null = null;
+
 async function loadAnalyzer(): Promise<UrlAnalyzer> {
+  // Modèle reçu par mise à jour, revérifié en entier à chaque chargement (étape 6.8).
+  // Seulement si l'option est toujours active : la désactiver revient au modèle du paquet.
+  if ((await getSettings()).modelUpdates) {
+    const update = await loadStoredModel(updateContext);
+    if (update !== null) {
+      const analyzer = new UrlAnalyzer(parseModel(update.model));
+      modelSource = { source: "update", release: update.release };
+      return analyzer;
+    }
+  }
   if (!__MODEL_SHA256__) throw new ModelUnavailableError("extension construite sans modèle");
   const response = await fetch(chrome.runtime.getURL(__MODEL_PATH__));
   if (!response.ok) throw new ModelUnavailableError("modèle introuvable dans le paquet");
@@ -82,7 +119,40 @@ async function loadAnalyzer(): Promise<UrlAnalyzer> {
   if ((await sha256Hex(bytes)) !== __MODEL_SHA256__) {
     throw new ModelUnavailableError("empreinte du modèle inattendue");
   }
-  return new UrlAnalyzer(loadUrlModel(JSON.parse(new TextDecoder().decode(bytes))));
+  const analyzer = new UrlAnalyzer(parseModel(bytes));
+  modelSource = { source: "bundled", release: __MODEL_RELEASE__ };
+  return analyzer;
+}
+
+/** Le prochain appel recharge le modèle (nouvelle publication, option désactivée). */
+function resetAnalyzer(): void {
+  analyzerPromise = null;
+  modelSource = null;
+  memoryCache.clear();
+}
+
+async function modelStatus(settings: Settings): Promise<ModelStatus> {
+  let modelVersion: string | null = null;
+  try {
+    modelVersion = (await getAnalyzer()).model.modelVersion;
+  } catch {
+    // Aucun modèle utilisable : l'état le dit (source « none »).
+  }
+  return {
+    modelVersion,
+    release: modelSource?.release ?? "",
+    source: modelSource?.source ?? "none",
+    updatesAvailable: updateContext.anchor !== null,
+    lastCheck: settings.modelUpdates ? await getUpdateState() : null,
+  };
+}
+
+/** Vérification planifiée (démarrage du navigateur, installation) : au plus une par jour. */
+async function scheduledUpdateCheck(): Promise<void> {
+  const settings = await getSettings();
+  if (!(await updatesAllowed(settings))) return;
+  const outcome = await checkForModelUpdate(settings, updateContext);
+  if (outcome.result === "updated") resetAnalyzer();
 }
 
 function getAnalyzer(): Promise<UrlAnalyzer> {
@@ -271,6 +341,14 @@ async function handle(request: Request): Promise<Response> {
       return { ok: true };
     case "allowlist-get":
       return { ok: true, domains: await getAllowlist() };
+    case "model-status":
+      return { ok: true, model: await modelStatus(await getSettings()) };
+    case "model-update-check": {
+      const settings = await getSettings();
+      const outcome = await checkForModelUpdate(settings, updateContext, { force: true });
+      if (outcome.result === "updated") resetAnalyzer();
+      return { ok: true, model: await modelStatus(settings), outcome };
+    }
     case "feedback": {
       const domain = reportableDomain(request.domain);
       if (domain === null) return { ok: false, error: "not-reportable" };
@@ -377,6 +455,9 @@ chrome.permissions.onRemoved.addListener((removed) => {
       patch.enrichment = false;
       patch.feedback = false;
     }
+    if (settings.modelUpdates && removed.origins?.some((origin) => UPDATE_ORIGINS.includes(origin))) {
+      patch.modelUpdates = false;
+    }
     if (Object.keys(patch).length > 0) await updateSettings(patch);
   })();
 });
@@ -394,11 +475,24 @@ async function createContextMenu(): Promise<void> {
 
 chrome.runtime.onInstalled.addListener(() => {
   void createContextMenu();
+  void scheduledUpdateCheck();
 });
 
-// Langue changée dans les options : le menu suit.
+chrome.runtime.onStartup.addListener(() => {
+  void scheduledUpdateCheck();
+});
+
+// Langue changée dans les options : le menu suit. Mises à jour désactivées : le modèle
+// reçu est effacé et l'extension revient à celui de son paquet.
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && isSettingsChange(changes)) void createContextMenu();
+  if (area !== "local" || !isSettingsChange(changes)) return;
+  void createContextMenu();
+  void (async () => {
+    if (!(await getSettings()).modelUpdates && modelSource?.source !== "bundled") {
+      await clearStoredModel();
+      resetAnalyzer();
+    }
+  })();
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {

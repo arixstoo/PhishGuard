@@ -13,6 +13,8 @@
  *    (`keys/model-signing.pub`, étape 4.12), et `models/url_v2.json` exactement la taille et
  *    l'empreinte signées. Sinon, le build échoue : l'extension n'embarque jamais un modèle
  *    non signé. `--allow-missing-model` (CI) construit sans modèle ; l'extension l'affiche.
+ *    La clé publique (brute, base64) et la publication du modèle embarqué sont injectées
+ *    dans le service worker : ce sont elles qui vérifient les mises à jour (étape 6.8).
  * 2. **Code** : esbuild regroupe le service worker, les pages (fenêtre contextuelle,
  *    options) et le script Gmail, sans minification (le Chrome Web Store exige un code
  *    lisible), puis vérifie qu'aucun bundle n'emploie `eval`, `new Function`,
@@ -76,7 +78,16 @@ async function stubModelForTests() {
   const reference = JSON.parse(readFileSync(join(here, "src/generated/reference-data.json"), "utf-8"));
   const bytes = Buffer.from(JSON.stringify(stubModel(reference.feature_extractor)), "utf-8");
   console.warn("build : modèle de TEST (e2e/stub-model.mjs), pour les parcours Playwright seulement");
-  return { bytes, sha256: sha256(bytes) };
+  return { bytes, sha256: sha256(bytes), release: "" };
+}
+
+/** Clé publique Ed25519 brute (32 octets, base64) : l'ancre de confiance des mises à jour. */
+function publicKeyRawBase64() {
+  const path = join(repo, "keys", "model-signing.pub");
+  if (!existsSync(path)) fail("keys/model-signing.pub absent : les mises à jour du modèle seraient invérifiables");
+  const key = createPublicKey(readFileSync(path));
+  if (key.asymmetricKeyType !== "ed25519") fail("keys/model-signing.pub : clé Ed25519 attendue");
+  return key.export({ format: "der", type: "spki" }).subarray(-32).toString("base64");
 }
 
 function signedModel() {
@@ -104,8 +115,8 @@ function signedModel() {
   if (golden.model_export_sha256 !== entry.sha256) {
     fail("le modèle signé n'est pas celui des vecteurs de référence : `make export`");
   }
-  console.log(`modèle : ${entry.name} (${(entry.size / 1024).toFixed(0)} Kio), signature valide`);
-  return { bytes, sha256: entry.sha256 };
+  console.log(`modèle : ${entry.name} (${(entry.size / 1024).toFixed(0)} Kio), publication ${manifest.release}, signature valide`);
+  return { bytes, sha256: entry.sha256, release: manifest.release };
 }
 
 // --------------------------------------------------------------------------- //
@@ -188,11 +199,12 @@ const FORBIDDEN = [
   [/\bXMLHttpRequest\b|\bnew\s+WebSocket\b|\bEventSource\b|\bsendBeacon\b/,"canal réseau (XHR, WebSocket, EventSource, sendBeacon)"],
 ];
 const BUNDLES = ["background.js", "popup.js", "options.js", "gmail.js"];
-// `fetch` n'est permis que dans le service worker (modèle du paquet, api.ts). La CSP
+// `fetch` n'est permis que dans le service worker (modèle du paquet, api.ts, mises à jour
+// signées du modèle dans updates.ts). La CSP
 // autorise https: pour le serveur choisi par l'utilisateur : ce contrôle et api.ts
 // (réglage + permission d'hôte) sont ce qui empêche tout autre envoi.
 const NO_FETCH = ["popup.js", "options.js", "gmail.js"];
-const FETCH_ALLOWED_SOURCES = new Set(["src/api.ts", "src/background.ts"]);
+const FETCH_ALLOWED_SOURCES = new Set(["src/api.ts", "src/background.ts", "src/updates.ts"]);
 
 /** Sources TypeScript qui appellent `fetch` : seules celles de la liste sont admises. */
 function checkSources(dir = join(here, "src")) {
@@ -266,6 +278,8 @@ const common = {
   define: {
     __MODEL_PATH__: JSON.stringify(MODEL_PATH),
     __MODEL_SHA256__: JSON.stringify(model ? model.sha256 : ""),
+    __MODEL_RELEASE__: JSON.stringify(model ? model.release : ""),
+    __MODEL_PUBLIC_KEY__: JSON.stringify(publicKeyRawBase64()),
   },
 };
 // Pages et service worker : modules ES.

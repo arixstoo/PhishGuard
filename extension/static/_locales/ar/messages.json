@@ -681,5 +681,76 @@
   },
   "optServerCleared": {
     "message": "تمت إزالة الخادم: لا يمكن إرسال أي شيء بعد الآن."
+  },
+  "optUpdatesTitle": {
+    "message": "تحديثات النموذج"
+  },
+  "optModelUpdates": {
+    "message": "تلقي التحديثات الموقَّعة لنموذج الكشف"
+  },
+  "optModelUpdatesHelp": {
+    "message": "مرة واحدة في اليوم على الأكثر، يُنزِّل PhishGuard من GitHub آخر نموذج نشره المشروع. لا يُرسَل أي شيء: لا عنوان مُزار، ولا إعداد، ولا مُعرِّف. لا يُثبَّت النموذج إلا إذا طابق توقيعه المفتاح المدمج في الإضافة؛ وإلا يُتجاهَل."
+  },
+  "optModelCheckNow": {
+    "message": "التحقق الآن"
+  },
+  "optModelBundled": {
+    "message": "النموذج المستخدم: ‏$VERSION$، المرفق مع الإضافة (الإصدار ‏$RELEASE$).",
+    "placeholders": {
+      "version": {
+        "content": "$1",
+        "example": "url_v3"
+      },
+      "release": {
+        "content": "$2",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optModelUpdated": {
+    "message": "النموذج المستخدم: ‏$VERSION$، تحديث موقَّع (الإصدار ‏$RELEASE$).",
+    "placeholders": {
+      "version": {
+        "content": "$1",
+        "example": "url_v3"
+      },
+      "release": {
+        "content": "$2",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optModelNone": {
+    "message": "لا يوجد نموذج صالح: التحليل غير ممكن."
+  },
+  "optModelUnavailable": {
+    "message": "لا يمكن لهذا الإصدار من الإضافة التحقق من التحديثات."
+  },
+  "optUpdateUpdated": {
+    "message": "تم التحقق من نموذج جديد وتثبيته: الإصدار ‏$RELEASE$.",
+    "placeholders": {
+      "release": {
+        "content": "$1",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optUpdateUpToDate": {
+    "message": "النموذج محدَّث."
+  },
+  "optUpdateRejected": {
+    "message": "رُفض الإصدار: توقيعه أو محتواه غير مطابق. يُحتفَظ بالنموذج الحالي."
+  },
+  "optUpdateFailed": {
+    "message": "تعذّر الوصول إلى GitHub حاليًا. محاولة أخرى عند التشغيل التالي."
+  },
+  "optUpdateDisabled": {
+    "message": "فعّل تحديثات النموذج أولًا."
+  },
+  "opt_modelUpdates_on": {
+    "message": "تم تفعيل تحديثات النموذج."
+  },
+  "opt_modelUpdates_off": {
+    "message": "تم إيقاف التحديثات: أُعيد النموذج المرفق مع الإضافة."
   }
 }

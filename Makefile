@@ -24,7 +24,9 @@ EMAIL_SAMPLE_COUNT := 200
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
 	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest \
 	extension-data extension-install extension-test extension-build extension-e2e extension-package \
-	bot sus \n	edge-config edge-maintenance edge-smoke check-ports
+	bot sus \
+	edge-config edge-maintenance edge-smoke check-ports \
+	model-freeze model-fixture publish-model
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -195,6 +197,16 @@ verify: ## Vérifie la signature du manifeste et l'empreinte de chaque modèle
 
 export: ## Modèle URL déployé (url_v2) en JSON pour l'extension et vecteurs de référence (étape 4.11)
 	$(PYTHON) scripts/export_model.py
+
+model-freeze: ## Gèle le bloc de test actuel pour le garde-fou mensuel ; empreinte dans docs/metrics/frozen_test.json (étape 6.8)
+	$(PYTHON) scripts/model_update.py freeze
+
+model-fixture: ## Régénère la publication signée par Python que vérifient les tests de l'extension (étape 6.8)
+	$(PYTHON) scripts/make_signed_release_fixture.py
+
+publish-model: ## Vérifie, signe et publie un candidat de model-update.yml : make publish-model RELEASE=AAAA.MM.JJ (étape 6.8)
+	@test -n "$(RELEASE)" || { echo "usage : make publish-model RELEASE=AAAA.MM.JJ"; exit 2; }
+	$(PYTHON) scripts/publish_model.py publish $(RELEASE)
 
 # --------------------------------------------------------------------------- #
 # API (module 4)

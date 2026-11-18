@@ -24,6 +24,11 @@ export interface Settings {
   apiKey: string;
   /** Signalements d'erreur envoyés à `serverUrl` (domaine seulement). */
   feedback: boolean;
+  /**
+   * Mises à jour signées du modèle depuis les publications GitHub du projet (étape 6.8) ;
+   * exige la permission des hôtes de GitHub. Indépendant de `serverUrl`.
+   */
+  modelUpdates: boolean;
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -34,6 +39,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   serverUrl: "",
   apiKey: "",
   feedback: false,
+  modelUpdates: false,
 });
 
 const SETTINGS_KEY = "settings";
@@ -92,6 +98,7 @@ export function parseSettings(value: unknown): Settings {
     serverUrl: serverUrl ?? "",
     apiKey,
     feedback: bool("feedback"),
+    modelUpdates: bool("modelUpdates"),
   };
   // Sans serveur valide, rien ne peut partir : les deux options réseau sont éteintes.
   if (!settings.serverUrl) {

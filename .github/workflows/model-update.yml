@@ -1,0 +1,286 @@
+name: model-update
+
+# Réentraînement mensuel du modèle URL (étape 6.8, docs/model-updates.md).
+#
+# 1. reconstitue les données : historique chiffré (release « data-history ») + collectes
+#    des 90 derniers jours (artefacts de fetch-feeds.yml) ;
+# 2. retire du jeu les domaines du test figé, découpe, entraîne le candidat (même
+#    recette que url_v2 : LightGBM puis entraînement adversarial), le calibre et l'exporte ;
+# 3. garde-fou : le candidat est comparé au modèle en service (vérifié par sa signature
+#    avant d'être chargé) sur le test figé, le test récent et les sites légitimes courants ;
+# 4. s'il passe : release **brouillon** « model-AAAA.MM.JJ » avec les fichiers, le
+#    rapport, les empreintes et une attestation de provenance Sigstore.
+#
+# Rien n'est signé ici : la clé privée ne quitte jamais la machine de l'auteur
+# (docs/model-registry.md). L'auteur relit le rapport puis publie avec
+# `python scripts/publish_model.py AAAA.MM.JJ`, qui vérifie la provenance avant de signer.
+
+on:
+  schedule:
+    # Le 2 de chaque mois à 05:00 UTC, après la collecte quotidienne de 04:00.
+    - cron: '0 5 2 * *'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Publication (AAAA.MM.JJ ou AAAA.MM.JJ.N) ; vide = date du jour'
+        required: false
+        default: ''
+      recall_tolerance:
+        description: 'Baisse de rappel admise (0 = aucune ; au plus 0.05)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-update
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.12'
+  # Les deux fichiers chiffrés sont dans des releases du dépôt (public) : sans la phrase
+  # de passe, ils sont illisibles. Même schéma que fetch-feeds.yml.
+  OPENSSL_DEC: openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:ARCHIVE_PASSPHRASE
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      actions: read # lister et télécharger les artefacts de fetch-feeds.yml
+    outputs:
+      passed: ${{ steps.gate.outputs.passed }}
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installation d'uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.8'
+
+      - name: Installation des dépendances (uv.lock)
+        run: |
+          uv sync --locked --python "$PYTHON_VERSION"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Numéro de publication
+        id: release
+        env:
+          REQUESTED: ${{ inputs.release }}
+        run: |
+          release="${REQUESTED:-$(date -u +%Y.%m.%d)}"
+          # Même format que l'extension (core/signed-model.ts) : ordre total, sans ambiguïté.
+          if ! [[ "$release" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]{1,3})?$ ]]; then
+            echo "::error::publication invalide : $release (attendu AAAA.MM.JJ[.N])"
+            exit 1
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+
+      - name: Secrets requis
+        env:
+          ARCHIVE_PASSPHRASE: ${{ secrets.ARCHIVE_PASSPHRASE }}
+        run: |
+          if [ -z "$ARCHIVE_PASSPHRASE" ]; then
+            echo "::error::Secret ARCHIVE_PASSPHRASE absent : données illisibles."
+            exit 1
+          fi
+
+      - name: Historique des collectes (release data-history)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE_PASSPHRASE: ${{ secrets.ARCHIVE_PASSPHRASE }}
+        run: |
+          mkdir -p data build
+          if gh release download data-history --repo "$GITHUB_REPOSITORY" \
+               --pattern 'feeds-history.tar.gz.enc' --dir build; then
+            $OPENSSL_DEC -in build/feeds-history.tar.gz.enc | tar -xz -C data --no-same-owner
+            rm build/feeds-history.tar.gz.enc
+          else
+            echo "::warning::Pas d'historique : seules les collectes des 90 derniers jours seront utilisées."
+          fi
+
+      - name: Collectes récentes (artefacts de fetch-feeds, 90 jours)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE_PASSPHRASE: ${{ secrets.ARCHIVE_PASSPHRASE }}
+        run: python scripts/sync_feed_archives.py --output-dir data/raw --repo "$GITHUB_REPOSITORY"
+
+      - name: Historique mis à jour (chiffré, pour le job suivant)
+        env:
+          ARCHIVE_PASSPHRASE: ${{ secrets.ARCHIVE_PASSPHRASE }}
+        run: |
+          tar -czf - -C data raw | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -pass env:ARCHIVE_PASSPHRASE -out build/feeds-history.tar.gz.enc
+
+      - name: Test figé (release frozen-test), vérifié par son empreinte versionnée
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE_PASSPHRASE: ${{ secrets.ARCHIVE_PASSPHRASE }}
+        run: |
+          mkdir -p build/frozen
+          gh release download frozen-test --repo "$GITHUB_REPOSITORY" \
+            --pattern 'url_test_frozen.parquet.enc' --dir build
+          $OPENSSL_DEC -in build/url_test_frozen.parquet.enc -out build/frozen/url_test_frozen.parquet
+          rm build/url_test_frozen.parquet.enc
+
+      - name: Jeu d'URLs, sans les domaines du test figé, puis split temporel
+        run: |
+          mkdir -p build/metrics build/candidate
+          python scripts/build_dataset.py --report build/metrics/urls_dataset.json
+          python scripts/model_update.py exclude-frozen --frozen build/frozen/url_test_frozen.parquet
+          python scripts/split_dataset.py --report build/metrics/urls_split.json
+
+      - name: Entraînement du candidat (LightGBM, puis entraînement adversarial)
+        run: |
+          python scripts/train_url.py --model-out build/candidate/url_v1.joblib \
+            --report build/metrics/url_v1.json
+          python scripts/train_adversarial.py --only url \
+            --url-reference build/candidate/url_v1.joblib \
+            --url-out build/candidate/url_v2.joblib \
+            --report build/metrics/adversarial_training.json
+          python scripts/calibrate_url.py --model build/candidate/url_v2.joblib \
+            --output build/candidate/url_v2_calibration.json \
+            --report build/metrics/url_v2_calibration.json
+          rm build/candidate/url_v1.joblib
+
+      - name: Modèle en service (release models-stable)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/current
+          gh release download models-stable --repo "$GITHUB_REPOSITORY" --dir build/current \
+            --pattern manifest.json --pattern manifest.json.sig --pattern url_v2.joblib
+
+      - name: Garde-fou de non-régression
+        id: gate
+        env:
+          TOLERANCE: ${{ inputs.recall_tolerance || '0' }}
+        run: |
+          set +e
+          python scripts/model_update.py gate \
+            --current-models-dir build/current \
+            --candidate-model build/candidate/url_v2.joblib \
+            --frozen build/frozen/url_test_frozen.parquet \
+            --recall-tolerance "$TOLERANCE" \
+            --report build/candidate/gate_report.json \
+            --summary "$GITHUB_STEP_SUMMARY"
+          status=$?
+          set -e
+          case "$status" in
+            0) echo "passed=true" >> "$GITHUB_OUTPUT" ;;
+            1) echo "passed=false" >> "$GITHUB_OUTPUT"
+               echo "::warning::Candidat refusé par le garde-fou : rien n'est publié." ;;
+            *) exit "$status" ;;
+          esac
+
+      - name: Export pour l'extension et empreintes
+        if: steps.gate.outputs.passed == 'true'
+        run: |
+          python scripts/export_model.py --models-dir build/candidate \
+            --golden build/candidate/url_vectors.json
+          python - <<'EOF' > build/candidate/gate_report.md
+          import json
+          from phishguard.model_update import render_markdown
+          print(render_markdown(json.load(open("build/candidate/gate_report.json", encoding="utf-8"))), end="")
+          EOF
+          cp build/metrics/*.json build/candidate/
+          (cd build/candidate && sha256sum -- * > SHA256SUMS)
+
+      - name: Candidat
+        if: steps.gate.outputs.passed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: candidate
+          path: build/candidate/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Historique chiffré
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: feeds-history
+          path: build/feeds-history.tar.gz.enc
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  save-history:
+    # L'historique ne doit pas dépendre du garde-fou : les flux de phishing ne se rattrapent
+    # pas, et les artefacts expirent après 90 jours.
+    needs: retrain
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # remplacer l'asset de la release data-history
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: feeds-history
+          path: build
+      - name: Publication de l'historique chiffré
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view data-history --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create data-history --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "Historique chiffré des collectes" \
+              --notes "Archive chiffrée (AES-256, phrase de passe hors du dépôt) des collectes de flux, utilisée par model-update.yml. Illisible sans la phrase de passe ; non redistribuable (conditions d'OpenPhish)."
+          fi
+          gh release upload data-history build/feeds-history.tar.gz.enc \
+            --repo "$GITHUB_REPOSITORY" --clobber
+
+  draft-release:
+    needs: retrain
+    if: needs.retrain.outputs.passed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # créer la release brouillon
+      id-token: write # attestation de provenance (Sigstore)
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: candidate
+          path: candidate
+
+      - name: Vérification des empreintes
+        working-directory: candidate
+        run: sha256sum --check --strict SHA256SUMS
+
+      # Prouve que ces fichiers sortent de ce workflow, sur ce dépôt, à ce commit.
+      # publish_model.py le vérifie (gh attestation verify) avant de signer.
+      - name: Attestation de provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            candidate/url_v2.joblib
+            candidate/url_v2_calibration.json
+            candidate/url_v2.json
+            candidate/gate_report.json
+
+      - name: Release brouillon
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ needs.retrain.outputs.release }}
+        run: |
+          gh release create "model-$RELEASE" candidate/* \
+            --repo "$GITHUB_REPOSITORY" --draft --latest=false \
+            --target "$GITHUB_SHA" \
+            --title "Modèle URL $RELEASE (candidat, non signé)" \
+            --notes-file candidate/gate_report.md
+          {
+            echo "### Candidat publié en brouillon : model-$RELEASE"
+            echo ""
+            echo "Relire le rapport, puis sur la machine de signature :"
+            echo ""
+            echo '```'
+            echo "python scripts/publish_model.py $RELEASE"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

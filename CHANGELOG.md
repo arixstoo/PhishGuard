@@ -2,6 +2,17 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié] : module 6, lancement (étapes 6.5 à 6.8)
+
+### Mises à jour du modèle (étape 6.8, [docs/model-updates.md](docs/model-updates.md))
+
+- Workflow mensuel `model-update.yml` : historique chiffré des collectes (release `data-history`, réenregistré à chaque passage, même si le candidat est refusé) + artefacts des 90 derniers jours ; domaines du test figé retirés **avant** le split ; candidat entraîné avec la recette de `url_v2` (LightGBM, entraînement adversarial, calibration) ; garde-fou ; export ; release **brouillon** avec `SHA256SUMS` et attestation de provenance Sigstore. Rien n'est signé sur la CI.
+- Garde-fou (`phishguard.model_update`) : rappel à 1 % de FPR qui ne baisse pas sur le **test figé** (21 004 URLs, empreinte du contenu versionnée dans `docs/metrics/frozen_test.json`) et sur le test récent ; faux positifs qui n'augmentent pas sur **106 sites légitimes courants** (pages de connexion et d'accueil, FR, Maghreb, international). Le modèle en service n'est désérialisé qu'après vérification de sa signature. Essai réel : `url_v1` soumis comme candidat est **refusé** face à `url_v2` (rappel 0,755 contre 0,668, mais 28 faux positifs contre 3 sur les sites courants).
+- `scripts/publish_model.py` (machine de signature) : vérifie empreintes, **provenance** (`gh attestation verify --signer-workflow`) et garde-fou, reprend le modèle texte du canal signé, signe, relit, publie la release datée et remplace le canal `models-stable` (manifeste et signature en dernier). `bootstrap` publie les modèles signés actuels. `make model-freeze model-fixture publish-model`.
+- Extension : option « Recevoir les mises à jour signées du modèle » (**désactivée par défaut**, permission des hôtes de GitHub demandée à l'activation et rendue à la désactivation ; vérification au plus une fois par jour, ou « Vérifier maintenant »). `core/signed-model.ts` reprend l'ordre de `phishguard.registry` avec la **clé publique embarquée au build** : tailles bornées, signature d'abord (document validé en entier, base64 canonique), même extracteur de features, taille et SHA-256, **pas de retour arrière**. Le modèle reçu est revérifié à chaque chargement (`storage.local` est modifiable par le script Gmail) ; en cas d'échec, retour au modèle du paquet. Requêtes `GET` anonymes, sans cookie ni `Referer` ; redirection hors de GitHub refusée.
+- **Critère atteint** : un modèle falsifié (un octet) est rejeté (`test/signed-model.test.ts` : chaque octet de la signature et du manifeste, positions réparties dans le modèle ; `test/updates.test.ts` : modèle servi ou stocké modifié). Une publication signée par Python et le vrai manifeste du dépôt passent la vérification TypeScript. 39 tests vitest et 26 tests pytest ajoutés.
+- Corrigé au passage : `.PHONY` du Makefile contenait un `\n` littéral.
+
 ## [Non publié] : module 6, déploiement (étapes 6.1 à 6.4)
 
 ### Déploiement

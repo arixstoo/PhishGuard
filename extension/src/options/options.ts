@@ -10,12 +10,13 @@
  * | analyse automatique   | `tabs`                       | non        |
  * | analyse en ligne      | hôte du serveur choisi       | non        |
  * | signalements          | hôte du serveur choisi       | non        |
+ * | mises à jour du modèle| hôtes des publications GitHub| non        |
  *
  * Règle de sécurité : tout texte est inséré avec `textContent`.
  */
 
 import { localizePage, resolveLanguage, type Translate, translator } from "../i18n";
-import type { Response } from "../messages";
+import type { ModelStatus, Response } from "../messages";
 import {
   API_KEY_RE,
   getSettings,
@@ -24,6 +25,8 @@ import {
   type Settings,
   updateSettings,
 } from "../settings";
+import { UPDATE_ORIGINS } from "../update-channel";
+import type { UpdateOutcome } from "../updates";
 
 let settings: Settings;
 let t: Translate;
@@ -66,6 +69,86 @@ function renderSettings(): void {
   checkbox("feedback").disabled = !settings.serverUrl;
   $("enrichment-help").textContent = t("optEnrichmentHelp", serverHost());
   $("feedback-help").textContent = t("optFeedbackHelp", serverHost());
+  checkbox("model-updates").checked = settings.modelUpdates;
+  $<HTMLButtonElement>("model-check").disabled = !settings.modelUpdates;
+}
+
+function renderModel(model: ModelStatus | null): void {
+  const line = $("model-current");
+  if (model === null || model.source === "none" || model.modelVersion === null) {
+    line.textContent = t("optModelNone");
+  } else {
+    const key = model.source === "update" ? "optModelUpdated" : "optModelBundled";
+    line.textContent = t(key, model.modelVersion, model.release || "?");
+  }
+  if (model !== null && !model.updatesAvailable) {
+    checkbox("model-updates").disabled = true;
+    $<HTMLButtonElement>("model-check").disabled = true;
+    line.textContent += ` ${t("optModelUnavailable")}`;
+  }
+}
+
+async function refreshModel(): Promise<void> {
+  const response = await send({ type: "model-status" });
+  renderModel(response.ok && "model" in response ? response.model : null);
+}
+
+const OUTCOME_MESSAGES: Readonly<Record<UpdateOutcome["result"], string>> = {
+  updated: "optUpdateUpdated",
+  "up-to-date": "optUpdateUpToDate",
+  rejected: "optUpdateRejected",
+  failed: "optUpdateFailed",
+  disabled: "optUpdateDisabled",
+  skipped: "optUpdateUpToDate",
+};
+
+/** Le service worker télécharge et vérifie : la page d'options n'a pas le droit d'appeler `fetch`. */
+async function checkModelUpdate(): Promise<void> {
+  const button = $<HTMLButtonElement>("model-check");
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  try {
+    const response = await send({ type: "model-update-check" });
+    if (response.ok && "model" in response) {
+      renderModel(response.model);
+      const outcome = response.outcome;
+      if (outcome) say("updates-status", t(OUTCOME_MESSAGES[outcome.result], outcome.release ?? ""));
+    } else {
+      say("updates-status", t("optUpdateFailed"));
+    }
+  } finally {
+    button.removeAttribute("aria-busy");
+    button.disabled = !settings.modelUpdates;
+  }
+}
+
+/** Mises à jour du modèle : permission des hôtes de GitHub demandée ici, rendue à la désactivation. */
+function setModelUpdates(input: HTMLInputElement): void {
+  const origins = [...UPDATE_ORIGINS];
+  if (input.checked) {
+    chrome.permissions.request({ origins }).then(
+      async (granted) => {
+        input.checked = granted;
+        settings = await updateSettings({ modelUpdates: granted });
+        renderSettings();
+        say("updates-status", t(granted ? "opt_modelUpdates_on" : "optPermissionDenied"));
+        if (granted) await checkModelUpdate();
+      },
+      () => {
+        input.checked = false;
+        say("updates-status", t("optPermissionDenied"));
+      },
+    );
+    return;
+  }
+  void (async () => {
+    settings = await updateSettings({ modelUpdates: false });
+    await chrome.permissions.remove({ origins }).catch(() => false);
+    renderSettings();
+    say("updates-status", t("opt_modelUpdates_off"));
+    // Le service worker efface le modèle reçu ; l'état affiché suit.
+    await refreshModel();
+  })();
 }
 
 async function renderAllowlist(): Promise<void> {
@@ -101,6 +184,7 @@ function localize(): void {
   localizePage(t);
   renderSettings();
   void renderAllowlist();
+  void refreshModel();
 }
 
 // --------------------------------------------------------------------------- //
@@ -245,15 +329,21 @@ async function removeDomain(domain: string, item: HTMLElement): Promise<void> {
 async function main(): Promise<void> {
   settings = await getSettings();
   // Permissions retirées depuis chrome://extensions : la page reflète l'état réel.
-  const [tabs, host] = await Promise.all([
+  const [tabs, host, github] = await Promise.all([
     chrome.permissions.contains({ permissions: ["tabs"] }),
     settings.serverUrl ? chrome.permissions.contains({ origins: [serverPermissionPattern(settings.serverUrl)] }) : false,
+    chrome.permissions.contains({ origins: [...UPDATE_ORIGINS] }),
   ]);
-  if ((settings.autoAnalyze && !tabs) || ((settings.enrichment || settings.feedback) && !host)) {
+  if (
+    (settings.autoAnalyze && !tabs) ||
+    ((settings.enrichment || settings.feedback) && !host) ||
+    (settings.modelUpdates && !github)
+  ) {
     settings = await updateSettings({
       autoAnalyze: settings.autoAnalyze && tabs,
       enrichment: settings.enrichment && host,
       feedback: settings.feedback && host,
+      modelUpdates: settings.modelUpdates && github,
     });
   }
   localize();
@@ -263,6 +353,8 @@ async function main(): Promise<void> {
   checkbox("auto").addEventListener("change", (e) => setAuto(e.target as HTMLInputElement));
   checkbox("enrichment").addEventListener("change", (e) => setNetwork(e.target as HTMLInputElement, "enrichment"));
   checkbox("feedback").addEventListener("change", (e) => setNetwork(e.target as HTMLInputElement, "feedback"));
+  checkbox("model-updates").addEventListener("change", (e) => setModelUpdates(e.target as HTMLInputElement));
+  $("model-check").addEventListener("click", () => void checkModelUpdate());
   $("server-form").addEventListener("submit", (e) => void saveServer(e as SubmitEvent));
   $("allowlist-form").addEventListener("submit", (e) => void addDomain(e as SubmitEvent));
 }
