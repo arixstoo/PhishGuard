@@ -24,7 +24,7 @@ EMAIL_SAMPLE_COUNT := 200
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
 	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest \
 	extension-data extension-install extension-test extension-build extension-e2e extension-package \
-	bot sus
+	bot sus \n	edge-config edge-maintenance edge-smoke check-ports
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -267,3 +267,23 @@ SUS ?= docs/user-tests/sus.csv
 
 sus: ## Score SUS des tests utilisateurs, critère ≥ 70 sur le dernier groupe (docs/user-tests.md)
 	$(PYTHON) scripts/sus_score.py $(SUS) --min-score 70
+
+# --------------------------------------------------------------------------- #
+# Déploiement (module 6, docs/deployment.md et docs/operations.md)
+# --------------------------------------------------------------------------- #
+
+PUBLIC_URL ?= https://api-phishguard.vercel.app
+
+edge-config: ## Proxy Vercel vers l'origine : make edge-config ORIGIN_HOST=… (deploy/edge/dist, étape 6.2)
+	@test -n "$(ORIGIN_HOST)" || { echo "ORIGIN_HOST=<nom de l'origine> requis" >&2; exit 2; }
+	$(PYTHON) scripts/render_edge_config.py proxy --origin-host "$(ORIGIN_HOST)"
+
+edge-maintenance: ## Proxy Vercel en maintenance : 503 sur tout chemin, sans origine (étape 6.2)
+	$(PYTHON) scripts/render_edge_config.py maintenance
+
+edge-smoke: ## Vérification publique de bout en bout : Vercel, Caddy, API (étapes 6.2 et 6.3)
+	bash scripts/edge_smoke.sh $(PUBLIC_URL)
+
+check-ports: ## Scan nmap de votre serveur depuis l'extérieur : make check-ports HOST=… (étape 6.1)
+	@test -n "$(HOST)" || { echo "HOST=<ip ou nom du serveur> requis" >&2; exit 2; }
+	bash deploy/server/check-ports.sh "$(HOST)"

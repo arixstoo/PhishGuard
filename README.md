@@ -104,6 +104,15 @@ make api-key NAME=extension-dev         # create an API key, shown once; only it
 
 Run `make help` to list the available commands.
 
+### Production
+
+The public API is served at `https://api-phishguard.vercel.app`: Vercel terminates TLS and
+relays to a hardened server (Caddy, signed models, read-only containers) that refuses any
+request not carrying the edge's secret header. Pushing a `v*` tag builds amd64 and arm64
+images, scans them with trivy, publishes them to ghcr.io with signed provenance and deploys
+them by digest, with automatic rollback. See [docs/deployment.md](docs/deployment.md) and
+[docs/operations.md](docs/operations.md) (monitoring, Telegram alerts, encrypted backups).
+
 ## Roadmap
 
 Each step is tracked as a GitHub issue, grouped by milestone.
@@ -116,7 +125,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | M3 XAI & adversarial | SHAP explanations, readable reasons, evasion catalogue, normalisation, adversarial training, LLM-phishing test, robustness report | ✅ done (`v0.3.0`) |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image, safe feedback, model export, signed model registry, load test | ✅ done (`v0.4.0`) |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, paste-and-check page, user tests | 🧪 beta `0.5.0-beta.1`, user tests pending |
-| M6 Launch | Deployment, Chrome Web Store, docs site, v1.0 | ⏳ planned |
+| M6 Launch | Deployment (hardened server, Vercel edge, tag-driven deploys, monitoring), Chrome Web Store, docs site, v1.0 | 🚧 deployment tooling ready (6.1–6.4), server pending |
 
 ## Repository layout
 
