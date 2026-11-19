@@ -9,6 +9,8 @@
 PhishGuard warns people at the exact moment they are about to click, with a clear verdict
 and a one-sentence explanation, in French, English and Arabic.
 
+📖 **Documentation:** [arixstoo.github.io/PhishGuard](https://arixstoo.github.io/PhishGuard/) (quick start, FAQ, privacy, architecture, threat model, model cards).
+
 > 🚧 **Work in progress.** The project is being rebuilt in public, module by module.
 > Nothing below is production-ready yet; the [roadmap](#roadmap) shows what exists today.
 
@@ -125,7 +127,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | M3 XAI & adversarial | SHAP explanations, readable reasons, evasion catalogue, normalisation, adversarial training, LLM-phishing test, robustness report | ✅ done (`v0.3.0`) |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image, safe feedback, model export, signed model registry, load test | ✅ done (`v0.4.0`) |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, paste-and-check page, user tests | 🧪 beta `0.5.0-beta.1`, user tests pending |
-| M6 Launch | Deployment (hardened server, Vercel edge, tag-driven deploys, monitoring), Chrome Web Store, docs site, v1.0 | 🚧 deployment tooling ready (6.1–6.4), server pending |
+| M6 Launch | Deployment (hardened server, Vercel edge, tag-driven deploys, monitoring), Chrome Web Store, docs site, v1.0 | 🚧 deployment tooling, privacy policy, governance, docs site and signed model updates ready (6.1–6.8); server and Chrome Web Store pending |
 
 ## Repository layout
 
@@ -185,8 +187,28 @@ tag and in `notebooks/legacy/`, as a record of where the project came from.
 
 ## License
 
-[MIT](LICENSE) for now, to keep reuse simple. The final licence choice will be made and
-explained before v1.0.
+PhishGuard is released under the [MIT licence](LICENSE). This is the final choice, made
+at step 6.6 between the three usual options:
+
+- **MIT** (chosen): the shortest and most widely understood permissive licence. The goal
+  of the project is that as many people as possible are protected from phishing, so the
+  priority is that anyone (a school, a CERT, an association, a company, another
+  open-source tool) can reuse the detector, the extension or the data pipeline without
+  asking and without a legal review. Every runtime dependency is compatible with it:
+  permissive licences (BSD, MIT, Apache-2.0, ISC, PSF), plus `certifi` under MPL-2.0,
+  whose copyleft applies only to modified files of `certifi` itself (checked on
+  18 November 2026 over the whole runtime dependency tree).
+- **Apache-2.0** adds an explicit patent grant. It matters for projects with corporate
+  contributors who hold patents; PhishGuard is maintained by one person and holds none,
+  so the extra length buys little here.
+- **AGPL-3.0** would force anyone offering PhishGuard as an online service to publish
+  their changes. It protects the code, but deters exactly the organisations the project
+  wants to reach (many forbid AGPL internally), which works against its purpose.
+
+The licence covers the source code. Datasets are not redistributed: each source keeps
+its own terms ([docs/data-sources.md](docs/data-sources.md)). Contributions are accepted
+under the same licence, with no contributor licence agreement
+([CONTRIBUTING.md](CONTRIBUTING.md#licence)).
 
 ## Author
 

@@ -11,6 +11,14 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - **Aucune requête vers un tiers**, vérifié dans Chromium : polices système (`font: false`), et gabarit `docs_theme/partials/source.html` qui coupe l'appel à l'API de GitHub que le thème fait depuis le navigateur de chaque visiteur.
 - Reste à faire : les trois captures d'écran de l'installation (issue « good first issue ») et la vidéo de démonstration de 90 secondes. Material for MkDocs annonce sa fin de vie pour mai 2027 ; Zensical, son successeur, relit le même `mkdocs.yml`.
 
+### Licence et gouvernance (étape 6.6)
+
+- **Licence définitive : MIT**, choix expliqué dans le README face à Apache-2.0 et AGPL-3.0 ; compatibilité vérifiée sur tout l'arbre des dépendances d'exécution (licences permissives, plus `certifi` en MPL-2.0, copyleft limité à ses propres fichiers).
+- `SECURITY.md` finalisé : versions maintenues, canal privé et solution sans compte GitHub, délais engagés (72 h, 7 jours, 30 jours, 90 jours au plus), **politique de divulgation coordonnée** (avis GitHub, CVE à partir de « moyen », crédit), périmètre étendu à la falsification et au retour arrière des modèles, identifiant de la clé de signature.
+- `CONTRIBUTING.md` réécrit pour qu'un inconnu contribue sans poser de question : par où commencer, sens des labels, mise en place Python, extension et site, données qui exigent un réentraînement, traductions, versionnage sémantique et `CHANGELOG`, délai de relecture (7 jours), licence des contributions.
+- Labels versionnés (`.github/labels.json`) et **10 issues « good first issue »** (`.github/good-first-issues/`) : sites légitimes, plateformes d'hébergement, dates de publication impossibles, traduction arabe de la politique, Phishing 101 en anglais, marques du Maghreb, test Playwright des mises à jour, écoute au lecteur d'écran, actionlint, captures du site. Chacune dit le contexte, les fichiers, les commandes et quand elle est terminée.
+- `scripts/setup_community.py` applique labels, issues et réglages de sécurité (signalement privé des vulnérabilités, alertes et correctifs Dependabot, analyse des secrets et protection à l'envoi) ; **simulation par défaut**, `--apply` pour écrire. `tests/test_community.py` refuse une issue qui cite un fichier disparu, un label inconnu, ou sans critère de fin.
+
 ### Confidentialité (étape 6.5, [PRIVACY.md](PRIVACY.md))
 
 - `PRIVACY.md`, en français et en anglais, court et factuel : données traitées par l'extension, l'API, le bot et la page web, pourquoi, combien de temps, avec qui (Vercel, hébergeur, Telegram, GitHub, sources de Threat Intelligence **jamais par défaut**), comment les supprimer, comment écrire. Publié aussi sur le site de documentation (adresse publique exigée par le Chrome Web Store).

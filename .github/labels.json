@@ -1,0 +1,22 @@
+{
+  "description": "Labels du dépôt (étape 6.6), appliqués par scripts/setup_community.py. Couleur sans « # ». Tout label employé par un modèle d'issue ou une issue de .github/good-first-issues/ doit être ici (vérifié par tests/test_community.py).",
+  "labels": [
+    {"name": "bug", "color": "d73a4a", "description": "Quelque chose ne marche pas comme documenté"},
+    {"name": "enhancement", "color": "a2eeef", "description": "Nouvelle fonctionnalité ou amélioration"},
+    {"name": "good first issue", "color": "7057ff", "description": "Bien décrite, faisable sans connaître le projet"},
+    {"name": "help wanted", "color": "008672", "description": "Une contribution extérieure est la bienvenue"},
+    {"name": "security", "color": "b60205", "description": "Sujet lié à la sécurité (failles : SECURITY.md, jamais en public)"},
+    {"name": "documentation", "color": "0075ca", "description": "Documentation, guides, site"},
+    {"name": "translation", "color": "c5def5", "description": "Langues de l'interface et des documents (fr, en, ar…)"},
+    {"name": "tests", "color": "bfd4f2", "description": "Tests manquants ou à améliorer"},
+    {"name": "ci", "color": "ededed", "description": "Intégration continue, workflows GitHub Actions"},
+    {"name": "accessibility", "color": "5319e7", "description": "Accessibilité (clavier, lecteur d'écran, contrastes)"},
+    {"name": "area:extension", "color": "fef2c0", "description": "Extension Chrome (extension/)"},
+    {"name": "area:api", "color": "fef2c0", "description": "API HTTP (src/phishguard/api/)"},
+    {"name": "area:detection", "color": "fef2c0", "description": "Features, modèles, listes de référence"},
+    {"name": "needs-retraining", "color": "f9d0c4", "description": "Change les données de référence : fusionné avec le prochain réentraînement"},
+    {"name": "triage", "color": "fbca04", "description": "À trier par le mainteneur"},
+    {"name": "detection-feedback", "color": "d93f0b", "description": "Faux positif ou faux négatif signalé"},
+    {"name": "roadmap", "color": "0e8a16", "description": "Étape du plan de réalisation"}
+  ]
+}
