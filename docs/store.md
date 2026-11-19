@@ -43,6 +43,12 @@ s'envoie à soi-même, sera plus parlante ; elle se fait à la main.
 
 Sous Linux, installer d'abord une police arabe (`fonts-noto-core`) pour les captures `ar`.
 
+![Capture générée : la bannière de PhishGuard au-dessus d'un message piégé (maquette Gmail des tests)](img/extension-gmail.png)
+
+Les deux captures du dépôt (`docs/img/extension-verdict.png`, en tête du README, et
+`docs/img/extension-gmail.png`) sont des copies des captures anglaises de
+`make store-assets` : les régénérer ensemble quand l'interface change.
+
 ## 2. Mise en place, une seule fois (manuel)
 
 1. **Compte développeur Chrome Web Store** : <https://chrome.google.com/webstore/devconsole>,
