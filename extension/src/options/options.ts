@@ -357,6 +357,8 @@ async function main(): Promise<void> {
   $("model-check").addEventListener("click", () => void checkModelUpdate());
   $("server-form").addEventListener("submit", (e) => void saveServer(e as SubmitEvent));
   $("allowlist-form").addEventListener("submit", (e) => void addDomain(e as SubmitEvent));
+  // Signal pour les parcours e2e : avant ce point, un clic peut tomber sans gestionnaire.
+  document.documentElement.dataset["ready"] = "true";
 }
 
 void main();
