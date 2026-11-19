@@ -2,6 +2,20 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié] : module 6, publication et adoption (étapes 6.9 à 6.14)
+
+### Chrome Web Store (étape 6.9, [docs/store.md](docs/store.md))
+
+- Fiche versionnée et vérifiée : `extension/store/listing.json` (objectif unique, une justification en anglais par autorisation, pratiques de confidentialité, adresses, légendes) et descriptions FR, EN, AR. `store.mjs` (`make store`) refuse un résumé ou une description hors limites, une langue sans fiche, un lien inconnu, une autorisation du manifeste sans justification (ou l'inverse), une catégorie de données cochée, du code distant, et **tout libellé cité entre guillemets qui n'existe pas dans l'interface** ; il écrit `release/store/<version>/dashboard.md`, toutes les réponses du formulaire dans l'ordre des onglets.
+- Images (`make store-assets`, Playwright) : 5 captures 1280 × 800 par langue de l'interface réelle avec le **vrai modèle signé** (le script refuse le modèle de test), images promotionnelles 440 × 280 et 1400 × 560, icône 128 × 128 à marge de 16 px. Aucune page réelle, aucune requête hors du paquet.
+- `publish-chrome.mjs` : envoi par l'API v2 du Chrome Web Store (jeton OAuth rafraîchi, attente de `fetchStatus`, version annoncée par le store égale à celle de l'archive, soumission en publication **différée**, jamais `skipReview`, jeton absent des messages d'erreur). Workflow `extension-release.yml` sur étiquette `v*` : modèle du canal `models-stable` vérifié par le build, tests, archives Chrome, Firefox et sources, `SHA256SUMS`, attestation Sigstore, release GitHub ; envois aux stores derrière des environnements protégés et des variables `CWS_ENABLED` / `AMO_ENABLED`, jamais pour une préversion.
+- Reste manuel (aucune API) : compte développeur, premier envoi en « non répertorié », formulaire de confidentialité (copié depuis `dashboard.md`), passage en public après les testeurs.
+
+### Firefox (étape 6.10)
+
+- `extension/targets.mjs` : un code, deux manifestes. `node build.mjs --browser=firefox` → `dist-firefox/` : page d'événements (même module), identifiant `phishguard@arixstoo.github.io`, `data_collection_permissions: none` (exigée par AMO depuis novembre 2025), Firefox 140+ (142+ sur Android). `test/targets.test.ts` : autorisations, CSP, script de contenu et langues identiques à Chrome, rien d'autre ne change.
+- `web-ext` 10.8.0 isolé dans `extension/tools/web-ext/` (son propre `package-lock.json`, 0 vulnérabilité) ; `web-ext lint --warnings-as-errors` : 0 erreur, 0 avertissement ; en CI dans `extension.yml`. Archive des sources pour AMO (`make extension-source`), notes de reconstruction pour les relecteurs. `make extension-firefox`.
+
 ## [Non publié] : module 6, lancement (étapes 6.5 à 6.8)
 
 ### Site de documentation (étape 6.7, https://arixstoo.github.io/PhishGuard/)

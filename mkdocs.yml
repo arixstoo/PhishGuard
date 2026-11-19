@@ -97,6 +97,8 @@ nav:
   - API:
       - Utiliser l'API: api.md
       - Schéma de réponse: response-schema.md
+  - Projet:
+      - Publication dans les stores: store.md
   - Contribuer:
       - Guide de contribution: contributing.md
       - Politique de sécurité: security.md

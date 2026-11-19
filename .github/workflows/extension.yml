@@ -88,6 +88,19 @@ jobs:
       - name: Build (sans modèle)
         run: node build.mjs --allow-missing-model
 
+      # Fiche des stores (étape 6.9) : limites, langues, une justification par autorisation,
+      # aucune donnée collectée, libellés cités qui existent dans l'interface.
+      - name: Fiche des stores
+        run: npm run store -- --check
+
+      # Firefox (étape 6.10) : même code, manifeste dérivé ; web-ext a son propre
+      # package-lock.json (extension/tools/web-ext), hors de l'arbre de l'extension.
+      - name: Build et lint Firefox (sans modèle)
+        run: |
+          npm ci --prefix tools/web-ext
+          node build.mjs --allow-missing-model --browser=firefox
+          npm run lint:firefox
+
   e2e:
     # Parcours de bout en bout dans Chromium (étape 5.10) : extension chargée, fenêtre
     # contextuelle au clavier, langues, options, maquette Gmail (10 messages), et aucune

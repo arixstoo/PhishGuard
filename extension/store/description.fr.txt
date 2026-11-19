@@ -1,0 +1,28 @@
+PhishGuard vous prévient au moment où vous allez cliquer sur un lien de phishing, avec un verdict clair et une explication en une phrase.
+
+★ L'analyse se fait sur votre ordinateur
+Le modèle de détection est livré dans l'extension. Par défaut, PhishGuard n'envoie aucune requête : ni l'adresse des pages, ni le contenu de vos emails ne quittent votre appareil. Il n'y a ni compte, ni identifiant, ni statistique d'usage, ni publicité.
+
+★ Ce que fait PhishGuard
+• Cliquez sur l'icône : l'adresse de la page ouverte est analysée en quelques millisecondes.
+• Clic droit sur un lien → « Analyser ce lien avec PhishGuard », avant de l'ouvrir.
+• Dans Gmail : quand vous ouvrez un message, ses liens et son expéditeur sont vérifiés sur votre ordinateur, et une alerte s'affiche au-dessus d'un message piégé. Rien n'est gardé ni envoyé.
+• Trois verdicts, toujours en texte et en couleur : « Aucun signe de phishing », « Suspect : prudence », « Phishing probable ».
+• Les raisons du verdict en langage simple (domaine qui imite une marque, lettres d'un autre alphabet, adresse IP à la place d'un nom…) et un conseil d'action.
+• Sites de confiance : ne plus signaler un site que vous connaissez.
+• Français, anglais et arabe (de droite à gauche), utilisable au clavier et au lecteur d'écran.
+
+★ Options, toutes désactivées à l'installation
+• Analyse automatique de chaque page ouverte, sur l'appareil.
+• Analyse en ligne par un serveur PhishGuard que vous choisissez (le vôtre, ou celui d'une personne de confiance) : il n'existe aucun serveur par défaut.
+• Mises à jour du modèle : téléchargées depuis les publications GitHub du projet, installées seulement si leur signature Ed25519 correspond à la clé intégrée à l'extension.
+Chaque option demande votre accord à Chrome au moment où vous l'activez, et rend l'autorisation quand vous la désactivez.
+
+★ Honnête sur ses limites
+Aucun détecteur n'attrape tout. PhishGuard juge la forme d'une adresse, sans visiter la page : un site piégé hébergé sur une plateforme connue peut lui échapper. Gardez les bons réflexes : ne donnez jamais un mot de passe ou un code reçu par SMS à la suite d'un message inattendu.
+
+★ Libre et vérifiable
+Code source sous licence MIT, modèle évalué sur des données récentes qu'il n'a jamais vues, rapport de robustesse et politique de confidentialité publiés :
+https://arixstoo.github.io/PhishGuard/
+
+Une erreur, une question : https://github.com/arixstoo/PhishGuard/issues

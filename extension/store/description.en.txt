@@ -1,0 +1,28 @@
+PhishGuard warns you at the moment you are about to click a phishing link, with a clear verdict and a one-sentence explanation.
+
+★ The analysis runs on your computer
+The detection model ships inside the extension. By default, PhishGuard sends no request at all: neither the address of the pages you visit nor the content of your emails ever leaves your device. No account, no identifier, no usage statistics, no ads.
+
+★ What PhishGuard does
+• Click the icon: the address of the open page is checked in a few milliseconds.
+• Right-click a link → "Check this link with PhishGuard", before opening it.
+• In Gmail: when you open a message, its links and sender are checked on your computer, and an alert appears above a trapped message. Nothing is kept or sent.
+• Three verdicts, always in words and in colour: "No sign of phishing", "Suspicious: be careful", "Likely phishing".
+• The reasons in plain language (a domain imitating a brand, letters from another alphabet, an IP address instead of a name…) and what to do next.
+• Trusted sites: stop flagging a site you know.
+• French, English and Arabic (right to left), usable with the keyboard and a screen reader.
+
+★ Options, all turned off at installation
+• Automatic check of every page you open, on your device.
+• Online analysis by a PhishGuard server that you choose (your own, or one run by someone you trust): there is no default server.
+• Model updates: downloaded from the project's GitHub releases, installed only if their Ed25519 signature matches the key built into the extension.
+Each option asks Chrome for your permission when you turn it on, and gives it back when you turn it off.
+
+★ Honest about its limits
+No detector catches everything. PhishGuard judges the shape of an address without visiting the page: a trap hosted on a well-known platform can slip through. Keep the right reflexes: never give a password or a code received by SMS after an unexpected message.
+
+★ Open and verifiable
+Source code under the MIT licence, a model evaluated on recent data it has never seen, a published robustness report and privacy policy:
+https://arixstoo.github.io/PhishGuard/
+
+A mistake, a question: https://github.com/arixstoo/PhishGuard/issues

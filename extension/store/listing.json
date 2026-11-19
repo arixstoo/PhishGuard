@@ -1,0 +1,128 @@
+{
+  "$comment": "Fiche du Chrome Web Store et d'AMO (étapes 6.9 et 6.10). Vérifiée par test/store.test.ts, rendue par store.mjs. Le résumé de chaque langue est extDescription de static/_locales : une seule source.",
+  "format_version": 1,
+  "single_purpose": {
+    "fr": "Détecter et signaler les liens de phishing.",
+    "en": "Detect and flag phishing links."
+  },
+  "urls": {
+    "homepage": "https://arixstoo.github.io/PhishGuard/",
+    "privacy_policy": "https://arixstoo.github.io/PhishGuard/privacy/",
+    "support": "https://github.com/arixstoo/PhishGuard/issues",
+    "source": "https://github.com/arixstoo/PhishGuard"
+  },
+  "category": {
+    "chrome": "Privacy & Security",
+    "firefox": ["Privacy & Security"]
+  },
+  "locales": ["fr", "en", "ar"],
+  "default_locale": "fr",
+  "remote_code": {
+    "uses_remote_code": false,
+    "justification": "All JavaScript is in the package and readable (not minified); the build refuses eval, new Function, importScripts and HTML injection. Optional model updates are data (decision trees in JSON), verified with an Ed25519 key built into the extension, never code."
+  },
+  "permissions": {
+    "activeTab": "Read the address of the current tab only when the user clicks the PhishGuard icon, to analyse it on the device.",
+    "contextMenus": "Add the \"Check this link with PhishGuard\" entry to the right-click menu on links.",
+    "storage": "Keep the user's settings and trusted sites on the device, and the results of the analyses they asked for in session memory.",
+    "https://mail.google.com/*": "Analyse on the device the links and sender of the single message open in Gmail, and show an alert there when a link is suspicious; nothing is stored or sent.",
+    "tabs": "Read the address of each opened page to analyse it on the device, only if the user turns on automatic analysis; released when it is turned off.",
+    "https://*/*": "Reach the PhishGuard server that the user typed and authorised, for online analysis or error reports, or download the signed model updates from the project's GitHub releases if the user turns them on; only those exact hosts are requested, at the moment the option is turned on.",
+    "http://localhost/*": "Reach a PhishGuard server running on the user's own computer, under the same conditions.",
+    "http://127.0.0.1/*": "Reach a PhishGuard server running on the user's own computer, under the same conditions."
+  },
+  "data_usage": {
+    "$comment": "Formulaire « Pratiques de confidentialité » : le développeur ne reçoit aucune donnée. Les options en ligne, désactivées par défaut, parlent à un serveur choisi par l'utilisateur, jamais à l'auteur (docs/extension-privacy.md, section 3).",
+    "collected": {
+      "personally_identifiable_information": false,
+      "health_information": false,
+      "financial_and_payment_information": false,
+      "authentication_information": false,
+      "personal_communications": false,
+      "location": false,
+      "web_history": false,
+      "user_activity": false,
+      "website_content": false
+    },
+    "certifications": {
+      "not_sold_to_third_parties": true,
+      "not_used_for_unrelated_purposes": true,
+      "not_used_for_creditworthiness_or_lending": true
+    },
+    "firefox_data_collection_permissions": ["none"]
+  },
+  "screenshots": [
+    {
+      "id": "1-phishing",
+      "caption": {
+        "fr": "Un verdict clair avant de cliquer",
+        "en": "A clear verdict before you click",
+        "ar": "حكم واضح قبل أن تنقر"
+      },
+      "subtitle": {
+        "fr": "Analyse sur votre ordinateur, avec les raisons et le bon réflexe.",
+        "en": "Analysed on your computer, with the reasons and what to do.",
+        "ar": "تحليل على حاسوبك، مع الأسباب وما يجب فعله."
+      }
+    },
+    {
+      "id": "2-gmail",
+      "caption": {
+        "fr": "Une alerte au-dessus du message piégé",
+        "en": "An alert above the trapped message",
+        "ar": "تنبيه فوق الرسالة المفخّخة"
+      },
+      "subtitle": {
+        "fr": "Dans Gmail, seul le message ouvert est lu. Rien n'est gardé ni envoyé.",
+        "en": "In Gmail, only the open message is read. Nothing is kept or sent.",
+        "ar": "في Gmail، تُقرأ الرسالة المفتوحة فقط. لا يُحفظ شيء ولا يُرسل."
+      }
+    },
+    {
+      "id": "3-details",
+      "caption": {
+        "fr": "Des explications, pas une boîte noire",
+        "en": "Explanations, not a black box",
+        "ar": "شروح، لا صندوق أسود"
+      },
+      "subtitle": {
+        "fr": "Les détails techniques sont là pour qui veut vérifier.",
+        "en": "Technical details are there for anyone who wants to check.",
+        "ar": "التفاصيل التقنية متاحة لمن يريد التحقق."
+      }
+    },
+    {
+      "id": "4-safe",
+      "caption": {
+        "fr": "Silencieux quand tout va bien",
+        "en": "Quiet when all is well",
+        "ar": "هادئ حين يكون كل شيء على ما يرام"
+      },
+      "subtitle": {
+        "fr": "Trois verdicts, toujours en texte et en couleur.",
+        "en": "Three verdicts, always in words and in colour.",
+        "ar": "ثلاثة أحكام، دائمًا بالكلمات وبالألوان."
+      }
+    },
+    {
+      "id": "5-options",
+      "caption": {
+        "fr": "Rien ne quitte l'appareil par défaut",
+        "en": "Nothing leaves your device by default",
+        "ar": "لا شيء يغادر جهازك افتراضيًا"
+      },
+      "subtitle": {
+        "fr": "Chaque option en ligne est désactivée, et demande votre accord.",
+        "en": "Every online option is off, and asks for your consent.",
+        "ar": "كل خيار عبر الإنترنت معطّل، ويطلب موافقتك."
+      }
+    }
+  ],
+  "promo": {
+    "tagline": {
+      "fr": "Le phishing repéré avant le clic",
+      "en": "Phishing spotted before the click",
+      "ar": "اكتشاف التصيد قبل النقر"
+    }
+  }
+}

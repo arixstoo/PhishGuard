@@ -2,7 +2,11 @@
  * Build de l'extension (étape 5.2) : `npm run build` → `dist/`, à charger dans
  * chrome://extensions (mode développeur, « Charger l'extension non empaquetée »).
  *
- *   node build.mjs [--watch] [--allow-missing-model] [--test]
+ *   node build.mjs [--watch] [--allow-missing-model] [--test] [--browser=chrome|firefox]
+ *
+ * `--browser=firefox` construit `dist-firefox/` (étape 6.10) : même code, manifeste dérivé
+ * de celui de Chrome par `targets.mjs` (page d'événements, identifiant AMO, déclaration
+ * de données). Les contrôles ci-dessous s'appliquent aux deux cibles.
  *
  * `--test` construit dans `dist-test/` une variante qui expose au test automatisé
  * l'analyse du service worker (`globalThis.phishguardTest`) ; jamais à publier.
@@ -30,12 +34,24 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
 import * as esbuild from "esbuild";
+import { browserFromArgs, browserManifest, DIST_DIRS } from "./targets.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..");
 const args = new Set(process.argv.slice(2));
 const testBuild = args.has("--test");
-const dist = join(here, testBuild ? "dist-test" : "dist");
+let browser;
+try {
+  browser = browserFromArgs(process.argv.slice(2));
+} catch (error) {
+  console.error(`build : ${error.message}`);
+  process.exit(1);
+}
+if (testBuild && browser !== "chrome") {
+  console.error("build : --test ne vise que Chrome (parcours Playwright dans Chromium)");
+  process.exit(1);
+}
+const dist = join(here, testBuild ? "dist-test" : DIST_DIRS[browser]);
 const MODEL_ROLE = "url-export";
 const MODEL_PATH = "model/url-model.json";
 
@@ -249,7 +265,8 @@ function writeStatic(model) {
   const pkg = JSON.parse(readFileSync(join(here, "package.json"), "utf-8"));
   const manifest = JSON.parse(readFileSync(join(here, "static/manifest.json"), "utf-8"));
   Object.assign(manifest, manifestVersion(pkg.version));
-  writeFileSync(join(dist, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  const target = browserManifest(manifest, browser);
+  writeFileSync(join(dist, "manifest.json"), `${JSON.stringify(target, null, 2)}\n`);
   mkdirSync(join(dist, "icons"), { recursive: true });
   for (const size of [16, 32, 48, 128]) writeFileSync(join(dist, `icons/icon-${size}.png`), shieldPng(size));
   if (model) {
@@ -269,7 +286,7 @@ const common = {
   outdir: dist,
   bundle: true,
   platform: "browser",
-  target: "chrome127",
+  target: browser === "firefox" ? "firefox140" : "chrome127",
   charset: "utf8",
   legalComments: "none",
   minify: false,
@@ -307,5 +324,5 @@ if (args.has("--watch")) {
   for (const name of BUNDLES) {
     console.log(`${name} : ${(statSync(join(dist, name)).size / 1024).toFixed(0)} Kio`);
   }
-  console.log(`extension prête : ${dist}`);
+  console.log(`extension prête (${browser}) : ${dist}`);
 }
