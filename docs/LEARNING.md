@@ -332,3 +332,23 @@ Trois lignes par étape : ce que j'ai fait, ce que j'ai appris, ce qui m'a bloqu
 - **Appris** : le code était déjà portable parce que MV3 avait imposé un service worker sans état et que la vérification d'origine des messages retombait sur `sender.url`. Le seul vrai travail était le manifeste, et `web-ext lint` a trouvé ce qu'aucune doc ne disait clairement : la déclaration de données exige Firefox 142 sur Android, pas 140.
 - **Bloqué** : Playwright ne charge pas d'extension dans Firefox ; le parcours complet reste un essai manuel avant chaque soumission. Compte AMO à créer.
 
+### 6.11 — Plan de lancement
+- **Fait** : plan sur quatre semaines avec des conditions de départ, brouillon de l'article avec une table qui relie chaque chiffre à sa source, textes pour chaque communauté, scénario de la vidéo.
+- **Appris** : écrire l'article avant le lancement oblige à choisir quels chiffres montrer. J'ai mis en avant celui qui ne m'arrange pas (66,8 % de rappel contre 95 % visés) : un lecteur technique le trouverait de toute façon, et le dire d'abord rend crédible tout le reste. La relecture a aussi corrigé deux promesses prématurées : l'article présentait une extension « Chrome et Firefox », et le README un store « en cours de revue », alors que rien n'est encore soumis.
+- **Bloqué** : le lancement lui-même attend le store public, l'API en production et les tests utilisateurs.
+
+### 6.12 — Mesurer sans pister
+- **Fait** : totaux d'usage de l'API (route, verdict, niveau du client, par jour), sans aucune écriture par requête ; rapport hebdomadaire automatique et heure de tri ; politique de confidentialité mise à jour et vérifiée par test.
+- **Appris** : « anonyme » se garantit mieux par le schéma que par le code. Des contraintes `CHECK` font refuser à SQLite toute valeur hors liste : même un futur bogue qui passerait une URL au compteur ne pourrait pas l'écrire. Le premier essai a d'ailleurs montré pourquoi une liste fermée vaut mieux qu'une valeur reprise de la réponse : je comptais le « canal » de la réponse (`sms`, `messaging`), pas la route appelée, et l'API répondait 500. Enfin, le taux de faux positifs signalés est un plancher (la plupart des gens ne signalent rien) : c'est sa tendance qui compte.
+- **Bloqué** : les chiffres réels attendent le serveur et les stores.
+
+### 6.13 — Feuille de route après la v1.0
+- **Fait** : neuf pistes classées par valeur, chacune reliée à une faiblesse mesurée, avec son risque pour la vie privée et un premier pas.
+- **Appris** : classer par valeur pour l'utilisateur plutôt que par intérêt technique a fait descendre le tableau de bord, la piste la plus « impressionnante », en huitième position : c'est aussi celle qui pousse le plus vers la surveillance des personnes.
+- **Bloqué** : rien ; les pistes deviennent des issues quand quelqu'un s'en empare.
+
+### 6.14 — Mettre le projet en valeur
+- **Fait** : haut du README réécrit avec trois chiffres générés depuis les métriques du modèle déployé, document de portfolio (CV, cinq histoires, démonstration de 5 minutes).
+- **Appris** : le README affichait encore les chiffres de `url_v1` alors que `url_v2` est déployé depuis le module 3, et la moitié des fonctionnalités cochées « à faire » étaient faites. Un chiffre recopié à la main vieillit ; il vaut mieux le générer depuis le rapport.
+- **Bloqué** : la puce « utilisateurs réels » du CV et l'histoire des tests utilisateurs attendent des données qui n'existent pas encore.
+

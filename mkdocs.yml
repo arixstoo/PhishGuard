@@ -98,7 +98,15 @@ nav:
       - Utiliser l'API: api.md
       - Schéma de réponse: response-schema.md
   - Projet:
+      - Feuille de route: roadmap.md
+      - Mesurer sans pister: measure.md
       - Publication dans les stores: store.md
+      - Lancement:
+          - Plan de lancement: launch/index.md
+          - Article de lancement: launch/article.md
+          - Textes du lancement: launch/posts.md
+          - Vidéo de démonstration: launch/demo.md
+      - Portfolio: portfolio.md
   - Contribuer:
       - Guide de contribution: contributing.md
       - Politique de sécurité: security.md

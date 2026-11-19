@@ -16,6 +16,28 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - `extension/targets.mjs` : un code, deux manifestes. `node build.mjs --browser=firefox` → `dist-firefox/` : page d'événements (même module), identifiant `phishguard@arixstoo.github.io`, `data_collection_permissions: none` (exigée par AMO depuis novembre 2025), Firefox 140+ (142+ sur Android). `test/targets.test.ts` : autorisations, CSP, script de contenu et langues identiques à Chrome, rien d'autre ne change.
 - `web-ext` 10.8.0 isolé dans `extension/tools/web-ext/` (son propre `package-lock.json`, 0 vulnérabilité) ; `web-ext lint --warnings-as-errors` : 0 erreur, 0 avertissement ; en CI dans `extension.yml`. Archive des sources pour AMO (`make extension-source`), notes de reconstruction pour les relecteurs. `make extension-firefox`.
 
+### Plan de lancement (étape 6.11, [docs/launch/](docs/launch/index.md))
+
+- Plan sur quatre semaines : conditions pour fixer le jour J (store public, API en production, SUS ≥ 70, `v1.0.0`), semaine −2 (vidéo, GIF, 10 testeurs, relectures), semaine −1 (répétition), jour J dans l'ordre, réponses sous 24 h la première semaine, un article technique par semaine ensuite.
+- Brouillon de l'article « Ce que j'ai appris en construisant un détecteur de phishing open source », avec les vrais chiffres, **objectif de rappel non atteint compris** (66,8 % à 1 % de FPR contre 95 % visés), et une table de relecture qui relie chaque chiffre à sa source dans le dépôt.
+- Textes prêts : LinkedIn, Show HN (titre et premier commentaire), r/cybersecurity, r/chrome_extensions, message aux CERT, associations et écoles, recrutement des testeurs, réponses aux questions attendues. Scénario de la vidéo de 90 secondes et recette du GIF.
+
+### Mesurer sans pister (étape 6.12, [docs/measure.md](docs/measure.md))
+
+- **Totaux d'usage de l'API** (`phishguard.api.usage`) : analyses par jour, route, verdict et niveau du client, rien d'autre. Table `usage_daily` (schéma 3, migration testée) dont chaque colonne est fermée par un `CHECK` : SQLite refuse lui-même une URL, une clé, une heure. Compteurs en mémoire écrits chaque minute et à l'arrêt : **aucune écriture par requête**. Rétention 365 jours (`PHISHGUARD_API_USAGE_RETENTION_DAYS`), désactivable (`PHISHGUARD_API_USAGE_STATS=false`). `python -m phishguard.api.usage summary` : semaines ISO, verdicts, **taux de faux positifs signalés**.
+- **Politique de confidentialité élargie** (19 novembre 2026, FR et EN) : ces totaux y sont décrits et vérifiés par `tests/test_privacy_policy.py` (colonnes, absence d'identifiant, 365 jours).
+- `scripts/adoption_report.py` (bibliothèque standard seule) : étoiles, forks, téléchargements des archives, issues de la semaine, visites et clones si un jeton le permet, totaux de l'API, utilisateurs des stores ; sources manquantes signalées sans échec. Workflow `adoption.yml` : chaque lundi, une issue « Tri hebdomadaire » (label `weekly-report`) avec la liste de l'heure de tri.
+- **Aucune télémétrie dans l'extension**, décision expliquée (les stores donnent déjà installations et utilisateurs actifs).
+
+### Feuille de route après la v1.0 (étape 6.13, [docs/roadmap.md](docs/roadmap.md))
+
+- Neuf pistes classées par valeur pour les utilisateurs, chacune avec le problème mesuré qu'elle résout, son coût, son risque pour la vie privée et un premier pas : correctifs issus des retours, signaux de confiance dans la fusion, base locale de préfixes Safe Browsing, modèle de texte français / arabe / darija, QR codes, signalement vers PhishTank / OpenPhish, add-in Outlook, tableau de bord, bots WhatsApp / Signal. Pistes écartées et pourquoi.
+
+### Portfolio (étape 6.14, [docs/portfolio.md](docs/portfolio.md))
+
+- Haut du README réécrit : le problème, une vraie capture de l'extension (`make store-assets`), **trois chiffres clés générés** depuis `docs/metrics/url_v2_test.json` par `make cards` (modèle déployé, seuil de décision), latence, installation, documents phares, état réel du projet ; liste des fonctionnalités à jour.
+- `docs/portfolio.md` : trois puces de CV chiffrées (FR et EN), cinq histoires d'entretien au format situation, action, résultat, démonstration de 5 minutes avec plan B, questions difficiles.
+
 ## [Non publié] : module 6, lancement (étapes 6.5 à 6.8)
 
 ### Site de documentation (étape 6.7, https://arixstoo.github.io/PhishGuard/)
