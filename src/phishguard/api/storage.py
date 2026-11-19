@@ -15,6 +15,9 @@ automatiquement : aucun réentraînement n'en dépend (empoisonnement, étape 4.
 relus à la main, par lots (``python -m phishguard.api.feedback``), puis acceptés ou
 rejetés ; la table est bornée et purgée (voir :meth:`Database.quarantine_feedback`).
 
+Les **totaux d'usage** (étape 6.12, :mod:`phishguard.api.usage`) sont des compteurs par
+jour, canal, verdict et palier du client : aucune colonne ne peut contenir un identifiant.
+
 Une connexion par opération : SQLite l'ouvre en quelques dizaines de microsecondes, et
 l'API l'appelle depuis plusieurs threads. Le mode WAL laisse lire pendant une écriture.
 """
@@ -41,7 +44,7 @@ KEY_TOKEN_BYTES = 32  # 256 bits
 KEY_PATTERN = re.compile(r"^pg_[A-Za-z0-9_-]{43}$")
 KEY_ID_PATTERN = re.compile(r"^[0-9a-f]{12}$")
 MAX_NAME_LENGTH = 64
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS api_keys (
@@ -75,6 +78,18 @@ ALTER TABLE feedback_quarantine ADD COLUMN reviewed_at TEXT;
 CREATE INDEX IF NOT EXISTS feedback_dedup
     ON feedback_quarantine (reporter, domain, judgement, received_at);
 CREATE INDEX IF NOT EXISTS feedback_pending ON feedback_quarantine (decision, id);
+""",
+    # Version 3 (étape 6.12) : totaux d'usage, sans identifiant. Les CHECK ferment chaque
+    # colonne à une liste connue : la table ne peut recevoir ni URL, ni domaine, ni clé.
+    3: """
+CREATE TABLE IF NOT EXISTS usage_daily (
+    day         TEXT NOT NULL CHECK (day GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+    channel     TEXT NOT NULL CHECK (channel IN ('url', 'text', 'email')),
+    verdict     TEXT NOT NULL CHECK (verdict IN ('safe', 'suspicious', 'phishing')),
+    tier        TEXT NOT NULL CHECK (tier IN ('anonymous', 'authenticated')),
+    count       INTEGER NOT NULL CHECK (count >= 0),
+    PRIMARY KEY (day, channel, verdict, tier)
+) WITHOUT ROWID;
 """,
 }
 
@@ -359,6 +374,64 @@ class Database:
         if retention_days < 1:
             raise ValueError("retention_days doit être au moins 1")
         return self.purge_feedback(retention_days, include_pending=True)
+
+    def feedback_by_day(self, since_day: str) -> list[tuple[str, str, int]]:
+        """Signalements reçus depuis ``since_day`` (inclus), par jour et jugement, décidés ou non.
+
+        Un compte par jour : rien du domaine ni du rapporteur (rapport d'adoption, étape 6.12).
+        """
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT substr(received_at, 1, 10) AS day, judgement, COUNT(*) "
+                "FROM feedback_quarantine WHERE received_at >= ? GROUP BY day, judgement "
+                "ORDER BY day",
+                (since_day,),
+            ).fetchall()
+        return [(str(day), str(judgement), int(count)) for day, judgement, count in rows]
+
+    # ------------------------------------------------------------------ #
+    # Totaux d'usage (étape 6.12)
+    # ------------------------------------------------------------------ #
+
+    def add_usage(self, counts: dict[tuple[str, str, str, str], int]) -> None:
+        """Ajoute des totaux ``(jour, canal, verdict, palier) → nombre`` en une transaction."""
+        with self._connect() as db:
+            db.executemany(
+                "INSERT INTO usage_daily (day, channel, verdict, tier, count) "
+                "VALUES (?, ?, ?, ?, ?) ON CONFLICT (day, channel, verdict, tier) "
+                "DO UPDATE SET count = count + excluded.count",
+                [(*key, int(n)) for key, n in counts.items() if n > 0],
+            )
+
+    def usage_since(self, since_day: str) -> list[UsageRow]:
+        """Totaux d'usage depuis ``since_day`` (inclus), du plus ancien au plus récent."""
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT day, channel, verdict, tier, count FROM usage_daily WHERE day >= ? "
+                "ORDER BY day, channel, verdict, tier",
+                (since_day,),
+            ).fetchall()
+        return [UsageRow(*row) for row in rows]
+
+    def enforce_usage_retention(self, retention_days: int) -> int:
+        """Supprime les totaux de plus de ``retention_days`` jours ; renvoie le nombre de lignes."""
+        if retention_days < 1:
+            raise ValueError("retention_days doit être au moins 1")
+        cutoff = (datetime.now(UTC).date() - timedelta(days=retention_days)).isoformat()
+        with self._connect() as db:
+            cursor = db.execute("DELETE FROM usage_daily WHERE day < ?", (cutoff,))
+        return cursor.rowcount
+
+
+@dataclass(frozen=True)
+class UsageRow:
+    """Total d'analyses d'un jour, pour un canal, un verdict et un palier."""
+
+    day: str
+    channel: str
+    verdict: str
+    tier: str
+    count: int
 
 
 @dataclass(frozen=True)

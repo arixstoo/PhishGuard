@@ -75,6 +75,20 @@ def test_feedback_retention_matches_the_policy() -> None:
     assert "at the latest 90 days after receipt" in ENGLISH
 
 
+def test_usage_statistics_match_the_policy() -> None:
+    """Étape 6.12 : des totaux sans identifiant, 365 jours, comptés par route et verdict."""
+    settings = ApiSettings(_env_file=None)
+    assert settings.usage_retention_days == 365
+    schema = read("src/phishguard/api/storage.py")
+    table = schema[schema.index("CREATE TABLE IF NOT EXISTS usage_daily") :]
+    table = table[: table.index(") WITHOUT ROWID")]
+    for column in ("day", "channel", "verdict", "tier", "count"):
+        assert f"    {column} " in table
+    for forbidden in ("ip", "key", "domain", "url", "reporter", "received_at"):
+        assert f"    {forbidden} " not in table
+    assert "**supprimés après 365 jours**" in FRENCH and "**deleted after 365 days**" in ENGLISH
+
+
 def test_threat_intelligence_is_off_by_default() -> None:
     assert ApiSettings(_env_file=None).threat_intel_enabled is False
     assert "**jamais par défaut**" in FRENCH and "**never by default**" in ENGLISH

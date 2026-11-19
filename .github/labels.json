@@ -17,6 +17,7 @@
     {"name": "needs-retraining", "color": "f9d0c4", "description": "Change les données de référence : fusionné avec le prochain réentraînement"},
     {"name": "triage", "color": "fbca04", "description": "À trier par le mainteneur"},
     {"name": "detection-feedback", "color": "d93f0b", "description": "Faux positif ou faux négatif signalé"},
-    {"name": "roadmap", "color": "0e8a16", "description": "Étape du plan de réalisation"}
+    {"name": "roadmap", "color": "0e8a16", "description": "Étape du plan de réalisation"},
+    {"name": "weekly-report", "color": "c2e0c6", "description": "Rapport d'adoption et tri de la semaine (adoption.yml)"}
   ]
 }

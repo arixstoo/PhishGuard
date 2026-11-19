@@ -18,7 +18,8 @@ Organisation :
 - ``routers/``      ``analyze.py``, ``feedback.py``, ``meta.py``, ``web.py`` (page de l'étape 5.12) ;
 - ``security.py``   IP réelle du client et clés d'API (étape 4.4) ;
 - ``ratelimit.py``  limites de débit (étape 4.4) ;
-- ``storage.py``    base SQLite : empreintes des clés, retours en quarantaine ;
+- ``storage.py``    base SQLite : empreintes des clés, retours en quarantaine, totaux d'usage ;
+- ``usage.py``      totaux d'analyses sans identifiant, rapport hebdomadaire (étape 6.12) ;
 - ``errors.py``     enveloppe d'erreur commune, sans trace ni recopie de l'entrée ;
 - ``middleware.py`` limite de taille des corps de requête ;
 - ``hardening.py``  en-têtes de sécurité, CORS, délai par requête (étape 4.5) ;
@@ -57,6 +58,7 @@ from phishguard.api.security import authenticated_client
 from phishguard.api.service import AnalysisService, describe_models
 from phishguard.api.settings import ApiSettings, get_api_settings
 from phishguard.api.storage import Database
+from phishguard.api.usage import FLUSH_INTERVAL_SECONDS, UsageCounter
 from phishguard.api.version import api_version
 from phishguard.deployment import Analyzers, load_analyzers
 from phishguard.email.parser import EmailLimits
@@ -78,22 +80,37 @@ AnalyzersFactory = Callable[[ApiSettings, Orchestrator | None], Analyzers]
 RETENTION_INTERVAL_SECONDS = 6 * 3600
 
 
-async def _enforce_retention(database: Database, retention_days: int) -> None:
+async def _enforce_retention(database: Database, settings: ApiSettings) -> None:
+    retention_days = settings.feedback_retention_days
     removed = await run_in_threadpool(database.enforce_feedback_retention, retention_days)
     if removed:
         # Un nombre seulement : jamais un domaine ni une date (étape 4.6).
         logger.info(
             "rétention des retours : %d supprimé(s) (plus de %d jours)", removed, retention_days
         )
+    await run_in_threadpool(database.enforce_usage_retention, settings.usage_retention_days)
 
 
-async def _retention_loop(database: Database, retention_days: int) -> None:
+async def _retention_loop(database: Database, settings: ApiSettings) -> None:
     while True:
         await asyncio.sleep(RETENTION_INTERVAL_SECONDS)
         try:
-            await _enforce_retention(database, retention_days)
+            await _enforce_retention(database, settings)
         except Exception:  # la boucle ne doit jamais mourir en silence
-            logger.exception("rétention des retours : échec, nouvel essai au prochain passage")
+            logger.exception("rétention : échec, nouvel essai au prochain passage")
+
+
+async def _flush_usage(usage: UsageCounter, database: Database) -> None:
+    try:
+        await run_in_threadpool(usage.flush, database)
+    except Exception:  # les totaux sont remis en mémoire : rien n'est perdu
+        logger.exception("totaux d'usage : écriture impossible, nouvel essai plus tard")
+
+
+async def _usage_loop(usage: UsageCounter, database: Database) -> None:
+    while True:
+        await asyncio.sleep(FLUSH_INTERVAL_SECONDS)
+        await _flush_usage(usage, database)
 
 
 def _deployed_analyzers(settings: ApiSettings, orchestrator: Orchestrator | None) -> Analyzers:
@@ -142,17 +159,22 @@ def create_app(
                 settings.models_dir if analyzers_factory is None else None,
             )
             database = Database(settings.database_path)
+            usage = UsageCounter(enabled=settings.usage_stats)
             app.state.phishguard = AppState(
                 settings=settings,
                 database=database,
                 service=AnalysisService(analyzers),
                 models=models,
+                usage=usage,
             )
-            await _enforce_retention(database, settings.feedback_retention_days)
-            retention = asyncio.create_task(
-                _retention_loop(database, settings.feedback_retention_days)
-            )
+            await _enforce_retention(database, settings)
+            retention = asyncio.create_task(_retention_loop(database, settings))
             stack.callback(retention.cancel)
+            # Rappels exécutés en ordre inverse : la boucle est annulée, puis les totaux
+            # restants sont écrits une dernière fois.
+            stack.push_async_callback(_flush_usage, usage, database)
+            usage_task = asyncio.create_task(_usage_loop(usage, database))
+            stack.callback(usage_task.cancel)
             logger.info(
                 "API prête : %s",
                 ", ".join(f"{kind}={m.version}" for kind, m in models.models.items()),

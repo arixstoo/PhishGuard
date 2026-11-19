@@ -12,6 +12,7 @@ from phishguard.api.schemas import ModelsInfo
 from phishguard.api.service import AnalysisService
 from phishguard.api.settings import ApiSettings
 from phishguard.api.storage import Database
+from phishguard.api.usage import UsageCounter
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,8 @@ class AppState:
     models: ModelsInfo
     # Pseudonymes des rapporteurs de retours, clé en mémoire du jour (étape 4.10).
     pseudonyms: ReporterPseudonyms = field(default_factory=ReporterPseudonyms)
+    # Totaux d'analyses en mémoire, écrits en base chaque minute (étape 6.12).
+    usage: UsageCounter = field(default_factory=UsageCounter)
 
 
 def app_state(request: Request) -> AppState:

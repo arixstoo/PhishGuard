@@ -61,6 +61,8 @@ invalide empêche le démarrage.
 | `PHISHGUARD_API_FEEDBACK_MAX_PENDING` | `10000` | retours en attente au-delà desquels 503 |
 | `PHISHGUARD_API_FEEDBACK_DEDUP_SECONDS` | `86400` | délai de déduplication d'un même signalement |
 | `PHISHGUARD_API_FEEDBACK_RETENTION_DAYS` | `90` | rétention maximale d'un retour, relu ou non (1 à 365), appliquée au démarrage puis toutes les 6 h |
+| `PHISHGUARD_API_USAGE_STATS` | `true` | totaux d'analyses par jour, route, verdict et niveau du client, sans identifiant ([measure.md](measure.md)) ; `false` : aucun comptage |
+| `PHISHGUARD_API_USAGE_RETENTION_DAYS` | `365` | conservation de ces totaux (1 à 730), appliquée comme celle des retours |
 | `PHISHGUARD_API_RATE_LIMIT_STORAGE_URI` | `memory://` | stockage des compteurs |
 | `PHISHGUARD_API_TRUSTED_PROXIES` | vide | réseaux dont `X-Forwarded-For` est cru |
 
@@ -416,6 +418,10 @@ ni de retrouver une IP, ni de suivre quelqu'un d'un jour à l'autre. Relus à la
 supprimés après relecture (`purge`), et dans tous les cas au plus tard 90 jours après
 réception. Ils ne modifient jamais le modèle.
 
+**Totaux d'usage** ([measure.md](measure.md)). Nombre d'analyses par jour, route, verdict
+et niveau du client (anonyme ou avec clé), gardés en mémoire et ajoutés à la base chaque
+minute. Aucune colonne ne peut contenir d'identifiant (contraintes `CHECK` de SQLite).
+
 **Durées de conservation.**
 
 | Donnée | Durée |
@@ -425,6 +431,7 @@ réception. Ils ne modifient jamais le modèle.
 | journal | selon l'hébergeur (conteneur : 3 × 10 Mo en rotation) |
 | empreintes des clés | jusqu'à suppression de la base (révocation sans effacement) |
 | retours | jusqu'à relecture (`purge`), et **au plus 90 jours**, relus ou non (`PHISHGUARD_API_FEEDBACK_RETENTION_DAYS`, appliqué au démarrage puis toutes les 6 h) |
+| totaux d'usage | **365 jours** (`PHISHGUARD_API_USAGE_RETENTION_DAYS`) |
 
 **Ce qui reste hors du contrôle de l'API** : un proxy inverse ou un hébergeur placé
 devant elle peut journaliser les requêtes, URLs comprises. À configurer en conséquence

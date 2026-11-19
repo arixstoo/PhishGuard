@@ -1,6 +1,6 @@
 # Politique de confidentialité de PhishGuard
 
-*En vigueur le 18 novembre 2026. [English version below](#phishguard-privacy-policy).*
+*En vigueur le 19 novembre 2026. [English version below](#phishguard-privacy-policy).*
 
 PhishGuard est un logiciel libre de détection du phishing : une extension Chrome, une
 API, un bot Telegram et une page web. Il est publié par son auteur, à titre personnel,
@@ -56,6 +56,10 @@ ou un email à analyser.
 - **Les signalements d'erreur** (domaine, verdict, jugement, date, pseudonyme du jour qui
   ne permet pas de vous retrouver) sont relus par une personne et **supprimés au plus tard
   90 jours après réception**, relus ou non. Ils ne modifient jamais le modèle.
+- **Statistiques d'usage** : l'API compte ses analyses par jour, route (URL, texte,
+  email), verdict et type de client (anonyme ou avec clé). Ce sont des totaux : ni adresse
+  IP, ni clé, ni contenu, ni heure. Ils servent à savoir si l'outil est utilisé et combien
+  de verdicts sont contestés, et sont **supprimés après 365 jours**.
 - **Sauvegardes** : la base (empreintes des clés, signalements) est copiée chaque jour,
   chiffrée avec une clé que le serveur ne possède pas. Les copies sont supprimées après
   14 jours sur le serveur et 30 jours chez le fournisseur de stockage. Une sauvegarde
@@ -119,7 +123,7 @@ les données traitées sera annoncée dans le [CHANGELOG](CHANGELOG.md).
 
 Une affirmation de cette politique qui ne correspondrait plus au code est un bogue.
 `tests/test_privacy_policy.py` vérifie que chaque fichier cité ici existe et que les
-valeurs chiffrées ci-dessus (100 analyses, 1 000 sites, une fois par jour, 90 jours,
+valeurs chiffrées ci-dessus (100 analyses, 1 000 sites, une fois par jour, 90 jours, 365 jours,
 14 jours, 3 × 10 Mo) sont celles du code.
 
 <!-- claims:start -->
@@ -132,6 +136,7 @@ valeurs chiffrées ci-dessus (100 analyses, 1 000 sites, une fois par jour, 90 j
 | contenu analysé jamais stocké ni journalisé ; journal sans URL, IP ni clé | `tests/test_api_logging.py` |
 | clés d'API stockées sous forme d'empreinte | `src/phishguard/api/storage.py` |
 | signalements supprimés au plus tard après 90 jours | `src/phishguard/api/settings.py`, `tests/test_api_feedback.py` |
+| statistiques d'usage : des totaux sans identifiant, supprimés après 365 jours | `src/phishguard/api/usage.py`, `tests/test_api_usage.py` |
 | journal en rotation, 3 fichiers de 10 Mo | `docker-compose.yml`, `deploy/compose.prod.yml` |
 | sauvegardes chiffrées, 14 jours sur le serveur | `deploy/server/backup.sh` |
 | Threat Intelligence désactivée par défaut | `src/phishguard/api/settings.py` |
@@ -147,7 +152,7 @@ le serveur, volontairement, ne peut pas effacer ses sauvegardes hors site.
 
 # PhishGuard privacy policy
 
-*Effective 18 November 2026. The French version above prevails in case of doubt.*
+*Effective 19 November 2026. The French version above prevails in case of doubt.*
 
 PhishGuard is free, open-source phishing detection software: a Chrome extension, an API,
 a Telegram bot and a web page. It is published by its author as an individual, with no
@@ -186,6 +191,10 @@ shipped in the extension. No account, no installation identifier, no usage stati
 - Error reports (domain, verdict, judgement, date, a daily pseudonym that cannot identify
   you) are reviewed by a person and **deleted at the latest 90 days after receipt**. They
   never change the model.
+- Usage statistics: the API counts its analyses per day, route (URL, text, email),
+  verdict and client type (anonymous or with a key). These are totals: no IP address, key,
+  content or time of day. They tell whether the tool is used and how many verdicts are
+  disputed, and are **deleted after 365 days**.
 - The database (key hashes, reports) is backed up daily, encrypted with a key the server
   does not hold; copies are deleted after 14 days on the server and 30 days at the
   storage provider, so a backup may hold a report up to 30 more days.
