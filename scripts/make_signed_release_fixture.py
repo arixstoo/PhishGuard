@@ -53,7 +53,7 @@ def main() -> int:
         extra={"normalization_version": extractor["normalization_version"]},
     )
     write_signed_manifest(OUT, manifest, key)
-    (OUT / "public.pem").write_bytes(
+    (OUT / "public.pub").write_bytes(
         key.public_key().public_bytes(
             serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
         )

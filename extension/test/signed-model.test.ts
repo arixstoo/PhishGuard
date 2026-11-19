@@ -249,7 +249,7 @@ describe("publications signées par Python", () => {
       signature: new Uint8Array(readFileSync(join(fixture, "manifest.json.sig"))),
       model: new Uint8Array(readFileSync(join(fixture, "url_v9.json"))),
     };
-    const key = { publicKey: rawKey(readFileSync(join(fixture, "public.pem"), "utf-8")) };
+    const key = { publicKey: rawKey(readFileSync(join(fixture, "public.pub"), "utf-8")) };
     const verified = await verifyModelRelease(files, key, { notOlderThan: BUNDLED });
     expect(verified).toMatchObject({ release: "2026.12.01", modelVersion: "url_v9" });
     expect(await rejection(verifyModelRelease({ ...files, model: flip(files.model, 10) }, key, { notOlderThan: BUNDLED }))).toBe(
