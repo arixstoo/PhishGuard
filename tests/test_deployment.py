@@ -191,7 +191,9 @@ def _workflow(name: str) -> dict:
     return yaml.safe_load((WORKFLOWS / name).read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("name", ["deploy.yml", "uptime.yml"])
+@pytest.mark.parametrize(
+    "name", ["deploy.yml", "uptime.yml", "extension-release.yml", "adoption.yml"]
+)
 def test_workflow_least_privilege_and_pinned_actions(name):
     workflow = _workflow(name)
     assert workflow["permissions"] == {}

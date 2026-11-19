@@ -64,6 +64,20 @@ def test_url_card_uses_the_versioned_reports(workspace):
     )
 
 
+def test_readme_key_figures_describe_the_deployed_model(workspace):
+    _, metrics, readme, args = workspace
+    assert "<!-- generated:key-figures:start -->" in (ROOT / "README.md").read_text("utf-8")
+    assert cards.main(args) == 0
+    assert "evaluate_url.py --model models/url_v2.joblib" in block(readme, "key-figures")
+    shutil.copy(ROOT / "docs" / "metrics" / "url_v2_test.json", metrics / "url_v2_test.json")
+    assert cards.main(args) == 0
+    test = json.loads((metrics / "url_v2_test.json").read_text(encoding="utf-8"))
+    point = test["test"]["operating_points"][test["decision"]["name"]]
+    rendered = block(readme, "key-figures")
+    assert f"**{point['recall']['rate'] * 100:.0f} in 100**" in rendered
+    assert "`url_v2`" in rendered and "below the project's 0.95 target" in rendered
+
+
 def test_text_card_falls_back_on_the_sms_baseline(workspace):
     docs, metrics, _, args = workspace
     shutil.copy(ROOT / "docs" / "metrics" / "sms_baseline.json", metrics / "sms_baseline.json")

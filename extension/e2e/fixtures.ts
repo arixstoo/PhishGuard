@@ -136,6 +136,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use(async (path) => {
       const page = await context.newPage();
       await page.goto(`chrome-extension://${extensionId}/${path}`);
+      // Les options attachent leurs gestionnaires après des appels asynchrones.
+      if (path === "options.html") await page.locator("html[data-ready='true']").waitFor({ state: "attached" });
       return page;
     });
   },

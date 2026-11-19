@@ -1,9 +1,10 @@
 /**
  * Archive de version de l'extension (étape 5.14) : `npm run package`.
  *
- *   npm run package   # build (modèle signé vérifié), puis release/phishguard-extension-<version>.zip
+ *   npm run package           # build (modèle signé vérifié), puis release/phishguard-extension-<version>.zip
+ *   npm run package:firefox   # idem pour Firefox : release/phishguard-firefox-<version>.zip (étape 6.10)
  *
- * 1. **Contrôles** sur `dist/` : construit par `npm run build` (jamais `dist-test/`), avec
+ * 1. **Contrôles** sur `dist/` (ou `dist-firefox/`) : construit par `npm run build` (jamais `dist-test/`), avec
  *    le modèle embarqué, sans crochet de test, manifeste à la version de package.json.
  * 2. **Archive reproductible** : fichiers triés, date fixe (1980-01-01, la plus ancienne
  *    du format ZIP), aucun attribut du système ni champ « extra ». Deux constructions du
@@ -20,9 +21,9 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateRawSync } from "node:zlib";
+import { archiveName, browserFromArgs, DIST_DIRS } from "./targets.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const dist = join(here, "dist");
 const releaseDir = join(here, "release");
 
 const fail = (message) => {
@@ -106,9 +107,16 @@ export function zip(entries) {
 }
 
 function main() {
+  let browser;
+  try {
+    browser = browserFromArgs(process.argv.slice(2));
+  } catch (error) {
+    fail(error.message);
+  }
+  const dist = join(here, DIST_DIRS[browser]);
   const pkg = JSON.parse(readFileSync(join(here, "package.json"), "utf-8"));
   const manifestPath = join(dist, "manifest.json");
-  if (!existsSync(manifestPath)) fail("dist/ absent : npm run build d'abord");
+  if (!existsSync(manifestPath)) fail(`${DIST_DIRS[browser]}/ absent : npm run build d'abord`);
   const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
   if ((manifest.version_name ?? manifest.version) !== pkg.version) {
     fail(`dist/ a été construit pour ${manifest.version_name ?? manifest.version}, package.json dit ${pkg.version}`);
@@ -116,13 +124,19 @@ function main() {
   if (!existsSync(join(dist, "model", "url-model.json"))) {
     fail("dist/ sans modèle (--allow-missing-model ?) : une version sans modèle n'analyse rien");
   }
+  if (browser === "firefox" && !manifest.browser_specific_settings?.gecko?.id) {
+    fail("dist-firefox/ sans identifiant gecko : construit sans --browser=firefox ?");
+  }
+  if (browser === "chrome" && manifest.browser_specific_settings) {
+    fail("dist/ porte un manifeste Firefox");
+  }
   const entries = files(dist).map((path) => [relative(dist, path).replaceAll("\\", "/"), readFileSync(path)]);
   for (const [name, data] of entries) {
     if (name.endsWith(".js") && data.includes("phishguardTest")) fail(`${name} vient du build de test`);
     if (name.endsWith(".map")) fail(`${name} : pas de carte de sources dans une version`);
   }
   const archive = zip(entries);
-  const name = `phishguard-extension-${pkg.version}.zip`;
+  const name = archiveName(browser, pkg.version);
   const digest = createHash("sha256").update(archive).digest("hex");
   mkdirSync(releaseDir, { recursive: true });
   writeFileSync(join(releaseDir, name), archive);

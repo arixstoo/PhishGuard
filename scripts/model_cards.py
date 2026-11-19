@@ -7,7 +7,8 @@ Lit les rapports de docs/metrics/ et réécrit les blocs générés de :
 - docs/model-card-url.md   (url_v1.json, url_v1_test.json, urls_split.json) ;
 - docs/model-card-text.md  (text_v1.json, à défaut sms_baseline.json) ;
 - docs/model-card-email.md (email_v1.json) ;
-- README.md, section « Current results » (URL).
+- README.md, section « Current results » (URL, ``url_v1``) et chiffres clés du haut de page
+  (modèle déployé ``url_v2``, url_v2_test.json, étape 6.14).
 
 Aucun chiffre n'est recopié à la main : un rapport absent donne un bloc qui le dit. Le
 texte des cards hors des blocs (usage prévu, biais, limites) est écrit à la main.
@@ -232,6 +233,40 @@ def readme_url_results(train: dict[str, Any], test: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def readme_key_figures(test: dict[str, Any]) -> str:
+    """Les chiffres du haut du README (étape 6.14) : modèle **déployé**, seuil de décision.
+
+    Écrits pour quelqu'un qui ne connaît pas le vocabulaire : « sur 100 liens de phishing,
+    combien sont signalés », « sur 1 000 pages légitimes, combien à tort ».
+    """
+    decision = test["decision"]
+    point = test["test"]["operating_points"][decision["name"]]
+    free = test["test"]["threshold_free"]
+    prevalence = {r["prevalence"]: r for r in test["test"]["prevalence"][decision["name"]]}
+    version = test["metadata"]["model"]["model_version"]
+    recall = point["recall"]["rate"]
+    homepages = point["fpr_homepages"]["rate"]
+    internal = point["fpr_internal_pages"]["rate"]
+    return "\n".join(
+        [
+            "| Phishing links flagged | False alarms on legitimate pages | Precision if 1 % of links are phishing |",
+            "| :---: | :---: | :---: |",
+            (
+                f"| **{recall * 100:.0f} in 100** | **{homepages * 1000:.0f} in 1,000** home pages, "
+                f"**{internal * 1000:.0f} in 1,000** inner pages | **{prevalence[0.01]['precision'] * 100:.0f} %** |"
+            ),
+            "",
+            (
+                f"*Deployed model `{version}`, at its decision threshold, measured once on the most "
+                f"recent {test['rows']['test']['total']:,} URLs it never saw (temporal, "
+                f"domain-grouped test set). Recall at 1 % FPR: {free['recall_at_fpr_1pct']:.3f}, "
+                f"below the project's 0.95 target. Source: "
+                "[`docs/metrics/url_v2_test.json`](docs/metrics/url_v2_test.json).*"
+            ),
+        ]
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Texte et email
 # --------------------------------------------------------------------------- #
@@ -365,7 +400,17 @@ def main(argv: list[str] | None = None) -> int:
         ),
         args.readme: ("current-results-url", readme_block),
     }
-    for path, (block, content) in updates.items():
+    deployed = read(metrics / "url_v2_test.json")
+    key_figures = (
+        readme_key_figures(deployed)
+        if deployed is not None
+        else (
+            "*Key figures: run `python scripts/evaluate_url.py --model models/url_v2.joblib "
+            "--report docs/metrics/url_v2_test.json`.*"
+        )
+    )
+    blocks = [*updates.items(), (args.readme, ("key-figures", key_figures))]
+    for path, (block, content) in blocks:
         changed = update_generated_block(path, block, content)
         print(f"{path.name} : bloc {block} {'mis à jour' if changed else 'déjà à jour'}")
     return 0

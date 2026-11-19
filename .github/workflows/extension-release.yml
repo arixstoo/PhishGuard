@@ -1,0 +1,258 @@
+name: extension-release
+
+# Version de l'extension pour les stores (étapes 6.9 et 6.10, docs/store.md).
+#
+#   git tag -s v1.0.0 -m "v1.0.0" && git push origin v1.0.0     (même étiquette que deploy.yml)
+#
+# 1. package : modèle signé du canal « models-stable » (signature Ed25519 vérifiée par le
+#              build avec keys/model-signing.pub, empreinte égale aux vecteurs de référence),
+#              archives Chrome et Firefox reproductibles, archive des sources (exigée par AMO),
+#              web-ext lint, fiche vérifiée, SHA256SUMS, attestation de provenance Sigstore ;
+# 2. release : fichiers joints à la release GitHub de l'étiquette (brouillon si elle n'existe pas) ;
+# 3. chrome  : envoi au Chrome Web Store (API v2) et soumission à la revue en publication
+#              **différée** : rien n'est public tant que l'auteur n'a pas cliqué sur « Publier » ;
+# 4. firefox : soumission à addons.mozilla.org (canal « listed », revue de Mozilla).
+#
+# Les étapes 3 et 4 ne tournent que si la variable du dépôt CWS_ENABLED (resp. AMO_ENABLED)
+# vaut « true », jamais pour une préversion (v1.0.0-rc.1), et le premier envoi de chaque
+# store se fait à la main (aucune API ne crée la fiche). Secrets des environnements GitHub :
+#   chrome-web-store : CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN ;
+#                      variables CWS_PUBLISHER_ID, CWS_EXTENSION_ID ;
+#   amo              : AMO_JWT_ISSUER, AMO_JWT_SECRET.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Étiquette existante à (re)construire, par exemple v1.0.0
+        type: string
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: extension-release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - name: Récupération du code de l'étiquette
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      # v1.0.0 ↔ 1.0.0, v1.0.0-rc.1 ↔ 1.0.0-rc.1 : la version affichée par le store est
+      # celle de l'étiquette.
+      - name: Étiquette conforme à extension/package.json
+        id: version
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]] \
+            || { echo "étiquette invalide : $TAG" >&2; exit 1; }
+          version=$(jq -r .version extension/package.json)
+          [ "v$version" = "$TAG" ] \
+            || { echo "extension/package.json annonce $version, l'étiquette $TAG" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* ]]; then echo "prerelease=true"; else echo "prerelease=false"; fi >> "$GITHUB_OUTPUT"
+
+      - name: Installation de Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            extension/package-lock.json
+            extension/tools/web-ext/package-lock.json
+
+      - name: Dépendances (package-lock.json, sans script d'installation)
+        working-directory: extension
+        run: |
+          npm ci
+          npm ci --prefix tools/web-ext
+
+      # Seuls le manifeste, sa signature et le modèle exporté : le build vérifie la
+      # signature avec la clé publique du dépôt, puis la taille et l'empreinte du modèle.
+      # Un modèle publié qui ne correspond plus aux vecteurs de référence fait échouer le build.
+      - name: Modèle signé du canal models-stable
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p models
+          gh release download models-stable --repo "$GITHUB_REPOSITORY" --dir models \
+            --pattern manifest.json --pattern manifest.json.sig --pattern url_v2.json
+
+      - name: Tests de l'extension
+        working-directory: extension
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Fiche des stores
+        working-directory: extension
+        run: npm run store -- --check
+
+      - name: Archives Chrome et Firefox
+        working-directory: extension
+        run: |
+          npm run package
+          npm run package:firefox
+          npm run lint:firefox
+
+      # AMO exige les sources de tout code regroupé par un outil (esbuild) : l'arbre exact
+      # de l'étiquette, que le relecteur reconstruit avec docs/store.md.
+      - name: Archive des sources
+        run: |
+          git archive --format=zip --prefix="phishguard-$VERSION/" \
+            -o "extension/release/phishguard-source-$VERSION.zip" "$TAG"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Empreintes
+        working-directory: extension/release
+        run: |
+          rm -f ./*.sha256
+          sha256sum ./*.zip | sed 's| \./| |' > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Attestation de provenance (Sigstore)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: extension/release/*.zip
+
+      - name: Archives de la version
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: extension-release
+          path: |
+            extension/release/*.zip
+            extension/release/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Archives de la version
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: extension-release
+          path: release
+
+      - name: Release GitHub de l'étiquette
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ needs.package.outputs.prerelease }}
+        run: |
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            flags=(--draft --verify-tag --title "PhishGuard $TAG" --notes "Voir CHANGELOG.md.")
+            [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" "${flags[@]}"
+          fi
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber release/*
+
+  chrome:
+    needs: package
+    if: vars.CWS_ENABLED == 'true' && needs.package.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: chrome-web-store
+    permissions:
+      contents: read
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+          sparse-checkout: extension/publish-chrome.mjs
+
+      - name: Installation de Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Archives de la version
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: extension-release
+          path: release
+
+      - name: Envoi et soumission à la revue (publication différée)
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          (cd release && sha256sum --check --ignore-missing SHA256SUMS)
+          node extension/publish-chrome.mjs "release/phishguard-extension-$VERSION.zip" --publish --staged
+
+  firefox:
+    needs: package
+    if: vars.AMO_ENABLED == 'true' && needs.package.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: amo
+    permissions:
+      contents: read
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Installation de Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: extension/tools/web-ext/package-lock.json
+
+      - name: web-ext (package-lock.json)
+        run: npm ci --prefix extension/tools/web-ext
+
+      - name: Archives de la version
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: extension-release
+          path: release
+
+      # web-ext signe le dossier : l'archive vérifiée est décompressée telle quelle, sans
+      # nouveau build. AMO relit le code et les sources joints avant toute publication.
+      - name: Soumission à addons.mozilla.org (canal listed)
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          (cd release && sha256sum --check --ignore-missing SHA256SUMS)
+          mkdir firefox
+          unzip -q "release/phishguard-firefox-$VERSION.zip" -d firefox
+          npm --prefix extension/tools/web-ext exec --no -- web-ext sign \
+            --source-dir "$PWD/firefox" --artifacts-dir "$PWD/signed" \
+            --channel listed --upload-source-code "$PWD/release/phishguard-source-$VERSION.zip" \
+            --approval-timeout 0

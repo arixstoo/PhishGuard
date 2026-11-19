@@ -1,0 +1,147 @@
+{
+  "description": "Pages légitimes courantes (accueil et connexion) sur lesquelles un faux positif coûte le plus de confiance. Garde-fou de l'étape 6.8 : un nouveau modèle ne doit pas en signaler davantage que le modèle en service. Liste choisie à la main pour le public visé (francophone, anglophone, arabophone) ; ajouter une URL : voir CONTRIBUTING.md.",
+  "format_version": 1,
+  "groups": [
+    {
+      "name": "comptes et messageries",
+      "urls": [
+        "https://accounts.google.com/signin",
+        "https://mail.google.com/mail/u/0/",
+        "https://login.microsoftonline.com/",
+        "https://login.live.com/",
+        "https://outlook.live.com/mail/0/",
+        "https://appleid.apple.com/sign-in",
+        "https://www.icloud.com/mail",
+        "https://login.yahoo.com/",
+        "https://mail.proton.me/login",
+        "https://www.laposte.net/accueil",
+        "https://www.orange.fr/portail",
+        "https://webmail.free.fr/",
+        "https://www.sfr.fr/mon-espace-client/"
+      ]
+    },
+    {
+      "name": "réseaux sociaux et messageries instantanées",
+      "urls": [
+        "https://www.facebook.com/login/",
+        "https://www.instagram.com/accounts/login/",
+        "https://x.com/i/flow/login",
+        "https://www.linkedin.com/login",
+        "https://web.whatsapp.com/",
+        "https://web.telegram.org/a/",
+        "https://www.tiktok.com/login",
+        "https://www.snapchat.com/",
+        "https://www.reddit.com/login/",
+        "https://discord.com/login",
+        "https://www.youtube.com/"
+      ]
+    },
+    {
+      "name": "paiement et banques",
+      "urls": [
+        "https://www.paypal.com/signin",
+        "https://www.paypal.com/fr/home",
+        "https://dashboard.stripe.com/login",
+        "https://wise.com/login",
+        "https://app.revolut.com/start",
+        "https://www.boursorama.com/connexion/",
+        "https://www.credit-agricole.fr/",
+        "https://mabanque.bnpparibas/",
+        "https://particuliers.societegenerale.fr/",
+        "https://www.labanquepostale.fr/",
+        "https://www.lcl.fr/",
+        "https://www.caisse-epargne.fr/",
+        "https://www.creditmutuel.fr/fr/authentification.html",
+        "https://www.hsbc.co.uk/",
+        "https://www.barclays.co.uk/",
+        "https://www.chase.com/",
+        "https://www.bankofamerica.com/",
+        "https://www.attijariwafabank.com/",
+        "https://www.biat.com.tn/",
+        "https://www.cpa-bank.dz/"
+      ]
+    },
+    {
+      "name": "commerce en ligne et livraison",
+      "urls": [
+        "https://www.amazon.fr/ap/signin",
+        "https://www.amazon.com/",
+        "https://www.ebay.fr/signin/",
+        "https://www.leboncoin.fr/",
+        "https://www.vinted.fr/member/signup/select_type",
+        "https://www.cdiscount.com/",
+        "https://www.fnac.com/",
+        "https://www.aliexpress.com/",
+        "https://www.jumia.com.tn/",
+        "https://www.noon.com/",
+        "https://www.laposte.fr/outils/suivre-vos-envois",
+        "https://www.colissimo.fr/",
+        "https://www.chronopost.fr/",
+        "https://www.dhl.com/fr-fr/home.html",
+        "https://www.ups.com/fr/fr/Home.page",
+        "https://www.fedex.com/fr-fr/home.html"
+      ]
+    },
+    {
+      "name": "administrations et services publics",
+      "urls": [
+        "https://www.impots.gouv.fr/accueil",
+        "https://cfspart.impots.gouv.fr/LoginAccess",
+        "https://www.ameli.fr/assure",
+        "https://www.caf.fr/",
+        "https://www.service-public.fr/",
+        "https://franceconnect.gouv.fr/",
+        "https://www.francetravail.fr/accueil/",
+        "https://ants.gouv.fr/",
+        "https://www.gov.uk/log-in-register-hmrc-online-services",
+        "https://www.irs.gov/",
+        "https://www.service-public.ma/",
+        "https://www.finances.gov.tn/",
+        "https://www.mfdgi.gov.dz/"
+      ]
+    },
+    {
+      "name": "travail, cloud et développement",
+      "urls": [
+        "https://github.com/login",
+        "https://gitlab.com/users/sign_in",
+        "https://www.dropbox.com/login",
+        "https://drive.google.com/drive/my-drive",
+        "https://docs.google.com/document/u/0/",
+        "https://onedrive.live.com/",
+        "https://www.office.com/",
+        "https://teams.microsoft.com/",
+        "https://app.slack.com/signin",
+        "https://zoom.us/signin",
+        "https://www.notion.so/login",
+        "https://console.aws.amazon.com/",
+        "https://portal.azure.com/",
+        "https://console.cloud.google.com/",
+        "https://www.docusign.com/",
+        "https://wetransfer.com/",
+        "https://www.canva.com/login"
+      ]
+    },
+    {
+      "name": "divertissement, voyage et information",
+      "urls": [
+        "https://www.netflix.com/login",
+        "https://www.disneyplus.com/login",
+        "https://open.spotify.com/",
+        "https://store.steampowered.com/login/",
+        "https://www.booking.com/",
+        "https://www.airbnb.fr/",
+        "https://www.sncf-connect.com/",
+        "https://www.airfrance.fr/",
+        "https://www.uber.com/fr/fr/",
+        "https://www.wikipedia.org/",
+        "https://www.lemonde.fr/",
+        "https://www.bbc.com/news",
+        "https://www.aljazeera.net/",
+        "https://www.google.com/",
+        "https://www.bing.com/",
+        "https://duckduckgo.com/"
+      ]
+    }
+  ]
+}

@@ -385,3 +385,61 @@ def test_parse_ids(spec, expected):
 def test_parse_ids_refuses(spec):
     with pytest.raises(ValueError):
         parse_ids(spec)
+
+
+# --------------------------------------------------------------------------- #
+# Rétention maximale (étape 6.5, PRIVACY.md : « supprimés au plus tard après 90 jours »)
+# --------------------------------------------------------------------------- #
+
+
+def _age_feedback(database: Database, days: int) -> None:
+    """Vieillit tous les retours de ``days`` jours (la date de réception est celle du serveur)."""
+    db = sqlite3.connect(database.path)
+    try:
+        for row_id, received in db.execute("SELECT id, received_at FROM feedback_quarantine"):
+            older = (date.fromisoformat(received[:10]) - timedelta(days=days)).isoformat()
+            db.execute(
+                "UPDATE feedback_quarantine SET received_at = ? WHERE id = ?",
+                (older + received[10:], row_id),
+            )
+        db.commit()
+    finally:
+        db.close()
+
+
+def test_retention_removes_old_feedback_even_if_never_reviewed(tmp_path):
+    database = Database(tmp_path / "db.sqlite3")
+    for domain in ("old-pending.example", "old-reviewed.example"):
+        database.quarantine_feedback(
+            domain=domain, verdict="phishing", judgement="false_positive", key_id=None
+        )
+    database.decide_feedback([2], "accepted")
+    _age_feedback(database, 91)
+    database.quarantine_feedback(
+        domain="recent.example", verdict="safe", judgement="false_negative", key_id=None
+    )
+    assert database.enforce_feedback_retention(90) == 2
+    assert [r["domain"] for r in rows(database)] == ["recent.example"]
+    with pytest.raises(ValueError):
+        database.enforce_feedback_retention(0)
+
+
+def test_retention_is_bounded_by_settings(api_models_dir, tmp_path):
+    from pydantic import ValidationError
+
+    assert settings_for(api_models_dir, tmp_path).feedback_retention_days == 90
+    for value in (0, 366):
+        with pytest.raises(ValidationError):
+            settings_for(api_models_dir, tmp_path, feedback_retention_days=value)
+
+
+def test_api_enforces_retention_at_startup(api_models_dir, tmp_path):
+    settings = settings_for(api_models_dir, tmp_path, feedback_retention_days=30)
+    database = Database(settings.database_path)
+    database.quarantine_feedback(
+        domain="stale.example", verdict="phishing", judgement="false_positive", key_id=None
+    )
+    _age_feedback(database, 31)
+    with api_client(settings) as client:
+        assert client.get("/v1/health").status_code == 200
+        assert database.count_feedback() == 0

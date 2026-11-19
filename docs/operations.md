@@ -101,6 +101,16 @@ Côté fournisseur, activez la conservation des versions ou le verrouillage d'ob
 (*Object Lock*) s'il est proposé : un attaquant qui obtiendrait la clé rclone ne
 pourrait alors pas effacer l'historique.
 
+**Expiration obligatoire : 30 jours.** La politique de confidentialité
+([PRIVACY.md](../PRIVACY.md)) promet qu'une sauvegarde hors du serveur est supprimée
+après 30 jours : les signalements d'erreur y figurent, et ils ne doivent pas survivre
+longtemps à leur rétention de 90 jours dans la base. Le serveur ne peut pas effacer ses
+sauvegardes hors site (`--immutable`, clé limitée), c'est donc une **règle d'expiration
+du bucket** qui s'en charge : Backblaze B2, *Lifecycle Settings* → « Keep only the last
+version » avec suppression après 30 jours ; Cloudflare R2, *Object lifecycle rules* →
+suppression après 30 jours. Un verrouillage d'objets éventuel doit durer moins de
+30 jours.
+
 ### Restaurer la base
 
 Testez-le au moins une fois, avant d'en avoir besoin.

@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 600" width="980" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Architecture de PhishGuard</title>
+  <desc id="desc">En haut, l'appareil de l'utilisateur : l'extension analyse localement, sans réseau par défaut. Au milieu, l'API derrière Vercel et Caddy, appelée par le bot Telegram, la page web, et l'extension si l'utilisateur l'a configurée. En bas, la chaîne des modèles : collecte, réentraînement mensuel et garde-fou sur GitHub Actions, signature sur la machine de l'auteur, canal signé models-stable lu par l'API et par l'extension.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-opt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a35400"/>
+    </marker>
+    <style>
+      .zone { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; }
+      .box { fill: #ffffff; stroke: #1f4fd1; stroke-width: 1.5; }
+      .local { fill: #eef6ff; }
+      .ext { fill: #fff7ed; stroke: #a35400; }
+      .zone-title { font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .title { font-size: 13.5px; font-weight: 650; fill: #0f172a; }
+      .text { font-size: 11.5px; fill: #334155; }
+      .note { font-size: 11px; fill: #a35400; font-style: italic; }
+      .flow { stroke: #475569; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .opt { stroke: #a35400; stroke-width: 1.6; fill: none; stroke-dasharray: 6 4; marker-end: url(#arrow-opt); }
+    </style>
+  </defs>
+
+  <rect width="980" height="600" fill="#ffffff"/>
+
+  <!-- Appareil de l'utilisateur -->
+  <rect class="zone" x="16" y="16" width="948" height="150" rx="10"/>
+  <text class="zone-title" x="32" y="40">Appareil de l'utilisateur : par défaut, rien ne sort</text>
+  <rect class="box local" x="32" y="54" width="300" height="98" rx="8"/>
+  <text class="title" x="46" y="76">Extension Chrome (MV3)</text>
+  <text class="text" x="46" y="96">fenêtre, menu « Analyser ce lien », options</text>
+  <text class="text" x="46" y="113">service worker : extracteur + modèle local</text>
+  <text class="text" x="46" y="130">LightGBM signé, 2 à 4 ms par analyse</text>
+  <rect class="box local" x="352" y="54" width="250" height="98" rx="8"/>
+  <text class="title" x="366" y="76">Gmail (script de contenu)</text>
+  <text class="text" x="366" y="96">liens et expéditeur du seul</text>
+  <text class="text" x="366" y="113">message ouvert, analysés sur</text>
+  <text class="text" x="366" y="130">l'appareil ; bandeau d'alerte</text>
+  <rect class="box local" x="622" y="54" width="326" height="98" rx="8"/>
+  <text class="title" x="636" y="76">Bot Telegram · page « coller et analyser »</text>
+  <text class="text" x="636" y="96">un message transféré ou un texte collé,</text>
+  <text class="text" x="636" y="113">envoyé à l'API, analysé puis oublié</text>
+  <path class="flow" d="M352,103 L336,103"/>
+
+  <!-- Serveur -->
+  <rect class="zone" x="16" y="196" width="948" height="170" rx="10"/>
+  <text class="zone-title" x="32" y="220">Serveur : l'API, derrière deux proxys TLS</text>
+  <rect class="box" x="32" y="236" width="170" height="112" rx="8"/>
+  <text class="title" x="46" y="258">Vercel</text>
+  <text class="text" x="46" y="278">api-phishguard.vercel.app</text>
+  <text class="text" x="46" y="295">TLS, pare-feu, ajoute</text>
+  <text class="text" x="46" y="312">l'en-tête secret</text>
+  <rect class="box" x="226" y="236" width="150" height="112" rx="8"/>
+  <text class="title" x="240" y="258">Caddy</text>
+  <text class="text" x="240" y="278">Let's Encrypt</text>
+  <text class="text" x="240" y="295">403 sans le secret</text>
+  <text class="text" x="240" y="312">aucun journal d'accès</text>
+  <rect class="box" x="400" y="236" width="300" height="112" rx="8"/>
+  <text class="title" x="414" y="258">API FastAPI (conteneur durci)</text>
+  <text class="text" x="414" y="278">URL, texte, email : modèles signés, fusion,</text>
+  <text class="text" x="414" y="295">raisons en fr/en/ar, ATT&amp;CK ; limites de débit</text>
+  <text class="text" x="414" y="312">SQLite : empreintes des clés, signalements</text>
+  <text class="text" x="414" y="329">(90 jours au plus) ; journal sans contenu</text>
+  <rect class="box ext" x="724" y="236" width="224" height="112" rx="8"/>
+  <text class="title" x="738" y="258">Threat Intelligence</text>
+  <text class="text" x="738" y="278">Safe Browsing, VirusTotal,</text>
+  <text class="text" x="738" y="295">urlscan.io, RDAP, DNS</text>
+  <text class="note" x="738" y="318">désactivée par défaut</text>
+  <path class="flow" d="M202,292 L222,292"/>
+  <path class="flow" d="M376,292 L396,292"/>
+  <path class="opt" d="M700,292 L720,292"/>
+
+  <!-- Appels vers l'API -->
+  <path class="flow" d="M785,152 L785,176 L117,176 L117,232"/>
+  <path class="opt" d="M182,152 L182,232"/>
+  <text class="note" x="190" y="190">option : serveur choisi par l'utilisateur</text>
+
+  <!-- Chaîne des modèles -->
+  <rect class="zone" x="16" y="396" width="948" height="188" rx="10"/>
+  <text class="zone-title" x="32" y="420">Chaîne des modèles : réentraînement mensuel, signature hors CI</text>
+  <rect class="box" x="32" y="436" width="200" height="130" rx="8"/>
+  <text class="title" x="46" y="458">Collecte (quotidienne)</text>
+  <text class="text" x="46" y="478">PhishTank, OpenPhish,</text>
+  <text class="text" x="46" y="495">URLhaus, Tranco,</text>
+  <text class="text" x="46" y="512">Common Crawl ;</text>
+  <text class="text" x="46" y="529">archives chiffrées</text>
+  <rect class="box" x="256" y="436" width="230" height="130" rx="8"/>
+  <text class="title" x="270" y="458">GitHub Actions (mensuel)</text>
+  <text class="text" x="270" y="478">split temporel, entraînement</text>
+  <text class="text" x="270" y="495">adversarial, garde-fou : test</text>
+  <text class="text" x="270" y="512">figé, test récent, 106 sites</text>
+  <text class="text" x="270" y="529">légitimes ; brouillon attesté</text>
+  <rect class="box" x="510" y="436" width="210" height="130" rx="8"/>
+  <text class="title" x="524" y="458">Machine de l'auteur</text>
+  <text class="text" x="524" y="478">vérifie provenance et</text>
+  <text class="text" x="524" y="495">garde-fou, puis signe</text>
+  <text class="text" x="524" y="512">(Ed25519, clé privée</text>
+  <text class="text" x="524" y="529">jamais sur la CI)</text>
+  <rect class="box" x="744" y="436" width="204" height="130" rx="8"/>
+  <text class="title" x="758" y="458">Canal models-stable</text>
+  <text class="text" x="758" y="478">manifeste signé, modèles,</text>
+  <text class="text" x="758" y="495">empreintes ; vérifié par</text>
+  <text class="text" x="758" y="512">l'API au démarrage et par</text>
+  <text class="text" x="758" y="529">l'extension (option)</text>
+  <path class="flow" d="M232,501 L252,501"/>
+  <path class="flow" d="M486,501 L506,501"/>
+  <path class="flow" d="M720,501 L740,501"/>
+  <path class="flow" d="M846,436 L846,384 L550,384 L550,352"/>
+  <path class="opt" d="M846,566 L846,592 L24,592 L24,128 L28,128"/>
+</svg>
