@@ -30,7 +30,6 @@ from typing import Any
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from phishguard.registry import (
-    PASSPHRASE_ENV,
     build_manifest,
     key_id,
     load_private_key,
@@ -139,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "keygen":
         if passphrase is None:
             print(
-                f"attention : {PASSPHRASE_ENV} vide, clé privée NON chiffrée (droits 600)",
+                "attention : PHISHGUARD_SIGNING_PASSPHRASE vide, clé privée NON chiffrée (droits 600)",
                 file=sys.stderr,
             )
         key = Ed25519PrivateKey.generate()
