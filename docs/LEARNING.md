@@ -299,3 +299,56 @@ Trois lignes par étape : ce que j'ai fait, ce que j'ai appris, ce qui m'a bloqu
 - **Fait** : `0.5.0-beta.1` (manifeste `version: 0.5.0`, `version_name` complet ; paquet Python `0.5.0b1`). `npm run package` : archive ZIP **reproductible** (même SHA-256 après un nouveau build complet) et son empreinte, refusée sans modèle signé ou depuis le build de test ; l'archive décompressée passe les parcours Gmail et options. Guide d'installation pour les testeurs (`docs/beta.md`).
 - **Appris** : Chrome n'accepte que des entiers dans `version` : `0.5.0-beta` dans le manifeste aurait empêché l'extension de se charger.
 - **Bloqué** : le tag `v0.5.0` attend les tests utilisateurs (critère de l'étape 5.13).
+
+## Module 6 — Déploiement, open source et adoption
+
+### 6.5 — Documents juridiques et de confidentialité
+- **Fait** : `PRIVACY.md` en français et en anglais : données de l'extension, de l'API, du bot et de la page web, durées, tiers, suppression, contact. Tableau « affirmation → vérifiée par », et `tests/test_privacy_policy.py` qui relie chaque valeur chiffrée de la politique (100 analyses, 1 000 sites, une fois par jour, 90 jours, 14 jours, 3 × 10 Mo) à la constante du code, dans les deux langues.
+- **Appris** : écrire la politique phrase par phrase contre le code a trouvé un écart : la rétention des signalements n'était qu'une recommandation (`purge` à la main). Une promesse de confidentialité doit être appliquée par le code, pas par la discipline de l'administrateur : l'API supprime désormais tout signalement de plus de 90 jours, au démarrage puis toutes les 6 heures. Même logique pour les sauvegardes hors serveur : le serveur ne peut pas les effacer (c'est voulu), donc la promesse repose sur une règle d'expiration du bucket, documentée là où on configure le stockage.
+- **Bloqué** : la règle d'expiration de 30 jours est à configurer chez le fournisseur de stockage, avec le serveur.
+
+### 6.6 — Licence et gouvernance
+- **Fait** : licence MIT confirmée et expliquée (face à Apache-2.0 et AGPL-3.0), compatibilité vérifiée sur tout l'arbre des dépendances ; `SECURITY.md` (délais, divulgation coordonnée, clé de signature), `CONTRIBUTING.md` réécrit ; labels versionnés et 10 issues « good first issue » ; `scripts/setup_community.py`, en simulation par défaut.
+- **Appris** : la vérification des licences a nuancé une phrase trop rapide : `certifi` est en MPL-2.0, pas « permissif ». Et une « bonne première issue » proposée par le plan (ajouter une marque) n'en est pas une sans explication : `brands.json` fait partie des données de référence du modèle, la modifier rend le modèle actuel incompatible. L'issue le dit, avec le label `needs-retraining`. Le test des issues (fichiers cités qui existent, critère de fin présent) a trouvé trois citations de fichiers à créer : une issue autonome se vérifie comme du code.
+- **Bloqué** : créer les labels et les issues, activer le signalement privé des vulnérabilités et les alertes Dependabot : actions publiques, à lancer avec `python scripts/setup_community.py --apply`.
+
+### 6.7 — Site de documentation
+- **Fait** : MkDocs Material sur GitHub Pages, accueil avec démarrage rapide, FAQ, architecture (diagramme SVG), modèle de menace ; documents de la racine publiés par un crochet sans duplication ; `mkdocs build --strict` en CI.
+- **Appris** : un site « respectueux de la vie privée » ne l'est pas par défaut. Le thème charge ses polices chez Google et interroge l'API de GitHub depuis le navigateur de chaque visiteur pour afficher les étoiles du dépôt. Les deux ont été coupés, et l'absence de toute requête vers un tiers a été vérifiée dans Chromium plutôt que supposée. Autre détail : les ancres de MkDocs suppriment les accents, celles de GitHub les gardent ; un réglage de `slugify` fait marcher les mêmes liens sur les deux.
+- **Bloqué** : les captures d'écran de l'installation (issue ouverte aux contributeurs) et la vidéo de 90 secondes. Material for MkDocs annonce sa fin de vie pour mai 2027 (Zensical relit le même `mkdocs.yml`).
+
+### 6.8 — Mises à jour du modèle sécurisées et planifiées
+- **Fait** : workflow mensuel (données, candidat, garde-fou, brouillon attesté), garde-fou de non-régression (test figé, test récent, 106 sites légitimes courants), publication signée sur la machine de l'auteur après vérification de la provenance, et côté extension une option de mises à jour vérifiées par Ed25519 avec la clé embarquée, sans retour arrière. Un octet modifié est rejeté (vérifié octet par octet).
+- **Appris** : le plan proposait de signer dans le workflow ; c'était contraire à la règle de l'étape 4.12 (la clé privée ne va jamais sur la CI). La séparation « la CI produit et prouve la provenance, l'humain vérifie et signe » garde les deux propriétés. L'essai réel du garde-fou est la meilleure justification de la liste des sites courants : `url_v1` soumis comme candidat a un meilleur rappel que `url_v2`, mais signale 28 pages de connexion légitimes contre 3 ; le rappel seul l'aurait publié. Enfin, le modèle reçu est stocké avec sa signature et revérifié à chaque chargement, parce que le stockage local est modifiable par le script Gmail.
+- **Bloqué** : mise en place unique (canal `models-stable`, test figé chiffré, historique des collectes) : publication sur GitHub, à faire par l'auteur ([docs/model-updates.md](model-updates.md#5-mise-en-place-une-fois)).
+
+### 6.9 — Publication sur le Chrome Web Store
+- **Fait** : fiche versionnée (objectif unique, justifications, pratiques de confidentialité, descriptions FR/EN/AR) vérifiée par un script et des tests, captures générées par Playwright avec le vrai modèle, envoi par l'API v2 du Chrome Web Store en publication différée, workflow de release sur étiquette avec attestation de provenance.
+- **Appris** : le formulaire d'un store est une promesse, au même titre que la politique de confidentialité ; il se vérifie comme du code. Le test « chaque libellé cité existe dans l'interface » a trouvé deux écarts dès le premier passage : la description promettait « Suspect : soyez prudent », l'interface dit « Suspect : prudence ». Autre point : le support de l'API v1 du store était annoncé jusqu'au 15 octobre 2026 ; vérifier la documentation à jour avant d'écrire le client a évité un script mort-né.
+- **Bloqué** : le compte développeur, le premier envoi et le formulaire de confidentialité ne passent par aucune API ; ils attendent l'auteur ([docs/store.md](store.md#2-mise-en-place-une-seule-fois-manuel)).
+
+### 6.10 — Firefox
+- **Fait** : manifeste Firefox dérivé de celui de Chrome (page d'événements, identifiant AMO, déclaration « aucune collecte »), build et archive séparés, `web-ext lint` sans avertissement en CI, archive des sources pour AMO.
+- **Appris** : le code était déjà portable parce que MV3 avait imposé un service worker sans état et que la vérification d'origine des messages retombait sur `sender.url`. Le seul vrai travail était le manifeste, et `web-ext lint` a trouvé ce qu'aucune doc ne disait clairement : la déclaration de données exige Firefox 142 sur Android, pas 140.
+- **Bloqué** : Playwright ne charge pas d'extension dans Firefox ; le parcours complet reste un essai manuel avant chaque soumission. Compte AMO à créer.
+
+### 6.11 — Plan de lancement
+- **Fait** : plan sur quatre semaines avec des conditions de départ, brouillon de l'article avec une table qui relie chaque chiffre à sa source, textes pour chaque communauté, scénario de la vidéo.
+- **Appris** : écrire l'article avant le lancement oblige à choisir quels chiffres montrer. J'ai mis en avant celui qui ne m'arrange pas (66,8 % de rappel contre 95 % visés) : un lecteur technique le trouverait de toute façon, et le dire d'abord rend crédible tout le reste. La relecture a aussi corrigé deux promesses prématurées : l'article présentait une extension « Chrome et Firefox », et le README un store « en cours de revue », alors que rien n'est encore soumis.
+- **Bloqué** : le lancement lui-même attend le store public, l'API en production et les tests utilisateurs.
+
+### 6.12 — Mesurer sans pister
+- **Fait** : totaux d'usage de l'API (route, verdict, niveau du client, par jour), sans aucune écriture par requête ; rapport hebdomadaire automatique et heure de tri ; politique de confidentialité mise à jour et vérifiée par test.
+- **Appris** : « anonyme » se garantit mieux par le schéma que par le code. Des contraintes `CHECK` font refuser à SQLite toute valeur hors liste : même un futur bogue qui passerait une URL au compteur ne pourrait pas l'écrire. Le premier essai a d'ailleurs montré pourquoi une liste fermée vaut mieux qu'une valeur reprise de la réponse : je comptais le « canal » de la réponse (`sms`, `messaging`), pas la route appelée, et l'API répondait 500. Enfin, le taux de faux positifs signalés est un plancher (la plupart des gens ne signalent rien) : c'est sa tendance qui compte.
+- **Bloqué** : les chiffres réels attendent le serveur et les stores.
+
+### 6.13 — Feuille de route après la v1.0
+- **Fait** : neuf pistes classées par valeur, chacune reliée à une faiblesse mesurée, avec son risque pour la vie privée et un premier pas.
+- **Appris** : classer par valeur pour l'utilisateur plutôt que par intérêt technique a fait descendre le tableau de bord, la piste la plus « impressionnante », en huitième position : c'est aussi celle qui pousse le plus vers la surveillance des personnes.
+- **Bloqué** : rien ; les pistes deviennent des issues quand quelqu'un s'en empare.
+
+### 6.14 — Mettre le projet en valeur
+- **Fait** : haut du README réécrit avec trois chiffres générés depuis les métriques du modèle déployé, document de portfolio (CV, cinq histoires, démonstration de 5 minutes).
+- **Appris** : le README affichait encore les chiffres de `url_v1` alors que `url_v2` est déployé depuis le module 3, et la moitié des fonctionnalités cochées « à faire » étaient faites. Un chiffre recopié à la main vieillit ; il vaut mieux le générer depuis le rapport.
+- **Bloqué** : la puce « utilisateurs réels » du CV et l'histoire des tests utilisateurs attendent des données qui n'existent pas encore.
+

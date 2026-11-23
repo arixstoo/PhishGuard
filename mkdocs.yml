@@ -1,0 +1,114 @@
+# Site de documentation (étape 6.7) : https://arixstoo.github.io/PhishGuard/
+#   pip install -e '.[docs]' && mkdocs serve      # aperçu local
+#   mkdocs build --strict                         # ce que lance la CI (.github/workflows/docs.yml)
+
+site_name: PhishGuard
+site_description: Détection du phishing libre, explicable et respectueuse de la vie privée.
+site_url: https://arixstoo.github.io/PhishGuard/
+repo_url: https://github.com/arixstoo/PhishGuard
+repo_name: arixstoo/PhishGuard
+edit_uri: edit/master/docs/
+copyright: PhishGuard · licence MIT
+docs_dir: docs
+
+theme:
+  name: material
+  # Gabarits remplacés : docs_theme/partials/source.html (aucune requête vers GitHub).
+  custom_dir: docs_theme
+  language: fr
+  # Aucune police téléchargée depuis Google : le site ne fait aucune requête vers un tiers.
+  font: false
+  icon:
+    logo: material/shield-check
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Passer en mode sombre
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Passer en mode clair
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.highlight
+    - content.code.copy
+
+hooks:
+  - scripts/docs_site.py
+
+plugins:
+  - search:
+      lang: [fr, en]
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      # Ancres comme sur GitHub (accents conservés) : les liens des documents marchent
+      # sur les deux.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+validation:
+  omitted_files: info
+  absolute_links: info
+  unrecognized_links: warn
+  anchors: info
+
+not_in_nav: |
+  /*.md
+  /user-tests/*
+
+nav:
+  - Accueil: index.md
+  - Questions fréquentes: faq.md
+  - Confidentialité:
+      - Politique de confidentialité: privacy.md
+      - Données de l'extension: extension-privacy.md
+  - Comprendre:
+      - Phishing 101: phishing-101.md
+      - Architecture: architecture.md
+      - Modèle de menace: threat-model.md
+  - Modèles et mesures:
+      - Fiche du modèle URL: model-card-url.md
+      - Fiche du modèle texte: model-card-text.md
+      - Fiche du modèle email: model-card-email.md
+      - Rapport de robustesse: robustness-report.md
+      - Évaluation réaliste: evaluation.md
+      - Mises à jour du modèle: model-updates.md
+  - API:
+      - Utiliser l'API: api.md
+      - Schéma de réponse: response-schema.md
+  - Projet:
+      - Feuille de route: roadmap.md
+      - Mesurer sans pister: measure.md
+      - Publication dans les stores: store.md
+      - Lancement:
+          - Plan de lancement: launch/index.md
+          - Article de lancement: launch/article.md
+          - Textes du lancement: launch/posts.md
+          - Vidéo de démonstration: launch/demo.md
+      - Portfolio: portfolio.md
+  - Contribuer:
+      - Guide de contribution: contributing.md
+      - Politique de sécurité: security.md
+      - Code de conduite: code-of-conduct.md
+      - Journal des versions: changelog.md

@@ -24,7 +24,10 @@ EMAIL_SAMPLE_COUNT := 200
 	explain-url calibrate-text cards schema robustness train-adversarial robustness-adversarial llm-phishing plot-robustness \
 	api api-key docker-build docker-scan docker-up docker-down export keygen sign verify loadtest \
 	extension-data extension-install extension-test extension-build extension-e2e extension-package \
-	bot sus \n	edge-config edge-maintenance edge-smoke check-ports
+	extension-firefox extension-source store store-assets \
+	bot sus \
+	edge-config edge-maintenance edge-smoke check-ports \
+	model-freeze model-fixture publish-model
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -196,6 +199,16 @@ verify: ## Vérifie la signature du manifeste et l'empreinte de chaque modèle
 export: ## Modèle URL déployé (url_v2) en JSON pour l'extension et vecteurs de référence (étape 4.11)
 	$(PYTHON) scripts/export_model.py
 
+model-freeze: ## Gèle le bloc de test actuel pour le garde-fou mensuel ; empreinte dans docs/metrics/frozen_test.json (étape 6.8)
+	$(PYTHON) scripts/model_update.py freeze
+
+model-fixture: ## Régénère la publication signée par Python que vérifient les tests de l'extension (étape 6.8)
+	$(PYTHON) scripts/make_signed_release_fixture.py
+
+publish-model: ## Vérifie, signe et publie un candidat de model-update.yml : make publish-model RELEASE=AAAA.MM.JJ (étape 6.8)
+	@test -n "$(RELEASE)" || { echo "usage : make publish-model RELEASE=AAAA.MM.JJ"; exit 2; }
+	$(PYTHON) scripts/publish_model.py publish $(RELEASE)
+
 # --------------------------------------------------------------------------- #
 # API (module 4)
 # --------------------------------------------------------------------------- #
@@ -255,6 +268,21 @@ extension-e2e: ## Parcours Playwright : extension, maquette Gmail, page « colle
 
 extension-package: ## Archive reproductible de la version : extension/release/*.zip et son SHA-256 (étape 5.14)
 	cd extension && $(NPM) run package
+
+extension-firefox: ## Build et archive Firefox, puis web-ext lint sans avertissement (étape 6.10, docs/store.md)
+	cd extension && $(NPM) ci --prefix tools/web-ext && $(NPM) run package:firefox && $(NPM) run lint:firefox
+
+EXTENSION_VERSION = $(shell node -p "require('./extension/package.json').version")
+
+extension-source: ## Archive des sources exigée par AMO : extension/release/phishguard-source-<version>.zip (étape 6.10)
+	mkdir -p extension/release
+	git archive --format=zip --prefix=phishguard-$(EXTENSION_VERSION)/ -o extension/release/phishguard-source-$(EXTENSION_VERSION).zip HEAD
+
+store: ## Vérifie la fiche des stores et écrit extension/release/store/<version>/ (étape 6.9, docs/store.md)
+	cd extension && $(NPM) run store
+
+store-assets: ## Captures 1280×800, images promotionnelles et icône du store, avec le vrai modèle signé (étape 6.9)
+	cd extension && $(NPM) run store:assets
 
 # --------------------------------------------------------------------------- #
 # Bot et tests utilisateurs (étapes 5.11 et 5.13)

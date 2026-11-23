@@ -1,0 +1,13 @@
+{
+  "name": "phishguard-web-ext",
+  "version": "1.0.0",
+  "private": true,
+  "description": "web-ext (Mozilla), isolé des dépendances de l'extension : lint et signature pour Firefox (étape 6.10).",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "web-ext": "10.8.0"
+  }
+}

@@ -55,6 +55,8 @@ dev = [
 explain = ["shap>=0.46", "matplotlib"]
 # Approche optionnelle de l'étape 1.9 : télécharge un encodeur de plusieurs centaines de Mo.
 embeddings = ["sentence-transformers"]
+# Site de documentation (étape 6.7) : `mkdocs serve`, `mkdocs build --strict`.
+docs = ["mkdocs>=1.6,<2", "mkdocs-material>=9.6,<10"]
 
 [project.urls]
 Repository = "https://github.com/arixstoo/PhishGuard"

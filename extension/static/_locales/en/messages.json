@@ -627,5 +627,76 @@
   },
   "optServerCleared": {
     "message": "Server removed: nothing can be sent anymore."
+  },
+  "optUpdatesTitle": {
+    "message": "Model updates"
+  },
+  "optModelUpdates": {
+    "message": "Receive signed updates of the detection model"
+  },
+  "optModelUpdatesHelp": {
+    "message": "At most once a day, PhishGuard downloads from GitHub the latest model published by the project. Nothing is sent: no visited address, no setting, no identifier. A model is installed only if its signature matches the key built into the extension; otherwise it is ignored."
+  },
+  "optModelCheckNow": {
+    "message": "Check now"
+  },
+  "optModelBundled": {
+    "message": "Model in use: $VERSION$, shipped with the extension (release $RELEASE$).",
+    "placeholders": {
+      "version": {
+        "content": "$1",
+        "example": "url_v3"
+      },
+      "release": {
+        "content": "$2",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optModelUpdated": {
+    "message": "Model in use: $VERSION$, signed update (release $RELEASE$).",
+    "placeholders": {
+      "version": {
+        "content": "$1",
+        "example": "url_v3"
+      },
+      "release": {
+        "content": "$2",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optModelNone": {
+    "message": "No usable model: analysis is not possible."
+  },
+  "optModelUnavailable": {
+    "message": "This version of the extension cannot verify updates."
+  },
+  "optUpdateUpdated": {
+    "message": "New model verified and installed: release $RELEASE$.",
+    "placeholders": {
+      "release": {
+        "content": "$1",
+        "example": "2026.12.01"
+      }
+    }
+  },
+  "optUpdateUpToDate": {
+    "message": "The model is up to date."
+  },
+  "optUpdateRejected": {
+    "message": "Release refused: its signature or content does not match. The current model is kept."
+  },
+  "optUpdateFailed": {
+    "message": "GitHub cannot be reached right now. Another attempt at next start-up."
+  },
+  "optUpdateDisabled": {
+    "message": "Turn on model updates first."
+  },
+  "opt_modelUpdates_on": {
+    "message": "Model updates turned on."
+  },
+  "opt_modelUpdates_off": {
+    "message": "Updates turned off: the model shipped with the extension is restored."
   }
 }

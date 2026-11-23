@@ -3,7 +3,8 @@
 Toutes renvoient le contrat figé de l'étape 2.11 bis (:class:`AnalysisResponse`). Les
 routes ne contiennent aucune logique d'analyse : elles valident, délèguent à la couche
 service et traduisent ses erreurs en codes HTTP. Chaque analyse ajoute à la ligne de
-journal de sa requête son verdict et la version du modèle, rien de l'entrée (étape 4.6).
+journal de sa requête son verdict et la version du modèle, rien de l'entrée (étape 4.6),
+et compte son canal et son verdict dans les totaux d'usage, sans identifiant (étape 6.12).
 """
 
 from __future__ import annotations
@@ -16,12 +17,14 @@ from phishguard.api.dependencies import AppState, analysis_service, app_state, r
 from phishguard.api.errors import JSON_ERROR_RESPONSES, ApiError, error_responses
 from phishguard.api.logs import annotate_analysis
 from phishguard.api.schemas import TextRequest, UrlRequest
+from phishguard.api.security import Client, authenticated_client
 from phishguard.api.service import (
     AnalysisService,
     EmailUpload,
     InputTooLargeError,
     InvalidInputError,
 )
+from phishguard.api.usage import UsageChannel
 from phishguard.explain.reasons import DEFAULT_LANGUAGE, Language
 from phishguard.schema import AnalysisResponse
 
@@ -33,6 +36,17 @@ EMAIL_CONTENT_TYPES = frozenset({"message/rfc822", "application/octet-stream", "
 READ_CHUNK = 64 * 1024
 
 Service = Annotated[AnalysisService, Depends(analysis_service)]
+State = Annotated[AppState, Depends(app_state)]
+# Déjà résolu par le routeur v1 : FastAPI réutilise la valeur, sans second contrôle.
+CurrentClient = Annotated[Client, Depends(authenticated_client)]
+
+
+def _count(
+    state: AppState, client: Client, route: UsageChannel, response: AnalysisResponse
+) -> None:
+    """Totaux d'usage : route, verdict, palier ; jamais l'entrée ni le client (étape 6.12)."""
+    tier = "authenticated" if client.kind == "authenticated" else "anonymous"
+    state.usage.record(route, response.verdict, tier)
 
 
 def _input_error(exc: Exception) -> ApiError:
@@ -48,12 +62,15 @@ def _input_error(exc: Exception) -> ApiError:
     responses={**error_responses(400), **JSON_ERROR_RESPONSES},
     summary="Analyser une URL",
 )
-async def analyze_url(body: UrlRequest, service: Service) -> AnalysisResponse:
+async def analyze_url(
+    body: UrlRequest, service: Service, state: State, client: CurrentClient
+) -> AnalysisResponse:
     try:
         response = await service.analyze_url(body)
     except InvalidInputError as exc:
         raise _input_error(exc) from None
     annotate_analysis(response, threat_intel=body.use_threat_intel)
+    _count(state, client, "url", response)
     return response
 
 
@@ -64,9 +81,12 @@ async def analyze_url(body: UrlRequest, service: Service) -> AnalysisResponse:
     responses=JSON_ERROR_RESPONSES,
     summary="Analyser un SMS ou un message",
 )
-async def analyze_text(body: TextRequest, service: Service) -> AnalysisResponse:
+async def analyze_text(
+    body: TextRequest, service: Service, state: State, client: CurrentClient
+) -> AnalysisResponse:
     response = await service.analyze_text(body)
     annotate_analysis(response)
+    _count(state, client, "text", response)
     return response
 
 
@@ -79,7 +99,8 @@ async def analyze_text(body: TextRequest, service: Service) -> AnalysisResponse:
 async def analyze_email(
     file: Annotated[UploadFile, File(description="Email brut au format .eml (RFC 5322)")],
     service: Service,
-    state: Annotated[AppState, Depends(app_state)],
+    state: State,
+    client: CurrentClient,
     language: Annotated[Language, Form(description="Langue des raisons")] = DEFAULT_LANGUAGE,
     analyst: Annotated[bool, Form(description="Inclure la vue analyste")] = False,
 ) -> AnalysisResponse:
@@ -96,6 +117,7 @@ async def analyze_email(
     except (InvalidInputError, InputTooLargeError) as exc:
         raise _input_error(exc) from None
     annotate_analysis(response)
+    _count(state, client, "email", response)
     return response
 
 

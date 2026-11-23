@@ -1,0 +1,62 @@
+name: adoption
+
+# Rapport d'adoption hebdomadaire et heure de tri (étape 6.12, docs/measure.md).
+#
+# Chaque lundi, ouvre une issue « Tri hebdomadaire <semaine ISO> » : chiffres GitHub
+# agrégés de la semaine précédente et liste de tri. Les chiffres du serveur
+# (python -m phishguard.api.usage summary) et des stores se lisent à la main et se
+# complètent dans l'issue : ce workflow n'a accès ni au serveur, ni aux tableaux de bord.
+#
+# Secret facultatif ADOPTION_TOKEN : jeton à grain fin, lecture seule, droit
+# « Administration : lecture » sur ce seul dépôt, pour les visites et les clones.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # lundi 06:17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: adoption
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/adoption_report.py
+          sparse-checkout-cone-mode: false
+
+      - name: Installation de Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      # Bibliothèque standard seulement : aucune dépendance installée.
+      - name: Rapport de la semaine précédente
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ADOPTION_TOKEN: ${{ secrets.ADOPTION_TOKEN }}
+        run: python scripts/adoption_report.py --out report.md
+
+      - name: Issue de tri (une par semaine)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title=$(head -n 1 report.md | sed 's/^# Adoption de PhishGuard, semaine /Tri hebdomadaire /')
+          if gh issue list --repo "$GITHUB_REPOSITORY" --state all --label weekly-report \
+              --search "\"$title\" in:title" --json number --jq 'length' | grep -qv '^0$'; then
+            echo "déjà ouverte : $title"
+            exit 0
+          fi
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" \
+            --label weekly-report --body-file report.md

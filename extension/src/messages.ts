@@ -17,6 +17,18 @@ import type { LinkInput, LinkVerdict, SenderInput, SenderReason } from "./core/i
 import { MAX_LINK_HREF_CHARS, MAX_LINK_TEXT_CHARS, MAX_MAIL_LINKS } from "./limits";
 import type { Judgement, RemoteAnalysis } from "./api";
 import type { Language } from "./i18n";
+import type { UpdateOutcome, UpdateState } from "./updates";
+
+/** Modèle en service et état des mises à jour, pour la page d'options (étape 6.8). */
+export interface ModelStatus {
+  modelVersion: string | null;
+  /** Publication signée en service ; `""` pour un paquet construit sans manifeste. */
+  release: string;
+  source: "bundled" | "update" | "none";
+  /** Faux si l'extension a été construite sans clé publique : aucune mise à jour possible. */
+  updatesAvailable: boolean;
+  lastCheck: UpdateState | null;
+}
 
 export type Request =
   | { type: "analyze-tab"; tabId: number }
@@ -25,7 +37,9 @@ export type Request =
   | { type: "allowlist-add-domain"; domain: string }
   | { type: "allowlist-remove"; domain: string }
   | { type: "allowlist-get" }
-  | { type: "feedback"; domain: string; verdict: Verdict; judgement: Judgement };
+  | { type: "feedback"; domain: string; verdict: Verdict; judgement: Judgement }
+  | { type: "model-status" }
+  | { type: "model-update-check" };
 
 export interface MailRequest {
   type: "mail-inspect";
@@ -51,6 +65,7 @@ export type Response =
   | { ok: true; remote: RemoteAnalysis; verdict: Verdict }
   | { ok: true; domain: string }
   | { ok: true; domains: string[] }
+  | { ok: true; model: ModelStatus; outcome?: UpdateOutcome }
   | { ok: true }
   | { ok: false; error: ErrorCode };
 
@@ -90,7 +105,9 @@ export function parseRequest(message: unknown): Request | null {
     case "allowlist-remove":
       return isDomain(m["domain"]) ? { type: m["type"], domain: m["domain"] } : null;
     case "allowlist-get":
-      return { type: "allowlist-get" };
+    case "model-status":
+    case "model-update-check":
+      return { type: m["type"] };
     case "feedback":
       return isDomain(m["domain"]) && VERDICTS.includes(m["verdict"]) && JUDGEMENTS.includes(m["judgement"])
         ? {

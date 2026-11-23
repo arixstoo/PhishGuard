@@ -174,6 +174,16 @@ class ApiSettings(BaseSettings):
     # Un même rapporteur qui signale le même domaine avec le même jugement dans ce délai
     # n'ajoute pas de ligne (0 : aucune déduplication).
     feedback_dedup_seconds: int = Field(default=86_400, ge=0, le=30 * 86_400)
+    # Durée maximale de conservation d'un retour, relu ou non (étape 6.5, PRIVACY.md) :
+    # appliquée au démarrage puis toutes les 6 heures, jamais au-delà d'un an.
+    feedback_retention_days: int = Field(default=90, ge=1, le=365)
+
+    # --- Totaux d'usage (étape 6.12, phishguard.api.usage) ------------------ #
+    # Analyses comptées par jour, canal, verdict et palier du client, sans aucun
+    # identifiant (PRIVACY.md) ; false : aucun comptage.
+    usage_stats: bool = True
+    # Durée de conservation de ces totaux, appliquée comme celle des retours.
+    usage_retention_days: int = Field(default=365, ge=1, le=730)
 
     @field_validator(
         "rate_limit_anonymous",

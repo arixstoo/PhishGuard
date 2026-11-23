@@ -26,7 +26,8 @@ dans Gmail. Réglages : clic droit sur l'icône → Options.
 |---|---|
 | `src/core/` | extracteur, modèle, décision, liens et expéditeur d'un email : pur, sans API Chrome |
 | `src/background.ts` | service worker |
-| `src/api.ts` | **seul** module réseau (options en ligne, désactivées par défaut) |
+| `src/api.ts` | module réseau des options en ligne (désactivées par défaut) |
+| `src/updates.ts`, `src/core/signed-model.ts` | mises à jour signées du modèle (désactivées par défaut) : téléchargement, vérification Ed25519 ([docs/model-updates.md](../docs/model-updates.md)) |
 | `src/popup/`, `src/options/` | fenêtre contextuelle, page d'options |
 | `src/gmail/` | script de contenu Gmail ; **tous les sélecteurs de Gmail dans `selectors.ts`** |
 | `static/_locales/` | `fr`, `en`, `ar` ; toute clé employée doit exister dans les trois (test) |

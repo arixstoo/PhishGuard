@@ -2,6 +2,74 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : une par module du [cahier des charges](PhishGuard%20%E2%80%94%20Cahier%20des%20charges%20et%20plan%20de%20r%C3%A9alisation.md).
 
+## [Non publié] : module 6, publication et adoption (étapes 6.9 à 6.14)
+
+### Chrome Web Store (étape 6.9, [docs/store.md](docs/store.md))
+
+- Fiche versionnée et vérifiée : `extension/store/listing.json` (objectif unique, une justification en anglais par autorisation, pratiques de confidentialité, adresses, légendes) et descriptions FR, EN, AR. `store.mjs` (`make store`) refuse un résumé ou une description hors limites, une langue sans fiche, un lien inconnu, une autorisation du manifeste sans justification (ou l'inverse), une catégorie de données cochée, du code distant, et **tout libellé cité entre guillemets qui n'existe pas dans l'interface** ; il écrit `release/store/<version>/dashboard.md`, toutes les réponses du formulaire dans l'ordre des onglets.
+- Images (`make store-assets`, Playwright) : 5 captures 1280 × 800 par langue de l'interface réelle avec le **vrai modèle signé** (le script refuse le modèle de test), images promotionnelles 440 × 280 et 1400 × 560, icône 128 × 128 à marge de 16 px. Aucune page réelle, aucune requête hors du paquet.
+- `publish-chrome.mjs` : envoi par l'API v2 du Chrome Web Store (jeton OAuth rafraîchi, attente de `fetchStatus`, version annoncée par le store égale à celle de l'archive, soumission en publication **différée**, jamais `skipReview`, jeton absent des messages d'erreur). Workflow `extension-release.yml` sur étiquette `v*` : modèle du canal `models-stable` vérifié par le build, tests, archives Chrome, Firefox et sources, `SHA256SUMS`, attestation Sigstore, release GitHub ; envois aux stores derrière des environnements protégés et des variables `CWS_ENABLED` / `AMO_ENABLED`, jamais pour une préversion.
+- Reste manuel (aucune API) : compte développeur, premier envoi en « non répertorié », formulaire de confidentialité (copié depuis `dashboard.md`), passage en public après les testeurs.
+
+### Firefox (étape 6.10)
+
+- `extension/targets.mjs` : un code, deux manifestes. `node build.mjs --browser=firefox` → `dist-firefox/` : page d'événements (même module), identifiant `phishguard@arixstoo.github.io`, `data_collection_permissions: none` (exigée par AMO depuis novembre 2025), Firefox 140+ (142+ sur Android). `test/targets.test.ts` : autorisations, CSP, script de contenu et langues identiques à Chrome, rien d'autre ne change.
+- `web-ext` 10.8.0 isolé dans `extension/tools/web-ext/` (son propre `package-lock.json`, 0 vulnérabilité) ; `web-ext lint --warnings-as-errors` : 0 erreur, 0 avertissement ; en CI dans `extension.yml`. Archive des sources pour AMO (`make extension-source`), notes de reconstruction pour les relecteurs. `make extension-firefox`.
+
+### Plan de lancement (étape 6.11, [docs/launch/](docs/launch/index.md))
+
+- Plan sur quatre semaines : conditions pour fixer le jour J (store public, API en production, SUS ≥ 70, `v1.0.0`), semaine −2 (vidéo, GIF, 10 testeurs, relectures), semaine −1 (répétition), jour J dans l'ordre, réponses sous 24 h la première semaine, un article technique par semaine ensuite.
+- Brouillon de l'article « Ce que j'ai appris en construisant un détecteur de phishing open source », avec les vrais chiffres, **objectif de rappel non atteint compris** (66,8 % à 1 % de FPR contre 95 % visés), et une table de relecture qui relie chaque chiffre à sa source dans le dépôt.
+- Textes prêts : LinkedIn, Show HN (titre et premier commentaire), r/cybersecurity, r/chrome_extensions, message aux CERT, associations et écoles, recrutement des testeurs, réponses aux questions attendues. Scénario de la vidéo de 90 secondes et recette du GIF.
+
+### Mesurer sans pister (étape 6.12, [docs/measure.md](docs/measure.md))
+
+- **Totaux d'usage de l'API** (`phishguard.api.usage`) : analyses par jour, route, verdict et niveau du client, rien d'autre. Table `usage_daily` (schéma 3, migration testée) dont chaque colonne est fermée par un `CHECK` : SQLite refuse lui-même une URL, une clé, une heure. Compteurs en mémoire écrits chaque minute et à l'arrêt : **aucune écriture par requête**. Rétention 365 jours (`PHISHGUARD_API_USAGE_RETENTION_DAYS`), désactivable (`PHISHGUARD_API_USAGE_STATS=false`). `python -m phishguard.api.usage summary` : semaines ISO, verdicts, **taux de faux positifs signalés**.
+- **Politique de confidentialité élargie** (19 novembre 2026, FR et EN) : ces totaux y sont décrits et vérifiés par `tests/test_privacy_policy.py` (colonnes, absence d'identifiant, 365 jours).
+- `scripts/adoption_report.py` (bibliothèque standard seule) : étoiles, forks, téléchargements des archives, issues de la semaine, visites et clones si un jeton le permet, totaux de l'API, utilisateurs des stores ; sources manquantes signalées sans échec. Workflow `adoption.yml` : chaque lundi, une issue « Tri hebdomadaire » (label `weekly-report`) avec la liste de l'heure de tri.
+- **Aucune télémétrie dans l'extension**, décision expliquée (les stores donnent déjà installations et utilisateurs actifs).
+
+### Feuille de route après la v1.0 (étape 6.13, [docs/roadmap.md](docs/roadmap.md))
+
+- Neuf pistes classées par valeur pour les utilisateurs, chacune avec le problème mesuré qu'elle résout, son coût, son risque pour la vie privée et un premier pas : correctifs issus des retours, signaux de confiance dans la fusion, base locale de préfixes Safe Browsing, modèle de texte français / arabe / darija, QR codes, signalement vers PhishTank / OpenPhish, add-in Outlook, tableau de bord, bots WhatsApp / Signal. Pistes écartées et pourquoi.
+
+### Portfolio (étape 6.14, [docs/portfolio.md](docs/portfolio.md))
+
+- Haut du README réécrit : le problème, une vraie capture de l'extension (`make store-assets`), **trois chiffres clés générés** depuis `docs/metrics/url_v2_test.json` par `make cards` (modèle déployé, seuil de décision), latence, installation, documents phares, état réel du projet ; liste des fonctionnalités à jour.
+- `docs/portfolio.md` : trois puces de CV chiffrées (FR et EN), cinq histoires d'entretien au format situation, action, résultat, démonstration de 5 minutes avec plan B, questions difficiles.
+
+## [Non publié] : module 6, lancement (étapes 6.5 à 6.8)
+
+### Site de documentation (étape 6.7, https://arixstoo.github.io/PhishGuard/)
+
+- MkDocs Material (`mkdocs.yml`, extra `docs` verrouillé dans `uv.lock`), publié sur GitHub Pages par `.github/workflows/docs.yml` (construction `--strict` sur chaque PR : un lien cassé fait échouer le job). Pages nouvelles : accueil et démarrage rapide en 3 étapes pour un non-technicien, questions fréquentes, architecture avec un diagramme SVG écrit à la main, modèle de menace (biens, attaquants, menaces, parades, risques résiduels). Navigation vers la confidentialité, les fiches des modèles, le rapport de robustesse, l'API, la contribution.
+- Aucun fichier dupliqué : un crochet (`scripts/docs_site.py`) publie `PRIVACY.md`, `SECURITY.md`, `CONTRIBUTING.md`, `CHANGELOG.md` et le code de conduite comme pages, et réécrit les liens qui sortent de `docs/` (vers la page du site, sinon vers GitHub). Ancres au format de GitHub : les mêmes liens marchent sur les deux.
+- **Aucune requête vers un tiers**, vérifié dans Chromium : polices système (`font: false`), et gabarit `docs_theme/partials/source.html` qui coupe l'appel à l'API de GitHub que le thème fait depuis le navigateur de chaque visiteur.
+- Reste à faire : les trois captures d'écran de l'installation (issue « good first issue ») et la vidéo de démonstration de 90 secondes. Material for MkDocs annonce sa fin de vie pour mai 2027 ; Zensical, son successeur, relit le même `mkdocs.yml`.
+
+### Licence et gouvernance (étape 6.6)
+
+- **Licence définitive : MIT**, choix expliqué dans le README face à Apache-2.0 et AGPL-3.0 ; compatibilité vérifiée sur tout l'arbre des dépendances d'exécution (licences permissives, plus `certifi` en MPL-2.0, copyleft limité à ses propres fichiers).
+- `SECURITY.md` finalisé : versions maintenues, canal privé et solution sans compte GitHub, délais engagés (72 h, 7 jours, 30 jours, 90 jours au plus), **politique de divulgation coordonnée** (avis GitHub, CVE à partir de « moyen », crédit), périmètre étendu à la falsification et au retour arrière des modèles, identifiant de la clé de signature.
+- `CONTRIBUTING.md` réécrit pour qu'un inconnu contribue sans poser de question : par où commencer, sens des labels, mise en place Python, extension et site, données qui exigent un réentraînement, traductions, versionnage sémantique et `CHANGELOG`, délai de relecture (7 jours), licence des contributions.
+- Labels versionnés (`.github/labels.json`) et **10 issues « good first issue »** (`.github/good-first-issues/`) : sites légitimes, plateformes d'hébergement, dates de publication impossibles, traduction arabe de la politique, Phishing 101 en anglais, marques du Maghreb, test Playwright des mises à jour, écoute au lecteur d'écran, actionlint, captures du site. Chacune dit le contexte, les fichiers, les commandes et quand elle est terminée.
+- `scripts/setup_community.py` applique labels, issues et réglages de sécurité (signalement privé des vulnérabilités, alertes et correctifs Dependabot, analyse des secrets et protection à l'envoi) ; **simulation par défaut**, `--apply` pour écrire. `tests/test_community.py` refuse une issue qui cite un fichier disparu, un label inconnu, ou sans critère de fin.
+
+### Confidentialité (étape 6.5, [PRIVACY.md](PRIVACY.md))
+
+- `PRIVACY.md`, en français et en anglais, court et factuel : données traitées par l'extension, l'API, le bot et la page web, pourquoi, combien de temps, avec qui (Vercel, hébergeur, Telegram, GitHub, sources de Threat Intelligence **jamais par défaut**), comment les supprimer, comment écrire. Publié aussi sur le site de documentation (adresse publique exigée par le Chrome Web Store).
+- **Écart corrigé en l'écrivant** : la rétention des signalements d'erreur n'était qu'une recommandation (`purge` à la main). L'API l'applique désormais : `PHISHGUARD_API_FEEDBACK_RETENTION_DAYS` (90 jours par défaut, 1 à 365), relus ou non, au démarrage puis toutes les 6 heures ; testé. Les sauvegardes hors serveur exigent une règle d'expiration de 30 jours chez le fournisseur ([docs/operations.md](docs/operations.md)).
+- `tests/test_privacy_policy.py` : chaque fichier cité par le tableau des vérifications existe, et chaque valeur chiffrée de la politique (100 analyses, 1 000 sites, une fois par jour, 90 jours, 14 jours, 3 × 10 Mo), en français et en anglais, est celle du code.
+
+### Mises à jour du modèle (étape 6.8, [docs/model-updates.md](docs/model-updates.md))
+
+- Workflow mensuel `model-update.yml` : historique chiffré des collectes (release `data-history`, réenregistré à chaque passage, même si le candidat est refusé) + artefacts des 90 derniers jours ; domaines du test figé retirés **avant** le split ; candidat entraîné avec la recette de `url_v2` (LightGBM, entraînement adversarial, calibration) ; garde-fou ; export ; release **brouillon** avec `SHA256SUMS` et attestation de provenance Sigstore. Rien n'est signé sur la CI.
+- Garde-fou (`phishguard.model_update`) : rappel à 1 % de FPR qui ne baisse pas sur le **test figé** (21 004 URLs, empreinte du contenu versionnée dans `docs/metrics/frozen_test.json`) et sur le test récent ; faux positifs qui n'augmentent pas sur **106 sites légitimes courants** (pages de connexion et d'accueil, FR, Maghreb, international). Le modèle en service n'est désérialisé qu'après vérification de sa signature. Essai réel : `url_v1` soumis comme candidat est **refusé** face à `url_v2` (rappel 0,755 contre 0,668, mais 28 faux positifs contre 3 sur les sites courants).
+- `scripts/publish_model.py` (machine de signature) : vérifie empreintes, **provenance** (`gh attestation verify --signer-workflow`) et garde-fou, reprend le modèle texte du canal signé, signe, relit, publie la release datée et remplace le canal `models-stable` (manifeste et signature en dernier). `bootstrap` publie les modèles signés actuels. `make model-freeze model-fixture publish-model`.
+- Extension : option « Recevoir les mises à jour signées du modèle » (**désactivée par défaut**, permission des hôtes de GitHub demandée à l'activation et rendue à la désactivation ; vérification au plus une fois par jour, ou « Vérifier maintenant »). `core/signed-model.ts` reprend l'ordre de `phishguard.registry` avec la **clé publique embarquée au build** : tailles bornées, signature d'abord (document validé en entier, base64 canonique), même extracteur de features, taille et SHA-256, **pas de retour arrière**. Le modèle reçu est revérifié à chaque chargement (`storage.local` est modifiable par le script Gmail) ; en cas d'échec, retour au modèle du paquet. Requêtes `GET` anonymes, sans cookie ni `Referer` ; redirection hors de GitHub refusée.
+- **Critère atteint** : un modèle falsifié (un octet) est rejeté (`test/signed-model.test.ts` : chaque octet de la signature et du manifeste, positions réparties dans le modèle ; `test/updates.test.ts` : modèle servi ou stocké modifié). Une publication signée par Python et le vrai manifeste du dépôt passent la vérification TypeScript. 39 tests vitest et 26 tests pytest ajoutés.
+- Corrigé au passage : `.PHONY` du Makefile contenait un `\n` littéral.
+
 ## [Non publié] : module 6, déploiement (étapes 6.1 à 6.4)
 
 ### Déploiement

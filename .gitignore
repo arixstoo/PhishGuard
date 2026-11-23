@@ -21,3 +21,7 @@ build/
 .coverage
 htmlcov/
 .hypothesis/
+
+# Site de documentation construit (mkdocs build, étape 6.7)
+/site/
+/_site/

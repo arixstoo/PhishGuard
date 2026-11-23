@@ -8,23 +8,45 @@
 [![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-T1566-red)](docs/mitre-attack.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![Status](https://img.shields.io/badge/status-in%20development-orange)
+![Status](https://img.shields.io/badge/status-beta-yellow)
 
 **Open-source, explainable and privacy-first phishing detection for URLs, SMS and emails.**
 PhishGuard warns people at the exact moment they are about to click, with a clear verdict
 and a one-sentence explanation, in French, English and Arabic.
 
-> 🚧 **Work in progress.** The project is being rebuilt in public, module by module.
-> Nothing below is production-ready yet; the [roadmap](#roadmap) shows what exists today.
+**The problem.** Phishing is still one of the main ways attackers get in
+([MITRE ATT&CK T1566](https://attack.mitre.org/techniques/T1566/)), and the people it
+hurts most are the least equipped: protections are either paid enterprise products or
+blocklists that only know a trap once it has been reported. PhishGuard judges a link the
+first time it is seen, explains why, and does it **on your device**.
 
-<!-- Demo GIF goes here once the browser extension exists (module 5). -->
+![PhishGuard flags a look-alike PayPal link as likely phishing and explains why](docs/img/extension-verdict.png)
 
-## Why
+<!-- generated:key-figures:start -->
+| Phishing links flagged | False alarms on legitimate pages | Precision if 1 % of links are phishing |
+| :---: | :---: | :---: |
+| **64 in 100** | **3 in 1,000** home pages, **40 in 1,000** inner pages | **48 %** |
 
-Phishing is still one of the main initial access vectors
-([MITRE ATT&CK T1566](https://attack.mitre.org/techniques/T1566/)). Existing protections
-are either paid enterprise products or reactive blocklists that only catch a site once it
-has already been reported. PhishGuard aims to fill the gap for non-technical users:
+*Deployed model `url_v2`, at its decision threshold, measured once on the most recent 21,004 URLs it never saw (temporal, domain-grouped test set). Recall at 1 % FPR: 0.668, below the project's 0.95 target. Source: [`docs/metrics/url_v2_test.json`](docs/metrics/url_v2_test.json).*
+<!-- generated:key-figures:end -->
+
+Analysis takes **2 to 4 ms** in the extension and **12 ms** (median, 50 requests/s) through
+the API ([load test](docs/load-test.md)).
+
+**Install:** Chrome Web Store *(not submitted yet; link added at publication)* · Firefox
+*(prepared, [docs/store.md](docs/store.md))* · beta archive for testers:
+[docs/beta.md](docs/beta.md) · 📖 [Documentation](https://arixstoo.github.io/PhishGuard/)
+(quick start, FAQ, privacy, architecture, threat model, model cards).
+
+**Start here:** [threat model](docs/threat-model.md) ·
+[robustness report](docs/robustness-report.md) ·
+[launch article](docs/launch/article.md) (what I learned, with the real numbers).
+
+> **Status: beta.** Detection, API, extension, bot, deployment tooling and store packages
+> are built and tested. Still pending, because they need the author's accounts and
+> server: the production server, the Chrome Web Store listing and the public launch.
+
+## Why it is different
 
 - **Local-first**: the detection model runs on the user's device; by default no email
   content and no browsing history ever leave it.
@@ -33,17 +55,18 @@ has already been reported. PhishGuard aims to fill the gap for non-technical use
 - **Honest**: metrics are measured on a temporal split, false positives are tracked as
   closely as missed detections, and robustness against evasion is benchmarked and published.
 
-## Planned features
+## Features
 
-- [x] Reproducible SMS spam/smishing baseline with honest metrics
-- [x] URL analysis: verdict (safe / suspicious / phishing) + 0–100 score (M1)
-- [x] SMS / text and raw email (`.eml`) analysis: SPF, DKIM, DMARC, display-vs-real links (M1)
-- [x] Opt-in Threat Intelligence enrichment (Safe Browsing, VirusTotal, urlscan.io, RDAP, CT logs) (M2)
-- [x] Explanations (SHAP + readable reasons) and MITRE ATT&CK mapping (M2–M3)
-- [x] Adversarial robustness benchmark (homoglyphs, typosquatting, zero-width characters…) (M3)
-- [x] Hardened REST API (FastAPI, OpenAPI, rate limiting, SSRF guard) (M4)
-- [ ] Chrome extension (local inference, Gmail banner, link hover), Telegram bot, web page (M5, in beta)
-- [ ] FR / EN / AR interface (RTL) (M5, in beta)
+- [x] URL analysis: verdict (safe / suspicious / phishing), 0–100 score, plain-language reasons
+- [x] SMS / text and raw email (`.eml`) analysis: SPF, DKIM, DMARC, display-vs-real links, attachments
+- [x] Opt-in Threat Intelligence enrichment (Safe Browsing, VirusTotal, urlscan.io, RDAP, CT logs), off by default
+- [x] Explanations (SHAP + readable reasons) and MITRE ATT&CK mapping
+- [x] Adversarial robustness benchmark (homoglyphs, typosquatting, zero-width characters…) and defences
+- [x] Hardened REST API (FastAPI, OpenAPI, rate limiting, SSRF guard, signed models)
+- [x] Chrome extension with on-device inference and Gmail banner; Firefox build; Telegram bot; paste-and-check page
+- [x] FR / EN / AR interface (right-to-left), keyboard and screen-reader accessible
+- [x] Signed monthly model updates behind a non-regression gate; usage measured without tracking
+- [ ] Public Chrome Web Store and Firefox listings, production API, `v1.0.0`
 
 ## Architecture
 
@@ -152,7 +175,7 @@ Each step is tracked as a GitHub issue, grouped by milestone.
 | M3 XAI & adversarial | SHAP explanations, readable reasons, evasion catalogue, normalisation, adversarial training, LLM-phishing test, robustness report | ✅ done (`v0.3.0`) |
 | M4 Secure API | FastAPI, rate limiting, fuzzing, security CI, hardened Docker image, safe feedback, model export, signed model registry, load test | ✅ done (`v0.4.0`) |
 | M5 Extension & bot | Chrome MV3 extension, Telegram bot, paste-and-check page, user tests | 🧪 beta `0.5.0-beta.1`, user tests pending |
-| M6 Launch | Deployment (hardened server, Vercel edge, tag-driven deploys, monitoring), Chrome Web Store, docs site, v1.0 | 🚧 deployment tooling ready (6.1–6.4), server pending |
+| M6 Launch | Deployment, privacy policy, governance, docs site, signed model updates, store packages (Chrome, Firefox), launch kit, measurement without tracking, roadmap | 🚧 everything that can be built and tested is done (6.1–6.14); server, store accounts and public launch pending |
 
 ## Repository layout
 
@@ -201,7 +224,12 @@ data/, models/    generated locally, never committed
 - [Paste-and-check page](docs/web-page.md): a static page served by the API, with a strict content security policy and Trusted Types (French)
 - [User tests](docs/user-tests.md) and [beta release](docs/beta.md): protocol, SUS questionnaire and scoring script, reproducible extension archive (French)
 - [External tools evaluation](docs/external-tools.md): EML Analyzer, Outlook .msg, DeHashed and PhishTool, what was kept and why (French)
-- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+- [Model updates](docs/model-updates.md): monthly retraining, non-regression gate (frozen test set, common legitimate sites) and signed updates verified by the extension (French)
+- [Store publication](docs/store.md): Chrome Web Store and Firefox listings, checked by tests, reproducible screenshots, release workflow (French)
+- [Measuring without tracking](docs/measure.md): aggregate usage counts with no identifier, weekly adoption report and triage hour (French)
+- [Roadmap after v1.0](docs/roadmap.md): ranked by user value, with privacy risk and first step for each item (French)
+- [Launch kit](docs/launch/index.md): plan, article draft, posts and demo script (French) · [Portfolio](docs/portfolio.md): CV bullets, interview stories, 5-minute demo (French)
+- [Privacy policy](PRIVACY.md) (French and English) · [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## What I learned
 
@@ -217,8 +245,28 @@ tag and in `notebooks/legacy/`, as a record of where the project came from.
 
 ## License
 
-[MIT](LICENSE) for now, to keep reuse simple. The final licence choice will be made and
-explained before v1.0.
+PhishGuard is released under the [MIT licence](LICENSE). This is the final choice, made
+at step 6.6 between the three usual options:
+
+- **MIT** (chosen): the shortest and most widely understood permissive licence. The goal
+  of the project is that as many people as possible are protected from phishing, so the
+  priority is that anyone (a school, a CERT, an association, a company, another
+  open-source tool) can reuse the detector, the extension or the data pipeline without
+  asking and without a legal review. Every runtime dependency is compatible with it:
+  permissive licences (BSD, MIT, Apache-2.0, ISC, PSF), plus `certifi` under MPL-2.0,
+  whose copyleft applies only to modified files of `certifi` itself (checked on
+  18 November 2026 over the whole runtime dependency tree).
+- **Apache-2.0** adds an explicit patent grant. It matters for projects with corporate
+  contributors who hold patents; PhishGuard is maintained by one person and holds none,
+  so the extra length buys little here.
+- **AGPL-3.0** would force anyone offering PhishGuard as an online service to publish
+  their changes. It protects the code, but deters exactly the organisations the project
+  wants to reach (many forbid AGPL internally), which works against its purpose.
+
+The licence covers the source code. Datasets are not redistributed: each source keeps
+its own terms ([docs/data-sources.md](docs/data-sources.md)). Contributions are accepted
+under the same licence, with no contributor licence agreement
+([CONTRIBUTING.md](CONTRIBUTING.md#licence)).
 
 ## Author
 
