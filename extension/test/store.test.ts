@@ -93,7 +93,7 @@ describe("chaque règle attrape son erreur", () => {
   });
 
   it("lien inconnu ou légende manquante", () => {
-    expect(broken((d) => (d.descriptions["en"] += "\nhttps://example.org/\n")).join()).toMatch(/example\.org/);
+    expect(broken((d) => (d.descriptions["en"] += "\nhttps://example.org/\n")).join()).toContain("https://example.org/");
     expect(broken((d) => delete d.listing["screenshots"][0].caption.ar).join()).toMatch(/légende/);
   });
 });
