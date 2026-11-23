@@ -51,6 +51,17 @@ updates:
       - dependency-name: python
         update-types: [version-update:semver-major, version-update:semver-minor]
 
+  # Images de production épinglées par empreinte (Caddy, Uptime Kuma, étape 6.2).
+  - package-ecosystem: docker-compose
+    directory: /deploy
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Paris
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: deps
+
   # Extension navigateur (module 5) : versions exactes et package-lock.json ; npm ne lance
   # aucun script d'installation (.npmrc ignore-scripts=true).
   - package-ecosystem: npm

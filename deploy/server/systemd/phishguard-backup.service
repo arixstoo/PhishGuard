@@ -1,0 +1,17 @@
+# Sauvegarde chiffrée de la base SQLite, copiée hors du serveur (étape 6.4).
+[Unit]
+Description=Sauvegarde chiffrée de la base PhishGuard
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+OnFailure=phishguard-alert@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/phishguard-backup
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=yes
+ProtectHome=read-only
+PrivateTmp=yes
+ReadWritePaths=/var/backups/phishguard /root/.config/rclone /root/.cache

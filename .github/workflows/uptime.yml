@@ -1,0 +1,56 @@
+name: uptime
+
+# Sonde externe de secours (étape 6.4, docs/operations.md).
+#
+# Uptime Kuma tourne sur le serveur : il voit l'API tomber, pas le serveur entier (panne,
+# réseau, compte suspendu). Cette sonde, hébergée ailleurs, vérifie l'adresse publique
+# toutes les 30 minutes et alerte sur Telegram si elle ne répond pas. GitHub peut retarder
+# un déclencheur planifié de plusieurs minutes : c'est un filet, pas la supervision principale.
+#
+# Activée par la variable de dépôt UPTIME_WATCHDOG_ENABLED=true, une fois l'API en service.
+# Secrets : ALERT_TELEGRAM_TOKEN, ALERT_TELEGRAM_CHAT_ID (bot d'alertes, pas celui d'analyse).
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    if: vars.UPTIME_WATCHDOG_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: GET /v1/health
+        id: probe
+        env:
+          URL: https://api-phishguard.vercel.app/v1/health
+        run: |
+          for attempt in 1 2 3; do
+            if curl -fsS --proto '=https' --max-time 10 "$URL" | grep -q '"status":"ok"'; then
+              echo "API en service"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "API injoignable après 3 essais" >&2
+          exit 1
+
+      - name: Alerte Telegram
+        if: failure()
+        env:
+          TOKEN: ${{ secrets.ALERT_TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.ALERT_TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          printf 'url = "https://api.telegram.org/bot%s/sendMessage"\n' "$TOKEN" | curl --config - \
+            -fsS --max-time 15 -o /dev/null \
+            --data-urlencode "chat_id=$CHAT_ID" \
+            --data-urlencode "text=[PhishGuard] https://api-phishguard.vercel.app/v1/health ne répond pas (sonde GitHub). $RUN_URL"

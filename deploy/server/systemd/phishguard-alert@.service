@@ -1,0 +1,11 @@
+# Alerte Telegram quand une unité échoue (étape 6.4) : OnFailure=phishguard-alert@%n.service
+[Unit]
+Description=Alerte PhishGuard : échec de %i
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/phishguard-alert "échec de %i — journalctl -u %i -n 50"
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes

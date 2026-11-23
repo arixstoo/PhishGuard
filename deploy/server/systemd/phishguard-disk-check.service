@@ -1,0 +1,12 @@
+# Espace disque et inodes de / et de Docker (étape 6.4).
+[Unit]
+Description=Espace disque du serveur PhishGuard
+OnFailure=phishguard-alert@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/phishguard-disk-check
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
