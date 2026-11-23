@@ -82,6 +82,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 - Dependabot `docker-compose` pour les images de production. `make edge-config edge-maintenance edge-smoke check-ports`.
 - Vérifié le 18 novembre 2026 : `caddy validate` ; pile complète locale (403 sans secret, secret faux ou à joker ; 200 avec ; 31ᵉ requête d'un visiteur → 429, autre visiteur → 200) ; `phishguard-deploy` en Docker-in-Docker avec registre local (déploiement, `status`, `rollback`, image inexistante → retour automatique) ; sauvegarde puis restauration sur une autre machine ; 45 tests (`tests/test_deployment.py`), shellcheck sans avertissement. Deux défauts trouvés et corrigés par ces essais : Uptime Kuma ne démarrait pas sans `CAP_DAC_OVERRIDE` (désormais non root, sans aucune capacité), et l'empreinte `.sha256` des sauvegardes citait le chemin du serveur.
 
+### Dépôt
+
+- CodeQL (`codeql.yml`, Python et TypeScript, requêtes `security-extended`, actions épinglées par SHA) en plus de bandit ; Dependabot surveille désormais `extension/` (npm) ; `.editorconfig`.
+- README : badges security, CodeQL, extension et version ; liste des fonctionnalités alignée sur la feuille de route (M1 à M4 faits, M5 en bêta) ; schéma d'architecture ; lien vers le journal d'apprentissage.
+
 ## [0.5.0-beta.1] : module 5, extension navigateur et canaux de messagerie (bêta)
 
 Version de test distribuée aux participants des tests utilisateurs ([docs/beta.md](docs/beta.md)). Le tag `v0.5.0` suivra les tests utilisateurs (SUS ≥ 70 sur le dernier groupe).

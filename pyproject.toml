@@ -22,7 +22,7 @@ dependencies = [
     "joblib",
     "httpx",
     "pydantic>=2",
-    "pydantic-settings>=2.1",  # clés d'API chargées depuis .env (étape 2.1)
+    "pydantic-settings>=2.16.3",  # clés d'API chargées depuis .env (étape 2.1)
     "aiolimiter>=1.1",  # limite de débit locale des API à quota (étape 2.5)
     "dnspython>=2.4",  # enregistrements DNS des domaines analysés (étape 2.7)
     "tenacity>=8.2",  # nouvelles tentatives sur les erreurs temporaires (étape 2.8)
@@ -30,7 +30,7 @@ dependencies = [
     "olefile>=0.46",  # macros des documents Office 97-2003 joints aux emails (étape 2.13)
     "pyyaml>=6.0",  # gabarits des raisons lisibles, lus avec safe_load (étape 3.2)
     # API HTTP (module 4)
-    "fastapi>=0.115",
+    "fastapi>=0.163.1",
     "uvicorn[standard]>=0.54.0",
     "python-multipart>=0.0.20",  # téléversement des .eml ; < 0.0.18 : CVE-2024-53981
     "limits>=4.0",  # limites de débit, stockage asynchrone (étape 4.4)

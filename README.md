@@ -1,6 +1,11 @@
 # PhishGuard
 
 [![CI](https://github.com/arixstoo/PhishGuard/actions/workflows/ci.yaml/badge.svg)](https://github.com/arixstoo/PhishGuard/actions/workflows/ci.yaml)
+[![security](https://github.com/arixstoo/PhishGuard/actions/workflows/security.yml/badge.svg)](https://github.com/arixstoo/PhishGuard/actions/workflows/security.yml)
+[![CodeQL](https://github.com/arixstoo/PhishGuard/actions/workflows/codeql.yml/badge.svg)](https://github.com/arixstoo/PhishGuard/actions/workflows/codeql.yml)
+[![extension](https://github.com/arixstoo/PhishGuard/actions/workflows/extension.yml/badge.svg)](https://github.com/arixstoo/PhishGuard/actions/workflows/extension.yml)
+[![release](https://img.shields.io/github/v/release/arixstoo/PhishGuard?include_prereleases)](https://github.com/arixstoo/PhishGuard/releases)
+[![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-T1566-red)](docs/mitre-attack.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Status](https://img.shields.io/badge/status-beta-yellow)
@@ -62,6 +67,28 @@ the API ([load test](docs/load-test.md)).
 - [x] FR / EN / AR interface (right-to-left), keyboard and screen-reader accessible
 - [x] Signed monthly model updates behind a non-regression gate; usage measured without tracking
 - [ ] Public Chrome Web Store and Firefox listings, production API, `v1.0.0`
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph device["User's device (local-first)"]
+        E[Chrome extension<br/>same extractor, model and fusion,<br/>no network by default]
+    end
+    B[Telegram bot] --> API
+    P[Paste-and-check page] --> API
+    E -. "opt-in online check" .-> API
+    subgraph server["Server"]
+        API[FastAPI<br/>API keys, rate limiting] --> N[Normalisation<br/>NFKC, homoglyphs, invisible chars]
+        N --> M[URL / text / email detectors<br/>signed models]
+        N -. opt-in .-> TI[Threat Intel enrichers<br/>Safe Browsing, VirusTotal, urlscan.io,<br/>RDAP, CT logs, DNS - behind the SSRF guard]
+        M & TI --> F[Score fusion<br/>calibrated probability + rules + TI]
+        F --> R[Response schema<br/>verdict, score, reasons FR/EN/AR,<br/>MITRE ATT&CK, analyst view]
+    end
+```
+
+Details: [end-to-end analysis](docs/analysis.md) · [score fusion](docs/fusion.md) ·
+[extension design](docs/extension-design.md).
 
 ## Current results
 
@@ -203,6 +230,12 @@ data/, models/    generated locally, never committed
 - [Roadmap after v1.0](docs/roadmap.md): ranked by user value, with privacy risk and first step for each item (French)
 - [Launch kit](docs/launch/index.md): plan, article draft, posts and demo script (French) · [Portfolio](docs/portfolio.md): CV bullets, interview stories, 5-minute demo (French)
 - [Privacy policy](PRIVACY.md) (French and English) · [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+
+## What I learned
+
+Each step of each module is logged in three lines: what was done, what it taught me, what
+blocked me. The full journal, from the 2022 SMS detector to the deployment tooling:
+**[docs/LEARNING.md](docs/LEARNING.md)** (French).
 
 ## History
 
