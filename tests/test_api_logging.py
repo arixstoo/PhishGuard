@@ -28,9 +28,9 @@ from phishguard.api.logs import (
 from phishguard.api.settings import ApiSettings
 
 # Sentinelle tirée à chaque exécution : ne doit jamais être écrite dans le journal.
-SECRET = "tok_" + secrets.token_hex(16)
-SECRET_HOST = "secret-reset-portal.example"
-SECRET_URL = f"https://user:{SECRET}@{SECRET_HOST}/reset/{SECRET}?token={SECRET}#{SECRET}"
+CANARY = "tok_" + secrets.token_hex(16)
+CANARY_HOST = "secret-reset-portal.example"
+CANARY_URL = f"https://user:{CANARY}@{CANARY_HOST}/reset/{CANARY}?token={CANARY}#{CANARY}"
 
 
 @pytest.fixture
@@ -67,10 +67,10 @@ def test_a_secret_token_in_an_analysed_url_never_reaches_the_logs(
     api_models_dir, tmp_path, log_stream
 ):
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
-        response = client.post("/v1/analyze/url", json={"url": SECRET_URL, "analyst": True})
+        response = client.post("/v1/analyze/url", json={"url": CANARY_URL, "analyst": True})
     assert response.status_code == 200
 
-    assert_never_logged(log_stream, SECRET, SECRET_HOST, "/reset/")
+    assert_never_logged(log_stream, CANARY, CANARY_HOST, "/reset/")
     (line,) = request_lines(log_stream)
     body = response.json()
     assert line["route"] == "/v1/analyze/url"
@@ -90,7 +90,7 @@ def test_a_secret_token_in_an_analysed_url_never_reaches_the_logs(
 
 def test_request_lines_carry_only_whitelisted_fields(api_models_dir, tmp_path, log_stream):
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
-        client.post("/v1/analyze/url", json={"url": SECRET_URL})
+        client.post("/v1/analyze/url", json={"url": CANARY_URL})
     (line,) = request_lines(log_stream)
     allowed = {
         "event",
@@ -116,24 +116,24 @@ def test_request_lines_carry_only_whitelisted_fields(api_models_dir, tmp_path, l
 
 
 def test_message_content_is_never_logged(api_models_dir, tmp_path, log_stream):
-    text = f"Votre colis est bloqué, code {SECRET}, payez sur {SECRET_URL}"
+    text = f"Votre colis est bloqué, code {CANARY}, payez sur {CANARY_URL}"
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
         assert client.post("/v1/analyze/text", json={"text": text}).status_code == 200
-    assert_never_logged(log_stream, SECRET, "colis", SECRET_HOST)
+    assert_never_logged(log_stream, CANARY, "colis", CANARY_HOST)
     (line,) = request_lines(log_stream)
     assert line["route"] == "/v1/analyze/text" and line["verdict"]
 
 
 def test_email_content_is_never_logged(api_models_dir, tmp_path, log_stream):
     raw = (EMAILS / "02_phish_link_mismatch.eml").read_bytes()
-    raw = raw.replace(b"\n\n", f"\n\nSecret {SECRET} {SECRET_URL}\n\n".encode(), 1)
+    raw = raw.replace(b"\n\n", f"\n\nSecret {CANARY} {CANARY_URL}\n\n".encode(), 1)
     sender = re.search(rb"^From:.*$", raw, re.MULTILINE).group().decode()
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
         response = client.post(
             "/v1/analyze/email", files={"file": ("m.eml", raw, "message/rfc822")}
         )
     assert response.status_code == 200
-    assert_never_logged(log_stream, SECRET, SECRET_HOST, sender.removeprefix("From:").strip())
+    assert_never_logged(log_stream, CANARY, CANARY_HOST, sender.removeprefix("From:").strip())
     assert request_lines(log_stream)[0]["channel"] == "email"
 
 
@@ -151,30 +151,30 @@ def test_api_keys_are_never_logged_valid_or_not(api_models_dir, tmp_path, log_st
 
 def test_invalid_url_and_validation_errors_are_not_logged(api_models_dir, tmp_path, log_stream):
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
-        assert client.post("/v1/analyze/url", json={"url": f"ftp://{SECRET}"}).status_code == 400
-        too_long = {"url": "https://a.example/" + SECRET * 100}
+        assert client.post("/v1/analyze/url", json={"url": f"ftp://{CANARY}"}).status_code == 400
+        too_long = {"url": "https://a.example/" + CANARY * 100}
         assert client.post("/v1/analyze/url", json=too_long).status_code == 422
-        unknown = {"url": "https://a.example/", SECRET: SECRET}
+        unknown = {"url": "https://a.example/", CANARY: CANARY}
         assert client.post("/v1/analyze/url", json=unknown).status_code == 422
-    assert_never_logged(log_stream, SECRET)
+    assert_never_logged(log_stream, CANARY)
     assert [line["status"] for line in request_lines(log_stream)] == [400, 422, 422]
 
 
 def test_unknown_paths_are_logged_as_unmatched(api_models_dir, tmp_path, log_stream):
     with api_client(settings_for(api_models_dir, tmp_path)) as client:
-        assert client.get(f"/v1/{SECRET}?token={SECRET}").status_code == 404
-    assert_never_logged(log_stream, SECRET)
+        assert client.get(f"/v1/{CANARY}?token={CANARY}").status_code == 404
+    assert_never_logged(log_stream, CANARY)
     assert request_lines(log_stream)[0]["route"] == "_unmatched"
 
 
 def test_internal_errors_log_types_and_places_but_no_message(api_models_dir, tmp_path, log_stream):
     def broken(_text, *, channel):
-        raise RuntimeError(f"échec sur {SECRET_URL}") from ValueError(SECRET)
+        raise RuntimeError(f"échec sur {CANARY_URL}") from ValueError(CANARY)
 
     with api_client(settings_for(api_models_dir, tmp_path), raise_server_exceptions=False) as c:
         c.app.state.phishguard.service.analyzers.text.analyze = broken
         assert c.post("/v1/analyze/text", json={"text": "hello"}).status_code == 500
-    assert_never_logged(log_stream, SECRET, SECRET_HOST, "Traceback")
+    assert_never_logged(log_stream, CANARY, CANARY_HOST, "Traceback")
     (error,) = [line for line in lines(log_stream) if line["event"] == "erreur interne"]
     assert error["level"] == "error"
     types = [item["type"] for item in error["exc_summary"]]
@@ -187,11 +187,11 @@ def test_internal_errors_log_types_and_places_but_no_message(api_models_dir, tmp
 def test_library_debug_logs_with_exceptions_are_scrubbed(log_stream):
     """Une erreur httpx cite l'URL appelée (Safe Browsing : la clé dans la requête)."""
     try:
-        raise ConnectionError(f"Server error for url '{SECRET_URL}&key=AIzaSyFAKE'")
+        raise ConnectionError(f"Server error for url '{CANARY_URL}&key=AIzaSyFAKE'")
     except ConnectionError:
-        logging.getLogger("httpx").debug("échec de %s", SECRET_URL, exc_info=True)
-    logging.getLogger("phishguard.enrichers").info("source %s", f"user@{SECRET_HOST}")
-    assert_never_logged(log_stream, SECRET, SECRET_HOST, "AIzaSyFAKE")
+        logging.getLogger("httpx").debug("échec de %s", CANARY_URL, exc_info=True)
+    logging.getLogger("phishguard.enrichers").info("source %s", f"user@{CANARY_HOST}")
+    assert_never_logged(log_stream, CANARY, CANARY_HOST, "AIzaSyFAKE")
     first, second = lines(log_stream)
     assert first["event"] == "échec de [url]"
     assert first["exc_summary"][0]["type"] == "builtins.ConnectionError"
@@ -239,7 +239,7 @@ def test_rate_limited_and_timed_out_requests_are_logged(api_models_dir, tmp_path
 @pytest.mark.parametrize(
     "text, expected",
     [
-        (f"voir {SECRET_URL} svp", "voir [url] svp"),
+        (f"voir {CANARY_URL} svp", "voir [url] svp"),
         ("hxxps://evil.example/x et www.evil.example/a", "[url] et [url]"),
         ("écrire à alice.martin+test@mail.example.org", "écrire à [email]"),
         ("clé pg_" + "A" * 43, "clé [api-key]"),
@@ -272,18 +272,18 @@ def test_redact_masks_sensitive_keys_at_any_depth():
 def test_describe_exception_has_no_message():
     try:
         try:
-            raise KeyError(SECRET)
+            raise KeyError(CANARY)
         except KeyError:
-            raise RuntimeError(SECRET_URL)  # contexte implicite (__context__) voulu
+            raise RuntimeError(CANARY_URL)  # contexte implicite (__context__) voulu
     except RuntimeError as exc:
         described = describe_exception(exc)
-    assert SECRET not in json.dumps(described)
+    assert CANARY not in json.dumps(described)
     assert [d["type"] for d in described] == ["builtins.RuntimeError", "builtins.KeyError"]
 
 
 def test_annotate_accepts_only_whitelisted_fields():
     with pytest.raises(KeyError, match="url"):
-        annotate(url=SECRET_URL)
+        annotate(url=CANARY_URL)
     annotate(verdict="phishing")  # hors requête : ignoré sans erreur
 
 
@@ -301,11 +301,11 @@ def test_console_format_never_prints_a_traceback():
     stream = io.StringIO()
     configure_logging(ApiSettings(_env_file=None, log_format="console"), stream=stream)
     try:
-        raise ValueError(SECRET)
+        raise ValueError(CANARY)
     except ValueError:
         logging.getLogger("phishguard.test").exception("échec")
     output = stream.getvalue()
-    assert "échec" in output and "Traceback" not in output and SECRET not in output
+    assert "échec" in output and "Traceback" not in output and CANARY not in output
 
 
 def test_configure_logging_is_idempotent():

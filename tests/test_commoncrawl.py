@@ -6,6 +6,7 @@ import json
 import random
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 import pandas as pd
@@ -232,7 +233,9 @@ def test_script_collects_and_build_dataset_reads_it(tmp_path, fake_crawl):
     csv_file = raw / f"commoncrawl_{CRAWL}_20261024_190000.csv"
     collected = pd.read_csv(csv_file, dtype=str)
     assert collected.groupby("domain").size().to_dict() == {"alpha-demo.com": 2, "beta-demo.com": 2}
-    assert not collected["url"].str.endswith("alpha-demo.com/").any()  # page d'accueil évitée
+    assert (
+        collected["url"].map(lambda url: urlsplit(url).path != "/").all()
+    )  # page d'accueil évitée
 
     manifest = json.loads((raw / "manifest_20261024_190000.json").read_text(encoding="utf-8"))
     entry = manifest["feeds"]["commoncrawl"]
@@ -248,7 +251,7 @@ def test_script_collects_and_build_dataset_reads_it(tmp_path, fake_crawl):
     # sa page d'accueil Tranco est conservée.
     assert set(crawled["registered_domain"]) == {"alpha-demo.com"}
     assert result.steps["commoncrawl_on_phishing_domain"] == 2
-    assert "https://beta-demo.com/" in set(result.dataset["url"])
+    assert result.dataset["url"].eq("https://beta-demo.com/").any()
 
 
 def test_first_party_rejects_platform_customers():

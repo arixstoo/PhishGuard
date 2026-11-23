@@ -7,6 +7,7 @@ son texte apparaisse dans l'erreur.
 
 import importlib.util
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -116,7 +117,7 @@ def test_unsafe_message_refuses_the_whole_file_without_echoing_it(tmp_path):
     path = write(tmp_path / "bad.jsonl", [(secret, 1), ("hello there", 0)])
     with pytest.raises(L.UnsafeMessageError) as error:
         L.load_llm_messages(path)
-    assert "m0" in str(error.value) and "real-bank.com" in str(error.value)
+    assert re.search(r"\bm0\b.*\breal-bank\.com\b", str(error.value))
     assert secret not in str(error.value)
 
 

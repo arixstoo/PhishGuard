@@ -97,7 +97,7 @@ describe.each(["popup.html", "options.html"])("structure de %s", (page) => {
 
   it("n'a aucun script ni gestionnaire en ligne (CSP script-src 'self')", () => {
     expect(html).not.toMatch(/\son[a-z]+=/i);
-    expect(html.match(/<script\b[^>]*>/g)).toEqual([expect.stringMatching(/src="[a-z]+\.js"/)]);
+    expect(html.match(/<script\b[^>]*>/gi)).toEqual([expect.stringMatching(/src="[a-z]+\.js"/)]);
   });
 
   it("a une zone annoncée aux lecteurs d'écran", () => {
